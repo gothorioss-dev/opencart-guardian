@@ -26,18 +26,20 @@ class Events extends \Opencart\System\Engine\Controller {
 
 		$this->load->language('extension/gtr_guardian/module/gtr_guardian');
 
+		$guardian = [];
+
+		$guardian[] = [
+			'name'     => $this->language->get('text_settings'),
+			'href'     => $this->url->link('extension/gtr_guardian/module/gtr_guardian', 'user_token=' . $this->session->data['user_token']),
+			'children' => []
+		];
+
 		$data['menus'][] = [
 			'id'       => 'menu-gtr-guardian',
 			'icon'     => 'fas fa-shield-halved',
 			'name'     => $this->language->get('heading_title'),
 			'href'     => '',
-			'children' => [
-				[
-					'name'     => $this->language->get('text_settings'),
-					'href'     => $this->url->link('extension/gtr_guardian/module/gtr_guardian', 'user_token=' . $this->session->data['user_token']),
-					'children' => []
-				]
-			]
+			'children' => $guardian
 		];
 	}
 }
