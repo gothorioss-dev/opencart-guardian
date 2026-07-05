@@ -6,6 +6,7 @@ $_['heading_title']     = 'OpenCart Guardian';
 $_['text_home']         = 'Главная';
 $_['text_extension']    = 'Расширения';
 $_['text_hello_world']  = 'Привет, мир! OpenCart Guardian работает.';
+$_['text_settings']     = 'Настройки';
 
 // Error
 $_['error_permission']  = 'Внимание: у вас нет прав для изменения OpenCart Guardian!';

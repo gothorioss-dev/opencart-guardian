@@ -60,11 +60,9 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function install(): void {
-		if ($this->user->hasPermission('modify', 'extension/gtr_guardian/module/gtr_guardian')) {
-			$this->load->model('extension/gtr_guardian/module/gtr_guardian');
+		$this->load->model('extension/gtr_guardian/module/gtr_guardian');
 
-			$this->model_extension_gtr_guardian_module_gtr_guardian->install();
-		}
+		$this->model_extension_gtr_guardian_module_gtr_guardian->install();
 	}
 
 	/**
@@ -73,10 +71,8 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function uninstall(): void {
-		if ($this->user->hasPermission('modify', 'extension/gtr_guardian/module/gtr_guardian')) {
-			$this->load->model('extension/gtr_guardian/module/gtr_guardian');
+		$this->load->model('extension/gtr_guardian/module/gtr_guardian');
 
-			$this->model_extension_gtr_guardian_module_gtr_guardian->uninstall();
-		}
+		$this->model_extension_gtr_guardian_module_gtr_guardian->uninstall();
 	}
 }
