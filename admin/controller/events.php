@@ -19,20 +19,30 @@ class Events extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function addColumnLeftMenu(string &$route, array &$data, string &$code, &$output = null): void {
-		/* todo: unlock after permissions implement */
-		/*if (!$this->user->hasPermission('access', 'extension/gtr_guardian/module/gtr_guardian')) {
-			return;
-		}*/
-
 		$this->load->language('extension/gtr_guardian/module/gtr_guardian');
 
 		$guardian = [];
+		$token = 'user_token=' . $this->session->data['user_token'];
 
-		$guardian[] = [
-			'name'     => $this->language->get('text_settings'),
-			'href'     => $this->url->link('extension/gtr_guardian/module/gtr_guardian', 'user_token=' . $this->session->data['user_token']),
-			'children' => []
-		];
+		if ($this->user->hasPermission('access', 'extension/gtr_guardian/dashboard/dashboard')) {
+			$guardian[] = [
+				'name'     => $this->language->get('text_dashboard'),
+				'href'     => $this->url->link('extension/gtr_guardian/dashboard/dashboard', $token),
+				'children' => []
+			];
+		}
+
+		if ($this->user->hasPermission('access', 'extension/gtr_guardian/health_monitor/health_monitor')) {
+			$guardian[] = [
+				'name'     => $this->language->get('text_health_monitor'),
+				'href'     => $this->url->link('extension/gtr_guardian/health_monitor/health_monitor', $token),
+				'children' => []
+			];
+		}
+
+		if (!$guardian) {
+			return;
+		}
 
 		$data['menus'][] = [
 			'id'       => 'menu-gtr-guardian',

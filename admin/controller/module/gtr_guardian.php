@@ -63,6 +63,18 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 		$this->load->model('extension/gtr_guardian/module/gtr_guardian');
 
 		$this->model_extension_gtr_guardian_module_gtr_guardian->install();
+
+		$this->load->model('user/user_group');
+
+		$group_id = $this->user->getGroupId();
+
+		foreach ([
+			'extension/gtr_guardian/dashboard/dashboard',
+			'extension/gtr_guardian/health_monitor/health_monitor',
+		] as $route) {
+			$this->model_user_user_group->addPermission($group_id, 'access', $route);
+			$this->model_user_user_group->addPermission($group_id, 'modify', $route);
+		}
 	}
 
 	/**

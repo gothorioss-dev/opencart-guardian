@@ -5,6 +5,9 @@ $_['heading_title']     = 'OpenCart Guardian';
 // Text
 $_['text_home']         = 'Home';
 $_['text_extension']    = 'Extensions';
+$_['text_guardian']     = 'OpenCart Guardian';
+$_['text_dashboard']    = 'Dashboard';
+$_['text_health_monitor'] = 'Health Monitor';
 $_['text_hello_world']  = 'Hello World! OpenCart Guardian is working.';
 $_['text_settings']     = 'Settings';
 
