@@ -19,6 +19,12 @@ class Events extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function addColumnLeftMenu(string &$route, array &$data, string &$code, &$output = null): void {
+		$this->load->model('extension/gtr_guardian/module/gtr_guardian');
+
+		if (!$this->model_extension_gtr_guardian_module_gtr_guardian->isCoreInstalled()) {
+			return;
+		}
+
 		$this->load->language('extension/gtr_guardian/module/gtr_guardian');
 
 		$guardian = [];
@@ -32,10 +38,13 @@ class Events extends \Opencart\System\Engine\Controller {
 			];
 		}
 
-		if ($this->user->hasPermission('access', 'extension/gtr_guardian/health_monitor/health_monitor')) {
+		if (
+			$this->model_extension_gtr_guardian_module_gtr_guardian->isSubmoduleInstalled('health_monitor')
+			&& $this->user->hasPermission('access', 'extension/gtr_guardian/other/health_monitor')
+		) {
 			$guardian[] = [
 				'name'     => $this->language->get('text_health_monitor'),
-				'href'     => $this->url->link('extension/gtr_guardian/health_monitor/health_monitor', $token),
+				'href'     => $this->url->link('extension/gtr_guardian/other/health_monitor', $token),
 				'children' => []
 			];
 		}

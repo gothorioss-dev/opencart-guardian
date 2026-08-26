@@ -2,6 +2,9 @@
 <div id="content">
   <div class="page-header">
     <div class="container-fluid">
+      <div class="float-end">
+        <a href="{{ settings }}" data-bs-toggle="tooltip" title="{{ text_settings }}" class="btn btn-light"><i class="fa-solid fa-cog"></i></a>
+      </div>
       <h1>{{ heading_title }}</h1>
       <ol class="breadcrumb">
         {% for breadcrumb in breadcrumbs %}

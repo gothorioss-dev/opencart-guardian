@@ -12,6 +12,14 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function index(): void {
+		$this->load->model('extension/gtr_guardian/module/gtr_guardian');
+
+		if (!$this->model_extension_gtr_guardian_module_gtr_guardian->isCoreInstalled()) {
+			$this->response->redirect($this->url->link('error/permission', 'user_token=' . $this->session->data['user_token']));
+
+			return;
+		}
+
 		$this->load->language('extension/gtr_guardian/module/gtr_guardian');
 		$this->load->language('extension/gtr_guardian/dashboard/dashboard');
 
@@ -36,6 +44,8 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 
 		$data['heading_title'] = $this->language->get('heading_title');
 		$data['text_description'] = $this->language->get('text_description');
+		$data['settings'] = $this->url->link('extension/gtr_guardian/module/gtr_guardian', 'user_token=' . $this->session->data['user_token']);
+		$data['text_settings'] = $this->language->get('text_settings');
 
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
