@@ -1,0 +1,70 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <a href="{{ settings }}" data-bs-toggle="tooltip" title="{{ text_settings }}" class="btn btn-light"><i class="fa-solid fa-gear"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header"><i class="fa-solid fa-shield-halved"></i> {{ text_overview }}</div>
+      <div class="card-body">
+        {% if domains %}
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>{{ column_domain }}</th>
+                  <th class="text-center">{{ column_status }}</th>
+                  <th>{{ column_summary }}</th>
+                  <th class="text-center">{{ column_findings }}</th>
+                  <th>{{ column_last_run }}</th>
+                  <th class="text-end">{{ column_action }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for domain in domains %}
+                  <tr>
+                    <td>{{ domain.name }}</td>
+                    <td class="text-center">
+                      {% if domain.status == 'critical' %}
+                        <span class="badge bg-danger">{{ text_status_critical }}</span>
+                      {% elseif domain.status == 'warning' %}
+                        <span class="badge bg-warning">{{ text_status_warning }}</span>
+                      {% elseif domain.status == 'ok' %}
+                        <span class="badge bg-success">{{ text_status_ok }}</span>
+                      {% elseif domain.status == 'error' %}
+                        <span class="badge bg-dark">{{ text_status_error }}</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ text_status_unknown }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ domain.summary ?: text_no_data }}</td>
+                    <td class="text-center text-nowrap">
+                      <span class="text-danger">{{ domain.counts.critical }}</span>
+                      / <span class="text-warning">{{ domain.counts.warning }}</span>
+                      / <span class="text-secondary">{{ domain.counts.info }}</span>
+                    </td>
+                    <td>{{ domain.last_run_text }}</td>
+                    <td class="text-end"><a href="{{ domain.href }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-arrow-right"></i> {{ button_open }}</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-secondary mb-0">{{ text_no_domains }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}
