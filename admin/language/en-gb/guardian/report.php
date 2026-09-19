@@ -17,6 +17,7 @@ $_['text_status_error']      = 'Error';
 $_['text_status_pending']    = 'Not run';
 $_['text_hint']              = 'How to fix:';
 $_['text_sample']            = 'Showing the first %d of %d findings.';
+$_['text_error_hidden']      = 'The check failed to run; details are in the error log.';
 
 // Column
 $_['column_check']           = 'Check';

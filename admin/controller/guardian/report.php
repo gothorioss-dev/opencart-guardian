@@ -18,6 +18,10 @@ class Report extends \Opencart\System\Engine\Controller {
 	 * @return string
 	 */
 	public function index(string $domain = ''): string {
+		if (!$this->isKnownDomain($domain)) {
+			return '';
+		}
+
 		$this->load->language('extension/gtr_guardian/guardian/report');
 
 		$this->load->model('extension/gtr_guardian/guardian/domain/' . $domain);
@@ -48,6 +52,9 @@ class Report extends \Opencart\System\Engine\Controller {
 			}
 		}
 
+		// Technical failure detail (may quote SQL) is for Guardian admins only.
+		$show_message = $this->user->hasPermission('access', 'extension/gtr_guardian/other/gtr_guardian');
+
 		$data['categories'] = [];
 
 		foreach ($this->model_extension_gtr_guardian_guardian_runner->getCategoryModels($provider->categories()) as $category => $model) {
@@ -66,10 +73,8 @@ class Report extends \Opencart\System\Engine\Controller {
 					'severity' => $meta['severity'],
 					'status'   => $result ? $result['status'] : 'pending',
 					'count'    => $result ? (int)$result['count'] : 0,
-					'items'    => $result ? $result['items'] : [],
-					// Not user input, so it never went through Request::clean() — and the
-					// Twig adaptor does not autoescape.
-					'message'  => $result ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : ''
+					'items'    => $result ? $this->escapeItems($result['items']) : [],
+					'message'  => $result && $result['status'] === 'error' ? ($show_message ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : $this->language->get('text_error_hidden')) : ''
 				];
 			}
 
@@ -124,7 +129,7 @@ class Report extends \Opencart\System\Engine\Controller {
 
 		$json = [];
 
-		if (!$this->user->hasPermission('modify', 'extension/gtr_guardian/guardian/' . $domain)) {
+		if (!$this->isKnownDomain($domain) || !$this->user->hasPermission('modify', 'extension/gtr_guardian/guardian/' . $domain)) {
 			$json['error'] = $this->language->get('error_permission');
 		}
 
@@ -138,5 +143,42 @@ class Report extends \Opencart\System\Engine\Controller {
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
+	}
+
+	/**
+	 * @param string $domain
+	 *
+	 * @return bool
+	 */
+	private function isKnownDomain(string $domain): bool {
+		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
+
+		return in_array($domain, $this->model_extension_gtr_guardian_other_gtr_guardian->getDomainCodes(), true);
+	}
+
+	/**
+	 * The Twig adaptor does not autoescape. Rows come from the store's own
+	 * tables, which are only escaped when data entered through the admin
+	 * (Request::clean); imports and API writes bypass that. double_encode=false
+	 * keeps already-escaped values intact.
+	 *
+	 * @param array<int, array<string, mixed>> $items
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	private function escapeItems(array $items): array {
+		$escaped = [];
+
+		foreach ($items as $row) {
+			$clean = [];
+
+			foreach ((array)$row as $key => $value) {
+				$clean[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8', false);
+			}
+
+			$escaped[] = $clean;
+		}
+
+		return $escaped;
 	}
 }

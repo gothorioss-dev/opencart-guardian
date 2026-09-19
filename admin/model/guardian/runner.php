@@ -26,9 +26,14 @@ class Runner extends \Opencart\System\Engine\Model {
 	 * @return int run_id
 	 */
 	public function run(string $domain, string $origin = self::ORIGIN_MANUAL): int {
+		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
+
+		if (!in_array($domain, $this->model_extension_gtr_guardian_other_gtr_guardian->getDomainCodes(), true)) {
+			throw new \InvalidArgumentException('Unknown Guardian domain: ' . $domain);
+		}
+
 		$this->load->model('extension/gtr_guardian/guardian/domain/' . $domain);
 		$this->load->model('extension/gtr_guardian/guardian/result');
-		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
 
 		$provider = $this->{'model_extension_gtr_guardian_guardian_domain_' . $domain};
 		$store = $this->model_extension_gtr_guardian_guardian_result;
