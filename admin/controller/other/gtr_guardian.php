@@ -69,8 +69,8 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 		$routes = $this->model_extension_gtr_guardian_other_gtr_guardian->getPermissionRoutes();
 
 		foreach ($routes as $code => $route) {
-			if ($code === 'settings' || $code === 'dashboard') {
-				$name = $this->language->get('text_' . $code);
+			if ($code === 'dashboard') {
+				$name = $this->language->get('text_dashboard');
 			} else {
 				$name = $this->language->get($code . '_heading_title');
 			}
@@ -82,8 +82,6 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 		}
 
 		$this->load->model('user/user_group');
-
-		$own_group_id = $this->user->getGroupId();
 
 		$data['permission_groups'] = [];
 
@@ -102,7 +100,6 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			$data['permission_groups'][] = [
 				'user_group_id' => (int)$group['user_group_id'],
 				'name'          => $group['name'],
-				'own'           => (int)$group['user_group_id'] === $own_group_id,
 				'cells'         => $cells
 			];
 		}
@@ -129,7 +126,6 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 		$data['tab_config'] = $this->language->get('tab_config');
 		$data['tab_permission'] = $this->language->get('tab_permission');
 		$data['text_permission_help'] = $this->language->get('text_permission_help');
-		$data['text_permission_own'] = $this->language->get('text_permission_own');
 		$data['text_access'] = $this->language->get('text_access');
 		$data['text_modify'] = $this->language->get('text_modify');
 		$data['column_group'] = $this->language->get('column_group');
@@ -206,7 +202,7 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 
 			$permission = $this->request->post['permission'] ?? [];
 
-			$this->model_extension_gtr_guardian_other_gtr_guardian->savePermissions(is_array($permission) ? $permission : [], $this->user->getGroupId());
+			$this->model_extension_gtr_guardian_other_gtr_guardian->savePermissions(is_array($permission) ? $permission : []);
 
 			$json['success'] = $this->language->get('text_success');
 		}

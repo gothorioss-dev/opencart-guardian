@@ -123,24 +123,15 @@
                   <tbody>
                     {% for group in permission_groups %}
                       <tr>
-                        <td>
-                          {{ group.name }}
-                          {% if group.own %}<div class="form-text">{{ text_permission_own }}</div>{% endif %}
-                        </td>
+                        <td>{{ group.name }}</td>
                         {% for route in permission_routes %}
                           {% set cell = group.cells[route.code] %}
-                          {% set locked = group.own and route.code == 'settings' %}
                           <td class="text-center text-nowrap">
                             {% for type in ['access', 'modify'] %}
                               {% set name = 'permission[' ~ group.user_group_id ~ '][' ~ route.code ~ '][' ~ type ~ ']' %}
                               {% set id = 'input-permission-' ~ group.user_group_id ~ '-' ~ route.code ~ '-' ~ type %}
                               <div class="form-check form-check-inline me-1">
-                                {% if locked and type == 'access' %}
-                                  <input type="hidden" name="{{ name }}" value="1"/>
-                                  <input type="checkbox" value="1" id="{{ id }}" class="form-check-input" checked disabled/>
-                                {% else %}
-                                  <input type="checkbox" name="{{ name }}" value="1" id="{{ id }}" class="form-check-input"{% if cell[type] %} checked{% endif %}/>
-                                {% endif %}
+                                <input type="checkbox" name="{{ name }}" value="1" id="{{ id }}" class="form-check-input"{% if cell[type] %} checked{% endif %}/>
                                 <label for="{{ id }}" class="form-check-label small" data-bs-toggle="tooltip" title="{{ type == 'access' ? text_access : text_modify }}">{{ type == 'access' ? 'A' : 'M' }}</label>
                               </div>
                             {% endfor %}

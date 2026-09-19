@@ -75,14 +75,15 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	}
 
 	/**
-	 * Guardian screens that carry access/modify permissions, keyed by a short
-	 * code used by the permissions matrix.
+	 * Functional Guardian screens managed by the permissions matrix, keyed by
+	 * a short code. The settings screen itself is deliberately absent: who may
+	 * edit Guardian settings (and thus these permissions) is decided in
+	 * System > Users > User Groups like for any other extension.
 	 *
 	 * @return array<string, string>
 	 */
 	public function getPermissionRoutes(): array {
 		$routes = [
-			'settings'  => 'extension/gtr_guardian/other/gtr_guardian',
 			'dashboard' => 'extension/gtr_guardian/guardian/dashboard'
 		];
 
@@ -96,16 +97,13 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	/**
 	 * Apply the permissions matrix: $permission[user_group_id][code][access|modify] = 1.
 	 *
-	 * Groups or cells absent from the array are revoked. The caller's own
-	 * group always keeps access to the settings screen, so an admin cannot
-	 * lock themselves out.
+	 * Groups or cells absent from the array are revoked.
 	 *
 	 * @param array<int|string, array<string, array<string, mixed>>> $permission
-	 * @param int                                                    $own_group_id
 	 *
 	 * @return void
 	 */
-	public function savePermissions(array $permission, int $own_group_id): void {
+	public function savePermissions(array $permission): void {
 		$this->load->model('user/user_group');
 
 		$routes = $this->getPermissionRoutes();
@@ -118,10 +116,6 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 			foreach ($routes as $code => $route) {
 				foreach (['access', 'modify'] as $type) {
 					$granted = !empty($permission[$group_id][$code][$type]);
-
-					if ($group_id === $own_group_id && $code === 'settings' && $type === 'access') {
-						$granted = true;
-					}
 
 					$has = in_array($route, $current[$type] ?? [], true);
 
