@@ -1,0 +1,94 @@
+<div class="card">
+  <div class="card-header">
+    <i class="fa-solid fa-list-check"></i>
+    {% if run %}
+      {{ text_last_run }} {{ run.date_finished }} ({{ run.origin }}) &middot;
+      {{ text_checks_total }} {{ run.checks_total }} &middot;
+      {{ text_findings }} <span class="text-danger">{{ run.critical }}</span> / <span class="text-warning">{{ run.warning }}</span> / <span class="text-secondary">{{ run.info }}</span>
+      {% if run.errors %}&middot; <span class="text-dark">{{ text_errors }} {{ run.errors }}</span>{% endif %}
+    {% else %}
+      {{ text_no_run }}
+    {% endif %}
+    {% if can_run %}
+      <button type="button" id="button-run" value="{{ run_url }}" data-oc-load="{{ reload_url }}" class="btn btn-primary btn-sm float-end"><i class="fa-solid fa-play"></i> {{ button_run }}</button>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    {% if categories %}
+      {% for category in categories %}
+        <h5 class="{% if not loop.first %}mt-4{% endif %}">{{ category.name }}</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>{{ column_check }}</th>
+                <th class="text-center">{{ column_severity }}</th>
+                <th class="text-center">{{ column_status }}</th>
+                <th class="text-end">{{ column_count }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for check in category.checks %}
+                {% set row_id = 'check-' ~ category.code ~ '-' ~ check.code %}
+                <tr>
+                  <td>
+                    <strong>{{ check.title }}</strong>
+                    <div class="form-text">{{ check.desc }}</div>
+                    {% if check.status == 'found' or check.status == 'error' %}
+                      <a data-bs-toggle="collapse" href="#{{ row_id }}" class="small">{{ button_details }}</a>
+                      <div id="{{ row_id }}" class="collapse mt-2">
+                        {% if check.status == 'error' %}
+                          <pre class="small text-danger mb-2">{{ check.message }}</pre>
+                        {% else %}
+                          <p class="small mb-2"><i class="fa-solid fa-lightbulb"></i> <strong>{{ text_hint }}</strong> {{ check.hint }}</p>
+                          {% if check.items %}
+                            {% if check.count > items_limit %}<p class="small text-secondary mb-1">{{ text_sample|format(items_limit, check.count) }}</p>{% endif %}
+                            <div class="table-responsive">
+                              <table class="table table-sm table-striped small mb-0">
+                                <thead>
+                                  <tr>{% for key, value in check.items|first %}<th>{{ key }}</th>{% endfor %}</tr>
+                                </thead>
+                                <tbody>
+                                  {% for item in check.items %}
+                                    <tr>{% for value in item %}<td>{{ value }}</td>{% endfor %}</tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                          {% endif %}
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if check.severity == 'critical' %}
+                      <span class="badge bg-danger">{{ text_severity_critical }}</span>
+                    {% elseif check.severity == 'warning' %}
+                      <span class="badge bg-warning">{{ text_severity_warning }}</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ text_severity_info }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if check.status == 'ok' %}
+                      <span class="badge bg-success">{{ text_status_ok }}</span>
+                    {% elseif check.status == 'found' %}
+                      <span class="badge bg-danger">{{ text_status_found }}</span>
+                    {% elseif check.status == 'error' %}
+                      <span class="badge bg-dark">{{ text_status_error }}</span>
+                    {% else %}
+                      <span class="badge bg-light text-dark">{{ text_status_pending }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">{{ check.status == 'found' ? check.count : '' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-secondary mb-0">{{ text_no_categories }}</p>
+    {% endif %}
+  </div>
+</div>
