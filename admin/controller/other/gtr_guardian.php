@@ -81,12 +81,10 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			];
 		}
 
-		$this->load->model('user/user_group');
-
 		$data['permission_groups'] = [];
 
-		foreach ($this->model_user_user_group->getUserGroups() as $group) {
-			$permission = $group['permission'] ? (array)json_decode($group['permission'], true) : [];
+		foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getManagedUserGroups() as $group) {
+			$permission = $group['permission'];
 
 			$cells = [];
 
@@ -126,6 +124,7 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 		$data['tab_config'] = $this->language->get('tab_config');
 		$data['tab_permission'] = $this->language->get('tab_permission');
 		$data['text_permission_help'] = $this->language->get('text_permission_help');
+		$data['text_permission_admin'] = $this->language->get('text_permission_admin');
 		$data['text_access'] = $this->language->get('text_access');
 		$data['text_modify'] = $this->language->get('text_modify');
 		$data['column_group'] = $this->language->get('column_group');

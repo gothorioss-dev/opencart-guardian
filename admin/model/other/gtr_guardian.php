@@ -95,9 +95,34 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	}
 
 	/**
+	 * User groups the permissions matrix manages: every group except those
+	 * allowed to edit Guardian settings — they administer the matrix and must
+	 * not be able to restrict themselves through it.
+	 *
+	 * @return array<int, array<string, mixed>> user group rows with "permission" decoded
+	 */
+	public function getManagedUserGroups(): array {
+		$this->load->model('user/user_group');
+
+		$groups = [];
+
+		foreach ($this->model_user_user_group->getUserGroups() as $group) {
+			$group['permission'] = $group['permission'] ? (array)json_decode($group['permission'], true) : [];
+
+			if (in_array('extension/gtr_guardian/other/gtr_guardian', $group['permission']['modify'] ?? [], true)) {
+				continue;
+			}
+
+			$groups[] = $group;
+		}
+
+		return $groups;
+	}
+
+	/**
 	 * Apply the permissions matrix: $permission[user_group_id][code][access|modify] = 1.
 	 *
-	 * Groups or cells absent from the array are revoked.
+	 * Only managed groups are touched; cells absent from the array are revoked.
 	 *
 	 * @param array<int|string, array<string, array<string, mixed>>> $permission
 	 *
@@ -108,10 +133,10 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 
 		$routes = $this->getPermissionRoutes();
 
-		foreach ($this->model_user_user_group->getUserGroups() as $group) {
+		foreach ($this->getManagedUserGroups() as $group) {
 			$group_id = (int)$group['user_group_id'];
 
-			$current = $group['permission'] ? (array)json_decode($group['permission'], true) : [];
+			$current = $group['permission'];
 
 			foreach ($routes as $code => $route) {
 				foreach (['access', 'modify'] as $type) {
