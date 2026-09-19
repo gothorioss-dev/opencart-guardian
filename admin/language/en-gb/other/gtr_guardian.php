@@ -27,6 +27,12 @@ $_['text_retention_current_none'] = 'Currently: automatic clean-up is off — hi
 $_['text_history_total']          = 'Stored runs: %d';
 $_['text_clear_confirm']          = 'Delete the whole run history of every domain?';
 $_['text_clear_success']          = 'Success: run history has been cleared!';
+$_['text_permission_pending']     = 'Permission management is not available yet.';
+
+// Tab
+$_['tab_general']                 = 'General';
+$_['tab_config']                  = 'Configuration';
+$_['tab_permission']              = 'Permissions';
 
 // Entry
 $_['entry_status']                = 'Status';
@@ -34,6 +40,7 @@ $_['entry_retention_runs']        = 'Keep runs';
 $_['entry_retention_days']        = 'Keep for';
 
 // Help
+$_['help_status']                 = 'Disabled: the Guardian menu and all its screens are hidden; stored results are kept.';
 $_['help_retention_runs']         = 'Newest runs kept per domain. Off — no limit by count.';
 $_['help_retention_days']         = 'Maximum age of a run in days. Off — no limit by age.';
 

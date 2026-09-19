@@ -82,6 +82,11 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 
 		$data['heading_title'] = $this->language->get('heading_title');
 		$data['text_edit'] = $this->language->get('text_edit');
+		$data['tab_general'] = $this->language->get('tab_general');
+		$data['tab_config'] = $this->language->get('tab_config');
+		$data['tab_permission'] = $this->language->get('tab_permission');
+		$data['text_permission_pending'] = $this->language->get('text_permission_pending');
+		$data['help_status'] = $this->language->get('help_status');
 		$data['text_history'] = $this->language->get('text_history');
 		$data['text_history_help'] = $this->language->get('text_history_help');
 		$data['text_retention_off'] = $this->language->get('text_retention_off');

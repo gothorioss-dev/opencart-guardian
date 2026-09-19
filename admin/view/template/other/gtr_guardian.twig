@@ -16,94 +16,105 @@
     </div>
   </div>
   <div class="container-fluid">
-    <form id="form-gtr-guardian" action="{{ save }}" method="post" data-oc-toggle="ajax">
-      <div class="card">
-        <div class="card-header"><i class="fa-solid fa-pencil"></i> {{ text_edit }}</div>
-        <div class="card-body">
-          <div class="row mb-3">
-            <label for="input-status" class="col-sm-2 col-form-label">{{ entry_status }}</label>
-            <div class="col-sm-10">
-              <div class="form-check form-switch form-switch-lg">
-                <input type="hidden" name="other_gtr_guardian_status" value="0"/>
-                <input type="checkbox" name="other_gtr_guardian_status" value="1" id="input-status" class="form-check-input"{% if other_gtr_guardian_status %} checked{% endif %}/>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card mt-3">
-        <div class="card-header"><i class="fa-solid fa-clock-rotate-left"></i> {{ text_history }}</div>
-        <div class="card-body">
-          <p class="text-secondary">{{ text_history_help }}</p>
-          {% for limit in ['runs', 'days'] %}
-            {% set value = limit == 'runs' ? retention_runs : retention_days %}
-            {% set presets = limit == 'runs' ? retention_runs_presets : retention_days_presets %}
-            {% set custom = limit == 'runs' ? retention_runs_custom : retention_days_custom %}
-            <div class="row mb-3">
-              <label for="input-retention-{{ limit }}" class="col-sm-2 col-form-label">{{ limit == 'runs' ? entry_retention_runs : entry_retention_days }}</label>
-              <div class="col-sm-10">
-                <div class="row g-2">
-                  <div class="col-sm-4">
-                    <select name="other_gtr_guardian_retention_{{ limit }}_select" id="input-retention-{{ limit }}" class="form-select" data-oc-target="#input-retention-{{ limit }}-custom">
-                      {% for preset in presets %}
-                        <option value="{{ preset }}"{% if not custom and value == preset %} selected{% endif %}>{{ preset }} {{ limit == 'runs' ? text_runs : text_days }}</option>
-                      {% endfor %}
-                      <option value="custom"{% if custom %} selected{% endif %}>{{ text_retention_custom }}</option>
-                      <option value="0"{% if not value %} selected{% endif %}>{{ text_retention_off }}</option>
-                    </select>
+    <div class="card">
+      <div class="card-header"><i class="fa-solid fa-pencil"></i> {{ text_edit }}</div>
+      <div class="card-body">
+        <form id="form-gtr-guardian" action="{{ save }}" method="post" data-oc-toggle="ajax">
+          <ul class="nav nav-tabs">
+            <li class="nav-item"><a href="#tab-general" data-bs-toggle="tab" class="nav-link active">{{ tab_general }}</a></li>
+            <li class="nav-item"><a href="#tab-config" data-bs-toggle="tab" class="nav-link">{{ tab_config }}</a></li>
+            <li class="nav-item"><a href="#tab-permission" data-bs-toggle="tab" class="nav-link">{{ tab_permission }}</a></li>
+          </ul>
+          <div class="tab-content">
+            <div id="tab-general" class="tab-pane active">
+              <div class="row mb-3">
+                <label for="input-status" class="col-sm-2 col-form-label">{{ entry_status }}</label>
+                <div class="col-sm-10">
+                  <div class="form-check form-switch form-switch-lg">
+                    <input type="hidden" name="other_gtr_guardian_status" value="0"/>
+                    <input type="checkbox" name="other_gtr_guardian_status" value="1" id="input-status" class="form-check-input"{% if other_gtr_guardian_status %} checked{% endif %}/>
                   </div>
-                  <div class="col-sm-3">
-                    <input type="number" name="other_gtr_guardian_retention_{{ limit }}_custom" value="{{ custom ? value : '' }}" min="1" step="1" id="input-retention-{{ limit }}-custom" class="form-control"{% if not custom %} style="display: none;"{% endif %}/>
+                  <div class="form-text">{{ help_status }}</div>
+                </div>
+              </div>
+              <fieldset>
+                <legend>{{ text_domains }}</legend>
+                <p class="text-secondary">{{ text_domains_help }}</p>
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>{{ column_domain }}</th>
+                        <th class="text-center">{{ column_enabled }}</th>
+                        <th class="text-end">{{ column_action }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for domain in domains %}
+                        <tr>
+                          <td>{{ domain.name }}</td>
+                          <td class="text-center">
+                            <div class="form-check form-switch d-inline-block">
+                              <input type="hidden" name="other_gtr_guardian_domain_{{ domain.code }}" value="0"/>
+                              <input type="checkbox" name="other_gtr_guardian_domain_{{ domain.code }}" value="1" class="form-check-input"{% if domain.enabled %} checked{% endif %}/>
+                            </div>
+                          </td>
+                          <td class="text-end">
+                            <a href="{{ domain.edit }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pencil"></i> {{ button_edit }}</a>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </fieldset>
+            </div>
+            <div id="tab-config" class="tab-pane">
+              <fieldset>
+                <legend>{{ text_history }}</legend>
+                <p class="text-secondary">{{ text_history_help }}</p>
+                {% for limit in ['runs', 'days'] %}
+                  {% set value = limit == 'runs' ? retention_runs : retention_days %}
+                  {% set presets = limit == 'runs' ? retention_runs_presets : retention_days_presets %}
+                  {% set custom = limit == 'runs' ? retention_runs_custom : retention_days_custom %}
+                  <div class="row mb-3">
+                    <label for="input-retention-{{ limit }}" class="col-sm-2 col-form-label">{{ limit == 'runs' ? entry_retention_runs : entry_retention_days }}</label>
+                    <div class="col-sm-10">
+                      <div class="row g-2">
+                        <div class="col-sm-4">
+                          <select name="other_gtr_guardian_retention_{{ limit }}_select" id="input-retention-{{ limit }}" class="form-select" data-oc-target="#input-retention-{{ limit }}-custom">
+                            {% for preset in presets %}
+                              <option value="{{ preset }}"{% if not custom and value == preset %} selected{% endif %}>{{ preset }} {{ limit == 'runs' ? text_runs : text_days }}</option>
+                            {% endfor %}
+                            <option value="custom"{% if custom %} selected{% endif %}>{{ text_retention_custom }}</option>
+                            <option value="0"{% if not value %} selected{% endif %}>{{ text_retention_off }}</option>
+                          </select>
+                        </div>
+                        <div class="col-sm-3">
+                          <input type="number" name="other_gtr_guardian_retention_{{ limit }}_custom" value="{{ custom ? value : '' }}" min="1" step="1" id="input-retention-{{ limit }}-custom" class="form-control"{% if not custom %} style="display: none;"{% endif %}/>
+                        </div>
+                      </div>
+                      <div class="form-text">{{ limit == 'runs' ? help_retention_runs : help_retention_days }}</div>
+                    </div>
+                  </div>
+                {% endfor %}
+                <div class="row mb-3">
+                  <div class="col-sm-2"></div>
+                  <div class="col-sm-10">
+                    <div class="form-text mb-2">{{ text_retention_current }}</div>
+                    <button type="button" id="button-clear" value="{{ clear }}" onclick="return confirm('{{ text_clear_confirm }}');" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i> {{ button_clear }}</button>
+                    <span id="history-total" class="ms-2 text-secondary">{{ text_history_total }}</span>
                   </div>
                 </div>
-                <div class="form-text">{{ limit == 'runs' ? help_retention_runs : help_retention_days }}</div>
-              </div>
+              </fieldset>
             </div>
-          {% endfor %}
-          <div class="row mb-3">
-            <div class="col-sm-2"></div>
-            <div class="col-sm-10">
-              <div class="form-text mb-2">{{ text_retention_current }}</div>
-              <button type="button" id="button-clear" value="{{ clear }}" onclick="return confirm('{{ text_clear_confirm }}');" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i> {{ button_clear }}</button>
-              <span id="history-total" class="ms-2 text-secondary">{{ text_history_total }}</span>
+            <div id="tab-permission" class="tab-pane">
+              <p class="text-secondary mb-0">{{ text_permission_pending }}</p>
             </div>
           </div>
-        </div>
+        </form>
       </div>
-      <div class="card mt-3">
-        <div class="card-header"><i class="fa-solid fa-puzzle-piece"></i> {{ text_domains }}</div>
-        <div class="card-body">
-          <p class="text-secondary">{{ text_domains_help }}</p>
-          <div class="table-responsive">
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>{{ column_domain }}</th>
-                  <th class="text-center">{{ column_enabled }}</th>
-                  <th class="text-end">{{ column_action }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for domain in domains %}
-                  <tr>
-                    <td>{{ domain.name }}</td>
-                    <td class="text-center">
-                      <div class="form-check form-switch d-inline-block">
-                        <input type="hidden" name="other_gtr_guardian_domain_{{ domain.code }}" value="0"/>
-                        <input type="checkbox" name="other_gtr_guardian_domain_{{ domain.code }}" value="1" class="form-check-input"{% if domain.enabled %} checked{% endif %}/>
-                      </div>
-                    </td>
-                    <td class="text-end">
-                      <a href="{{ domain.edit }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pencil"></i> {{ button_edit }}</a>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
 <script type="text/javascript"><!--

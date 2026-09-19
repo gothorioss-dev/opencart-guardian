@@ -17,7 +17,7 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 	public function index(): void {
 		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
 
-		if (!$this->model_extension_gtr_guardian_other_gtr_guardian->isCoreInstalled()) {
+		if (!$this->model_extension_gtr_guardian_other_gtr_guardian->isActive()) {
 			$this->response->redirect($this->url->link('error/permission', 'user_token=' . $this->session->data['user_token']));
 
 			return;

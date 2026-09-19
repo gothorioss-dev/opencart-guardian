@@ -8,7 +8,7 @@ namespace Opencart\Admin\Model\Extension\GtrGuardian\Other;
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Other
  */
 class GtrGuardian extends \Opencart\System\Engine\Model {
-	public const RETENTION_RUNS_DEFAULT = 10;
+	public const RETENTION_RUNS_DEFAULT = 30;
 	public const RETENTION_DAYS_DEFAULT = 30;
 
 	/**
@@ -20,6 +20,16 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		$this->load->model('setting/extension');
 
 		return !empty($this->model_setting_extension->getExtensionByCode('other', 'gtr_guardian'));
+	}
+
+	/**
+	 * Whether Guardian is installed and switched on. Every Guardian screen and
+	 * the menu are gated on this; the settings screen itself is not.
+	 *
+	 * @return bool
+	 */
+	public function isActive(): bool {
+		return $this->isCoreInstalled() && (bool)$this->config->get('other_gtr_guardian_status');
 	}
 
 	/**
@@ -116,6 +126,17 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 			$this->model_user_user_group->addPermission($group_id, 'access', $route);
 			$this->model_user_user_group->addPermission($group_id, 'modify', $route);
 		}
+
+		// Everything is on out of the box; the admin opts out explicitly.
+		$settings = ['other_gtr_guardian_status' => 1];
+
+		foreach ($this->getDomainCodes() as $code) {
+			$settings['other_gtr_guardian_domain_' . $code] = 1;
+		}
+
+		$this->load->model('setting/setting');
+
+		$this->model_setting_setting->editSetting('other_gtr_guardian', $settings);
 	}
 
 	/**

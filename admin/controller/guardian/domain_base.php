@@ -96,6 +96,6 @@ abstract class DomainBase extends \Opencart\System\Engine\Controller {
 	private function isAvailable(): bool {
 		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
 
-		return $this->model_extension_gtr_guardian_other_gtr_guardian->isCoreInstalled() && $this->model_extension_gtr_guardian_other_gtr_guardian->isDomainEnabled(static::DOMAIN);
+		return $this->model_extension_gtr_guardian_other_gtr_guardian->isActive() && $this->model_extension_gtr_guardian_other_gtr_guardian->isDomainEnabled(static::DOMAIN);
 	}
 }

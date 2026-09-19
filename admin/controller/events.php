@@ -21,7 +21,7 @@ class Events extends \Opencart\System\Engine\Controller {
 	public function addColumnLeftMenu(string &$route, array &$data, string &$code, &$output = null): void {
 		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
 
-		if (!$this->model_extension_gtr_guardian_other_gtr_guardian->isCoreInstalled()) {
+		if (!$this->model_extension_gtr_guardian_other_gtr_guardian->isActive()) {
 			return;
 		}
 
