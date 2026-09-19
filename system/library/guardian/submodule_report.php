@@ -26,7 +26,7 @@ class SubmoduleReport {
 	 * @param string             $code
 	 * @param string             $status       one of the STATUS_* constants
 	 * @param string             $summary      short plain-text summary
-	 * @param array<string, int> $counts       findings per severity
+	 * @param array<string, int> $counts       checks with findings per severity, plus "errors" (checks that failed)
 	 * @param int|null           $last_run     unix timestamp of the last run, null if never
 	 * @param int                $checks_total number of checks the domain ships
 	 */

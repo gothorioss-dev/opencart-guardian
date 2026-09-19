@@ -8,6 +8,9 @@ namespace Opencart\Admin\Model\Extension\GtrGuardian\Other;
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Other
  */
 class GtrGuardian extends \Opencart\System\Engine\Model {
+	public const RETENTION_RUNS_DEFAULT = 10;
+	public const RETENTION_DAYS_DEFAULT = 30;
+
 	/**
 	 * Whether the Guardian core extension is installed.
 	 *
@@ -59,6 +62,22 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		return array_values(array_filter($this->getDomainCodes(), function (string $code): bool {
 			return $this->isDomainEnabled($code);
 		}));
+	}
+
+	/**
+	 * Run-history retention limits: newest runs to keep per domain and max
+	 * age in days. 0 disables that limit.
+	 *
+	 * @return array{runs: int, days: int}
+	 */
+	public function getRetention(): array {
+		$runs = $this->config->get('other_gtr_guardian_retention_runs');
+		$days = $this->config->get('other_gtr_guardian_retention_days');
+
+		return [
+			'runs' => $runs === null ? self::RETENTION_RUNS_DEFAULT : max(0, (int)$runs),
+			'days' => $days === null ? self::RETENTION_DAYS_DEFAULT : max(0, (int)$days)
+		];
 	}
 
 	/**
@@ -121,6 +140,7 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		}
 
 		$this->model_setting_setting->deleteSettingsByCode('other_gtr_guardian');
+		$this->model_setting_setting->deleteSettingsByCode('gtr_guardian');
 
 		$this->load->model('extension/gtr_guardian/guardian/result');
 

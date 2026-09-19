@@ -1,8 +1,7 @@
 <?php
 namespace Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Domain;
 
-use Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleProvider;
-use Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport;
+use Opencart\Admin\Model\Extension\GtrGuardian\Guardian\DomainBase;
 /**
  * Class Security
  *
@@ -10,7 +9,7 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport;
  *
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Domain
  */
-class Security extends \Opencart\System\Engine\Model implements SubmoduleProvider {
+class Security extends DomainBase {
 	/**
 	 * @return string
 	 */
@@ -23,14 +22,5 @@ class Security extends \Opencart\System\Engine\Model implements SubmoduleProvide
 	 */
 	public function categories(): array {
 		return ['security', 'backup'];
-	}
-
-	/**
-	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport
-	 */
-	public function report(): SubmoduleReport {
-		// Scaffold stage: no check runner yet. Later this reads the latest run
-		// for the domain from the shared Guardian results store.
-		return SubmoduleReport::pending($this->getCode());
 	}
 }
