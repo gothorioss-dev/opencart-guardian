@@ -12,6 +12,11 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	public const RETENTION_DAYS_DEFAULT = 30;
 
 	/**
+	 * @var array<int, string>|null
+	 */
+	private ?array $domain_codes = null;
+
+	/**
 	 * Whether the Guardian core extension is installed.
 	 *
 	 * @return bool
@@ -29,7 +34,8 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	 * @return bool
 	 */
 	public function isActive(): bool {
-		return $this->isCoreInstalled() && (bool)$this->config->get('other_gtr_guardian_status');
+		// The flag is in memory, the install lookup is a query: check it first.
+		return (bool)$this->config->get('other_gtr_guardian_status') && $this->isCoreInstalled();
 	}
 
 	/**
@@ -38,15 +44,26 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	 * @return array<int, string>
 	 */
 	public function getDomainCodes(): array {
-		$codes = [];
+		if ($this->domain_codes === null) {
+			$this->domain_codes = [];
 
-		foreach ((array)glob(DIR_EXTENSION . 'gtr_guardian/admin/model/guardian/domain/*.php') as $file) {
-			$codes[] = basename($file, '.php');
+			foreach ((array)glob(DIR_EXTENSION . 'gtr_guardian/admin/model/guardian/domain/*.php') as $file) {
+				$this->domain_codes[] = basename($file, '.php');
+			}
+
+			sort($this->domain_codes);
 		}
 
-		sort($codes);
+		return $this->domain_codes;
+	}
 
-		return $codes;
+	/**
+	 * @param string $code
+	 *
+	 * @return bool
+	 */
+	public function isKnownDomain(string $code): bool {
+		return in_array($code, $this->getDomainCodes(), true);
 	}
 
 	/**
@@ -72,6 +89,34 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		return array_values(array_filter($this->getDomainCodes(), function (string $code): bool {
 			return $this->isDomainEnabled($code);
 		}));
+	}
+
+	/**
+	 * Enabled domains the current user may open — what the menu and the
+	 * dashboard show.
+	 *
+	 * @return array<int, string>
+	 */
+	public function getVisibleDomainCodes(): array {
+		return array_values(array_filter($this->getEnabledDomainCodes(), function (string $code): bool {
+			return $this->user->hasPermission('access', 'extension/gtr_guardian/guardian/' . $code);
+		}));
+	}
+
+	/**
+	 * Keys of the on/off settings in the "other_gtr_guardian" group: the core
+	 * status plus one flag per domain.
+	 *
+	 * @return array<int, string>
+	 */
+	public function getFlagKeys(): array {
+		$keys = ['other_gtr_guardian_status'];
+
+		foreach ($this->getDomainCodes() as $code) {
+			$keys[] = 'other_gtr_guardian_domain_' . $code;
+		}
+
+		return $keys;
 	}
 
 	/**
@@ -145,11 +190,16 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 					$has = in_array($route, $current[$type] ?? [], true);
 
 					if ($granted && !$has) {
-						$this->model_user_user_group->addPermission($group_id, $type, $route);
+						$current[$type][] = $route;
 					} elseif (!$granted && $has) {
-						$this->model_user_user_group->removePermission($group_id, $type, $route);
+						$current[$type] = array_values(array_diff($current[$type], [$route]));
 					}
 				}
+			}
+
+			// One write per group instead of a query pair per cell.
+			if ($current !== $group['permission']) {
+				$this->model_user_user_group->editUserGroup($group_id, ['name' => $group['name'], 'permission' => $current]);
 			}
 		}
 	}
@@ -205,7 +255,7 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		// addPermission() appends blindly, so skip what the group already has.
 		$group_info = $this->model_user_user_group->getUserGroup($group_id);
 
-		foreach ($this->getRoutes() as $route) {
+		foreach ($this->getPermissionRoutes() as $route) {
 			foreach (['access', 'modify'] as $type) {
 				if (!in_array($route, $group_info['permission'][$type] ?? [], true)) {
 					$this->model_user_user_group->addPermission($group_id, $type, $route);
@@ -214,15 +264,9 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		}
 
 		// Everything is on out of the box; the admin opts out explicitly.
-		$settings = ['other_gtr_guardian_status' => 1];
-
-		foreach ($this->getDomainCodes() as $code) {
-			$settings['other_gtr_guardian_domain_' . $code] = 1;
-		}
-
 		$this->load->model('setting/setting');
 
-		$this->model_setting_setting->editSetting('other_gtr_guardian', $settings);
+		$this->model_setting_setting->editSetting('other_gtr_guardian', array_fill_keys($this->getFlagKeys(), 1));
 	}
 
 	/**
@@ -244,7 +288,7 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		// The settings route is granted by the core "other" lifecycle on every
 		// install and never revoked by it; revoke it here so reinstalls do not
 		// accumulate copies.
-		$routes = array_merge($this->getRoutes(), ['extension/gtr_guardian/other/gtr_guardian']);
+		$routes = array_merge(array_values($this->getPermissionRoutes()), ['extension/gtr_guardian/other/gtr_guardian']);
 
 		foreach ($routes as $route) {
 			$this->model_user_user_group->removePermission($group_id, 'access', $route);
@@ -257,20 +301,5 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		$this->load->model('extension/gtr_guardian/guardian/result');
 
 		$this->model_extension_gtr_guardian_guardian_result->dropTables();
-	}
-
-	/**
-	 * Admin routes the package guards with access/modify permissions.
-	 *
-	 * @return array<int, string>
-	 */
-	private function getRoutes(): array {
-		$routes = ['extension/gtr_guardian/guardian/dashboard'];
-
-		foreach ($this->getDomainCodes() as $code) {
-			$routes[] = 'extension/gtr_guardian/guardian/' . $code;
-		}
-
-		return $routes;
 	}
 }

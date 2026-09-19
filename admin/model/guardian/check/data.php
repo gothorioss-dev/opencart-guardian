@@ -21,7 +21,7 @@ class Data extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productNoModel(): CheckResult {
-		return $this->collect('product_no_model', "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status` FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE TRIM(`p`.`model`) = '' ORDER BY `p`.`product_id`");
+		return $this->collect('product_no_model', $this->productSelect() . " WHERE TRIM(`p`.`model`) = '' ORDER BY `p`.`product_id`");
 	}
 
 	/**
@@ -30,6 +30,15 @@ class Data extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productNoCategory(): CheckResult {
-		return $this->collect('product_no_category', "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status` FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') LEFT JOIN `" . DB_PREFIX . "product_to_category` `p2c` ON (`p2c`.`product_id` = `p`.`product_id`) WHERE `p2c`.`product_id` IS NULL ORDER BY `p`.`product_id`");
+		return $this->collect('product_no_category', $this->productSelect() . " LEFT JOIN `" . DB_PREFIX . "product_to_category` `p2c` ON (`p2c`.`product_id` = `p`.`product_id`) WHERE `p2c`.`product_id` IS NULL ORDER BY `p`.`product_id`");
+	}
+
+	/**
+	 * Common finding columns for product checks: id, admin-language name, status.
+	 *
+	 * @return string SELECT ... FROM product p LEFT JOIN product_description pd, without WHERE
+	 */
+	private function productSelect(): string {
+		return "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status` FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "')";
 	}
 }

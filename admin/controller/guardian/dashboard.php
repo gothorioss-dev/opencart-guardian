@@ -53,25 +53,6 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 
 		$data['domains'] = $this->getReports();
 
-		$data['heading_title'] = $this->language->get('heading_title');
-		$data['text_settings'] = $this->language->get('text_settings');
-		$data['text_overview'] = $this->language->get('text_overview');
-		$data['text_no_domains'] = $this->language->get('text_no_domains');
-		$data['text_no_data'] = $this->language->get('text_no_data');
-		$data['text_never'] = $this->language->get('text_never');
-		$data['text_status_ok'] = $this->language->get('text_status_ok');
-		$data['text_status_warning'] = $this->language->get('text_status_warning');
-		$data['text_status_critical'] = $this->language->get('text_status_critical');
-		$data['text_status_unknown'] = $this->language->get('text_status_unknown');
-		$data['text_status_error'] = $this->language->get('text_status_error');
-		$data['column_domain'] = $this->language->get('column_domain');
-		$data['column_status'] = $this->language->get('column_status');
-		$data['column_summary'] = $this->language->get('column_summary');
-		$data['column_findings'] = $this->language->get('column_findings');
-		$data['column_last_run'] = $this->language->get('column_last_run');
-		$data['column_action'] = $this->language->get('column_action');
-		$data['button_open'] = $this->language->get('button_open');
-
 		$data['user_token'] = $this->session->data['user_token'];
 
 		$data['header'] = $this->load->controller('common/header');
@@ -97,19 +78,14 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 		foreach ($this->model_extension_gtr_guardian_guardian_dashboard->collectReports() as $report) {
 			$code = $report['code'];
 
-			// Partial access: a group may be limited to some domains only.
-			if (!$this->user->hasPermission('access', 'extension/gtr_guardian/guardian/' . $code)) {
-				continue;
-			}
-
 			$this->load->language('extension/gtr_guardian/guardian/' . $code, $code);
 
-			$rows[] = $report + [
+			$rows[] = array_merge($report, [
 				'name'          => $this->language->get($code . '_heading_title'),
 				'href'          => $this->url->link('extension/gtr_guardian/guardian/' . $code, 'user_token=' . $this->session->data['user_token']),
 				'summary'       => $report['summary'] ?: $this->getSummaryText($report),
 				'last_run_text' => $report['last_run'] ? date($this->language->get('datetime_format'), $report['last_run']) : $this->language->get('text_never')
-			];
+			]);
 		}
 
 		return $rows;

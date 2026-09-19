@@ -28,7 +28,7 @@ class Runner extends \Opencart\System\Engine\Model {
 	public function run(string $domain, string $origin = self::ORIGIN_MANUAL): int {
 		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
 
-		if (!in_array($domain, $this->model_extension_gtr_guardian_other_gtr_guardian->getDomainCodes(), true)) {
+		if (!$this->model_extension_gtr_guardian_other_gtr_guardian->isKnownDomain($domain)) {
 			throw new \InvalidArgumentException('Unknown Guardian domain: ' . $domain);
 		}
 
@@ -40,13 +40,7 @@ class Runner extends \Opencart\System\Engine\Model {
 
 		$models = $this->getCategoryModels($provider->categories());
 
-		$total = 0;
-
-		foreach ($models as $model) {
-			$total += count($model->getChecks());
-		}
-
-		$run_id = $store->addRun($domain, $origin, $total);
+		$run_id = $store->addRun($domain, $origin, $this->countChecks($models));
 
 		$counts = ['critical' => 0, 'warning' => 0, 'info' => 0, 'errors' => 0];
 
@@ -115,13 +109,7 @@ class Runner extends \Opencart\System\Engine\Model {
 	 * @return int
 	 */
 	public function getChecksTotal(array $categories): int {
-		$total = 0;
-
-		foreach ($this->getCategoryModels($categories) as $model) {
-			$total += count($model->getChecks());
-		}
-
-		return $total;
+		return $this->countChecks($this->getCategoryModels($categories));
 	}
 
 	/**
@@ -157,7 +145,7 @@ class Runner extends \Opencart\System\Engine\Model {
 				$status = SubmoduleReport::STATUS_CRITICAL;
 			} elseif ($counts['warning']) {
 				$status = SubmoduleReport::STATUS_WARNING;
-			} elseif ($counts['errors'] && !$counts['info']) {
+			} elseif ($counts['errors']) {
 				$status = SubmoduleReport::STATUS_ERROR;
 			} else {
 				$status = SubmoduleReport::STATUS_OK;
@@ -193,5 +181,20 @@ class Runner extends \Opencart\System\Engine\Model {
 
 		// Keep the in-request view consistent with what was just written.
 		$this->config->set('gtr_guardian_summary', $summary);
+	}
+
+	/**
+	 * @param array<string, \Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check\Base> $models
+	 *
+	 * @return int
+	 */
+	private function countChecks(array $models): int {
+		$total = 0;
+
+		foreach ($models as $model) {
+			$total += count($model->getChecks());
+		}
+
+		return $total;
 	}
 }

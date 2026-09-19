@@ -10,16 +10,20 @@ namespace Opencart\Admin\Controller\Extension\GtrGuardian\Other;
  */
 class GtrGuardian extends \Opencart\System\Engine\Controller {
 	/**
-	 * Retention presets offered in the settings dropdowns.
+	 * Retention presets offered in the settings dropdowns, per limit.
 	 */
-	private const RETENTION_RUNS_PRESETS = [10, 30, 50, 100];
-	private const RETENTION_DAYS_PRESETS = [30, 60, 90];
+	private const RETENTION_PRESETS = [
+		'runs' => [10, 30, 50, 100],
+		'days' => [30, 60, 90]
+	];
 
 	/**
-	 * Upper bounds for a custom retention value.
+	 * Upper bounds for a custom retention value, per limit.
 	 */
-	private const RETENTION_RUNS_MAX = 1000;
-	private const RETENTION_DAYS_MAX = 3650;
+	private const RETENTION_MAX = [
+		'runs' => 1000,
+		'days' => 3650
+	];
 
 	/**
 	 * Index
@@ -70,22 +74,14 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			];
 		}
 
-		$data['permission_routes'] = [];
+		// Matrix columns: the dashboard plus the domains listed above.
+		$data['permission_routes'] = [['code' => 'dashboard', 'name' => $this->language->get('text_dashboard')]];
+
+		foreach ($data['domains'] as $domain) {
+			$data['permission_routes'][] = ['code' => $domain['code'], 'name' => $domain['name']];
+		}
 
 		$routes = $this->model_extension_gtr_guardian_other_gtr_guardian->getPermissionRoutes();
-
-		foreach ($routes as $code => $route) {
-			if ($code === 'dashboard') {
-				$name = $this->language->get('text_dashboard');
-			} else {
-				$name = $this->language->get($code . '_heading_title');
-			}
-
-			$data['permission_routes'][] = [
-				'code' => $code,
-				'name' => $name
-			];
-		}
 
 		$data['permission_groups'] = [];
 
@@ -110,53 +106,24 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 
 		$retention = $this->model_extension_gtr_guardian_other_gtr_guardian->getRetention();
 
-		$data['retention_runs'] = $retention['runs'];
-		$data['retention_runs_presets'] = self::RETENTION_RUNS_PRESETS;
-		$data['retention_runs_custom'] = $retention['runs'] && !in_array($retention['runs'], self::RETENTION_RUNS_PRESETS, true);
+		$data['retention'] = [];
 
-		$data['retention_days'] = $retention['days'];
-		$data['retention_days_presets'] = self::RETENTION_DAYS_PRESETS;
-		$data['retention_days_custom'] = $retention['days'] && !in_array($retention['days'], self::RETENTION_DAYS_PRESETS, true);
+		foreach ($retention as $limit => $value) {
+			$data['retention'][$limit] = [
+				'value'   => $value,
+				'presets' => self::RETENTION_PRESETS[$limit],
+				'custom'  => $value && !in_array($value, self::RETENTION_PRESETS[$limit], true),
+				'entry'   => $this->language->get('entry_retention_' . $limit),
+				'help'    => $this->language->get('help_retention_' . $limit),
+				'unit'    => $this->language->get('text_' . $limit)
+			];
+		}
 
 		$data['text_retention_current'] = $this->getRetentionText($retention);
 
 		$this->load->model('extension/gtr_guardian/guardian/result');
 
 		$data['text_history_total'] = sprintf($this->language->get('text_history_total'), $this->model_extension_gtr_guardian_guardian_result->getTotalRuns());
-
-		$data['heading_title'] = $this->language->get('heading_title');
-		$data['text_edit'] = $this->language->get('text_edit');
-		$data['tab_general'] = $this->language->get('tab_general');
-		$data['tab_config'] = $this->language->get('tab_config');
-		$data['tab_permission'] = $this->language->get('tab_permission');
-		$data['text_permission_help'] = $this->language->get('text_permission_help');
-		$data['text_permission_admin'] = $this->language->get('text_permission_admin');
-		$data['text_access'] = $this->language->get('text_access');
-		$data['text_modify'] = $this->language->get('text_modify');
-		$data['column_group'] = $this->language->get('column_group');
-		$data['help_status'] = $this->language->get('help_status');
-		$data['text_history'] = $this->language->get('text_history');
-		$data['text_history_help'] = $this->language->get('text_history_help');
-		$data['text_retention_off'] = $this->language->get('text_retention_off');
-		$data['text_retention_custom'] = $this->language->get('text_retention_custom');
-		$data['text_runs'] = $this->language->get('text_runs');
-		$data['text_days'] = $this->language->get('text_days');
-		$data['text_clear_confirm'] = $this->language->get('text_clear_confirm');
-		$data['entry_retention_runs'] = $this->language->get('entry_retention_runs');
-		$data['entry_retention_days'] = $this->language->get('entry_retention_days');
-		$data['help_retention_runs'] = $this->language->get('help_retention_runs');
-		$data['help_retention_days'] = $this->language->get('help_retention_days');
-		$data['text_domains'] = $this->language->get('text_domains');
-		$data['text_domains_help'] = $this->language->get('text_domains_help');
-		$data['text_dashboard'] = $this->language->get('text_dashboard');
-		$data['entry_status'] = $this->language->get('entry_status');
-		$data['column_domain'] = $this->language->get('column_domain');
-		$data['column_enabled'] = $this->language->get('column_enabled');
-		$data['column_action'] = $this->language->get('column_action');
-		$data['button_save'] = $this->language->get('button_save');
-		$data['button_back'] = $this->language->get('button_back');
-		$data['button_edit'] = $this->language->get('button_edit');
-		$data['button_clear'] = $this->language->get('button_clear');
 
 		$data['user_token'] = $this->session->data['user_token'];
 
@@ -192,7 +159,7 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			$value = $this->resolveRetention($limit, $retention[$limit]);
 
 			if ($value === null) {
-				$json['error']['retention_' . $limit] = sprintf($this->language->get('error_retention'), $limit === 'runs' ? self::RETENTION_RUNS_MAX : self::RETENTION_DAYS_MAX);
+				$json['error']['retention_' . $limit] = sprintf($this->language->get('error_retention'), self::RETENTION_MAX[$limit]);
 			} else {
 				$retention[$limit] = $value;
 			}
@@ -206,13 +173,7 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			// keeps its value.
 			$settings = $this->model_setting_setting->getSetting('other_gtr_guardian');
 
-			$flags = ['other_gtr_guardian_status'];
-
-			foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getDomainCodes() as $code) {
-				$flags[] = 'other_gtr_guardian_domain_' . $code;
-			}
-
-			foreach ($flags as $flag) {
+			foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getFlagKeys() as $flag) {
 				if (isset($this->request->post[$flag])) {
 					$settings[$flag] = (int)!empty($this->request->post[$flag]);
 				}
@@ -224,8 +185,9 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 
 			$this->model_setting_setting->editSetting('other_gtr_guardian', $settings);
 
-			// The matrix is applied only when its tab was actually submitted;
-			// unchecked cells are then revocations.
+			// The full form always posts the marker; it guards against a partial
+			// request revoking every group's access because "permission" is
+			// simply absent. With the marker, absent cells are revocations.
 			if (isset($this->request->post['permission_matrix'])) {
 				$permission = $this->request->post['permission'] ?? [];
 
@@ -301,8 +263,6 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 	 * @return int|null null when the submitted value is invalid
 	 */
 	private function resolveRetention(string $limit, int $current): ?int {
-		$max = $limit === 'runs' ? self::RETENTION_RUNS_MAX : self::RETENTION_DAYS_MAX;
-
 		$select = $this->request->post['other_gtr_guardian_retention_' . $limit . '_select'] ?? null;
 
 		if ($select === null) {
@@ -320,7 +280,7 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 
 		$value = (int)$select;
 
-		return $value <= $max ? $value : null;
+		return $value <= self::RETENTION_MAX[$limit] ? $value : null;
 	}
 
 	/**

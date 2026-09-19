@@ -38,18 +38,12 @@ class Events extends \Opencart\System\Engine\Controller {
 			];
 		}
 
-		foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getEnabledDomainCodes() as $domain_code) {
-			$domain_route = 'extension/gtr_guardian/guardian/' . $domain_code;
-
-			if (!$this->user->hasPermission('access', $domain_route)) {
-				continue;
-			}
-
+		foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getVisibleDomainCodes() as $domain_code) {
 			$this->load->language('extension/gtr_guardian/guardian/' . $domain_code, $domain_code);
 
 			$guardian[] = [
 				'name'     => $this->language->get($domain_code . '_heading_title'),
-				'href'     => $this->url->link($domain_route, $token),
+				'href'     => $this->url->link('extension/gtr_guardian/guardian/' . $domain_code, $token),
 				'children' => []
 			];
 		}

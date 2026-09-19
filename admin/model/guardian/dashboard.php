@@ -5,14 +5,14 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport;
 /**
  * Class Dashboard
  *
- * Guardian assembly point. Polls every enabled domain through the
- * SubmoduleProvider contract and returns normalised report rows.
+ * Guardian assembly point. Polls every domain visible to the current user
+ * through the SubmoduleProvider contract and returns normalised report rows.
  *
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian
  */
 class Dashboard extends \Opencart\System\Engine\Model {
 	/**
-	 * Collect a normalised report from every enabled Guardian domain.
+	 * Collect a normalised report from every Guardian domain the user may see.
 	 *
 	 * A failing provider is isolated: it is logged and returned as an error
 	 * row, never allowed to break the page.
@@ -24,7 +24,7 @@ class Dashboard extends \Opencart\System\Engine\Model {
 
 		$reports = [];
 
-		foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getEnabledDomainCodes() as $code) {
+		foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getVisibleDomainCodes() as $code) {
 			try {
 				$this->load->model('extension/gtr_guardian/guardian/domain/' . $code);
 

@@ -65,6 +65,12 @@ class Report extends \Opencart\System\Engine\Controller {
 			foreach ($model->getChecks() as $code => $meta) {
 				$result = $results[$category][$code] ?? [];
 
+				$message = '';
+
+				if ($result && $result['status'] === 'error') {
+					$message = $show_message ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : $this->language->get('text_error_hidden');
+				}
+
 				$checks[] = [
 					'code'     => $code,
 					'title'    => $this->language->get($category . '_check_' . $code . '_title'),
@@ -74,7 +80,7 @@ class Report extends \Opencart\System\Engine\Controller {
 					'status'   => $result ? $result['status'] : 'pending',
 					'count'    => $result ? (int)$result['count'] : 0,
 					'items'    => $result ? $this->escapeItems($result['items']) : [],
-					'message'  => $result && $result['status'] === 'error' ? ($show_message ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : $this->language->get('text_error_hidden')) : ''
+					'message'  => $message
 				];
 			}
 
@@ -91,28 +97,6 @@ class Report extends \Opencart\System\Engine\Controller {
 
 		$data['run_url'] = $this->url->link('extension/gtr_guardian/guardian/' . $domain . '.run', 'user_token=' . $this->session->data['user_token']);
 		$data['reload_url'] = $this->url->link('extension/gtr_guardian/guardian/' . $domain . '.report', 'user_token=' . $this->session->data['user_token']);
-
-		$data['text_no_run'] = $this->language->get('text_no_run');
-		$data['text_last_run'] = $this->language->get('text_last_run');
-		$data['text_checks_total'] = $this->language->get('text_checks_total');
-		$data['text_findings'] = $this->language->get('text_findings');
-		$data['text_errors'] = $this->language->get('text_errors');
-		$data['text_no_categories'] = $this->language->get('text_no_categories');
-		$data['text_severity_critical'] = $this->language->get('text_severity_critical');
-		$data['text_severity_warning'] = $this->language->get('text_severity_warning');
-		$data['text_severity_info'] = $this->language->get('text_severity_info');
-		$data['text_status_ok'] = $this->language->get('text_status_ok');
-		$data['text_status_found'] = $this->language->get('text_status_found');
-		$data['text_status_error'] = $this->language->get('text_status_error');
-		$data['text_status_pending'] = $this->language->get('text_status_pending');
-		$data['text_hint'] = $this->language->get('text_hint');
-		$data['text_sample'] = $this->language->get('text_sample');
-		$data['column_check'] = $this->language->get('column_check');
-		$data['column_severity'] = $this->language->get('column_severity');
-		$data['column_status'] = $this->language->get('column_status');
-		$data['column_count'] = $this->language->get('column_count');
-		$data['button_run'] = $this->language->get('button_run');
-		$data['button_details'] = $this->language->get('button_details');
 
 		return $this->load->view('extension/gtr_guardian/guardian/report', $data);
 	}
@@ -153,7 +137,7 @@ class Report extends \Opencart\System\Engine\Controller {
 	private function isKnownDomain(string $domain): bool {
 		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
 
-		return in_array($domain, $this->model_extension_gtr_guardian_other_gtr_guardian->getDomainCodes(), true);
+		return $this->model_extension_gtr_guardian_other_gtr_guardian->isKnownDomain($domain);
 	}
 
 	/**
@@ -172,7 +156,7 @@ class Report extends \Opencart\System\Engine\Controller {
 		foreach ($items as $row) {
 			$clean = [];
 
-			foreach ((array)$row as $key => $value) {
+			foreach ($row as $key => $value) {
 				$clean[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8', false);
 			}
 

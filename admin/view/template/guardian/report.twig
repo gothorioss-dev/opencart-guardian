@@ -10,7 +10,9 @@
       {{ text_no_run }}
     {% endif %}
     {% if can_run %}
-      <button type="button" id="button-run" value="{{ run_url }}" data-oc-load="{{ reload_url }}" class="btn btn-primary btn-sm float-end"><i class="fa-solid fa-play"></i> {{ button_run }}</button>
+      <form action="{{ run_url }}" method="post" data-oc-toggle="ajax" data-oc-load="{{ reload_url }}" data-oc-target="#guardian-report" class="float-end">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-play"></i> {{ button_run }}</button>
+      </form>
     {% endif %}
   </div>
   <div class="card-body">

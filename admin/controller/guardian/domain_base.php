@@ -51,10 +51,6 @@ abstract class DomainBase extends \Opencart\System\Engine\Controller {
 
 		$data['back'] = $this->url->link('extension/gtr_guardian/guardian/dashboard', 'user_token=' . $this->session->data['user_token']);
 
-		$data['heading_title'] = $this->language->get('heading_title');
-		$data['text_description'] = $this->language->get('text_description');
-		$data['button_back'] = $this->language->get('button_back');
-
 		$data['report'] = $this->load->controller('extension/gtr_guardian/guardian/report', static::DOMAIN);
 
 		$data['header'] = $this->load->controller('common/header');
