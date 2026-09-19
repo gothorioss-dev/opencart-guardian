@@ -19,6 +19,13 @@ class Storefront extends \Opencart\System\Engine\Model implements SubmoduleProvi
 	}
 
 	/**
+	 * @return array<int, string>
+	 */
+	public function categories(): array {
+		return ['frontend'];
+	}
+
+	/**
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport
 	 */
 	public function report(): SubmoduleReport {

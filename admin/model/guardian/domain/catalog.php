@@ -19,6 +19,13 @@ class Catalog extends \Opencart\System\Engine\Model implements SubmoduleProvider
 	}
 
 	/**
+	 * @return array<int, string>
+	 */
+	public function categories(): array {
+		return ['data', 'catalog', 'media', 'seo', 'garbage'];
+	}
+
+	/**
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport
 	 */
 	public function report(): SubmoduleReport {

@@ -19,6 +19,13 @@ class System extends \Opencart\System\Engine\Model implements SubmoduleProvider 
 	}
 
 	/**
+	 * @return array<int, string>
+	 */
+	public function categories(): array {
+		return ['config', 'extension', 'performance', 'logs', 'cron', 'integrity'];
+	}
+
+	/**
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport
 	 */
 	public function report(): SubmoduleReport {

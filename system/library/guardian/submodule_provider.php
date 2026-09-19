@@ -19,6 +19,14 @@ interface SubmoduleProvider {
 	public function getCode(): string;
 
 	/**
+	 * Check category codes the domain owns, in display order. Each maps to a
+	 * check model admin/model/guardian/check/<category>.php.
+	 *
+	 * @return array<int, string>
+	 */
+	public function categories(): array;
+
+	/**
 	 * Domain health snapshot for the dashboard.
 	 *
 	 * Implementations must not throw: on internal failure they return

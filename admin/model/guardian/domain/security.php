@@ -19,6 +19,13 @@ class Security extends \Opencart\System\Engine\Model implements SubmoduleProvide
 	}
 
 	/**
+	 * @return array<int, string>
+	 */
+	public function categories(): array {
+		return ['security', 'backup'];
+	}
+
+	/**
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport
 	 */
 	public function report(): SubmoduleReport {
