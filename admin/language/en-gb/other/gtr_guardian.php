@@ -27,7 +27,10 @@ $_['text_retention_current_none'] = 'Currently: automatic clean-up is off — hi
 $_['text_history_total']          = 'Stored runs: %d';
 $_['text_clear_confirm']          = 'Delete the whole run history of every domain?';
 $_['text_clear_success']          = 'Success: run history has been cleared!';
-$_['text_permission_pending']     = 'Permission management is not available yet.';
+$_['text_permission_help']        = 'Which user groups may open (A — access) and act on (M — modify: run checks, clear history, save settings) each Guardian screen. A group with no access to a domain does not see it in the menu or on the dashboard.';
+$_['text_permission_own']         = 'Your group — access to the settings cannot be revoked here.';
+$_['text_access']                 = 'Access';
+$_['text_modify']                 = 'Modify';
 
 // Tab
 $_['tab_general']                 = 'General';
@@ -45,6 +48,7 @@ $_['help_retention_runs']         = 'Newest runs kept per domain. Off — no lim
 $_['help_retention_days']         = 'Maximum age of a run in days. Off — no limit by age.';
 
 // Column
+$_['column_group']                = 'User group';
 $_['column_domain']               = 'Domain';
 $_['column_enabled']              = 'Enabled';
 $_['column_action']               = 'Action';

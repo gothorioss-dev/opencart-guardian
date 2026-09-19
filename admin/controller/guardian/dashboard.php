@@ -93,6 +93,11 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 		foreach ($this->model_extension_gtr_guardian_guardian_dashboard->collectReports() as $report) {
 			$code = $report['code'];
 
+			// Partial access: a group may be limited to some domains only.
+			if (!$this->user->hasPermission('access', 'extension/gtr_guardian/guardian/' . $code)) {
+				continue;
+			}
+
 			$this->load->language('extension/gtr_guardian/guardian/' . $code, $code);
 
 			$rows[] = $report + [
