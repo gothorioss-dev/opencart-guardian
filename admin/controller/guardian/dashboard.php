@@ -45,7 +45,11 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 			'href' => $this->url->link('extension/gtr_guardian/guardian/dashboard', 'user_token=' . $this->session->data['user_token'])
 		];
 
-		$data['settings'] = $this->url->link('extension/gtr_guardian/other/gtr_guardian', 'user_token=' . $this->session->data['user_token']);
+		if ($this->user->hasPermission('access', 'extension/gtr_guardian/other/gtr_guardian')) {
+			$data['settings'] = $this->url->link('extension/gtr_guardian/other/gtr_guardian', 'user_token=' . $this->session->data['user_token']);
+		} else {
+			$data['settings'] = '';
+		}
 
 		$data['domains'] = $this->getReports();
 
