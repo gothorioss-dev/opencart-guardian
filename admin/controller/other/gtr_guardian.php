@@ -16,6 +16,12 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 	private const RETENTION_DAYS_PRESETS = [30, 60, 90];
 
 	/**
+	 * Upper bounds for a custom retention value.
+	 */
+	private const RETENTION_RUNS_MAX = 1000;
+	private const RETENTION_DAYS_MAX = 3650;
+
+	/**
 	 * Index
 	 *
 	 * @return void
@@ -175,33 +181,56 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 		$json = [];
 
 		if (!$this->user->hasPermission('modify', 'extension/gtr_guardian/other/gtr_guardian')) {
-			$json['error'] = $this->language->get('error_permission');
+			$json['error']['warning'] = $this->language->get('error_permission');
+		}
+
+		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
+
+		$retention = $this->model_extension_gtr_guardian_other_gtr_guardian->getRetention();
+
+		foreach (['runs', 'days'] as $limit) {
+			$value = $this->resolveRetention($limit, $retention[$limit]);
+
+			if ($value === null) {
+				$json['error']['retention_' . $limit] = sprintf($this->language->get('error_retention'), $limit === 'runs' ? self::RETENTION_RUNS_MAX : self::RETENTION_DAYS_MAX);
+			} else {
+				$retention[$limit] = $value;
+			}
 		}
 
 		if (!$json) {
 			$this->load->model('setting/setting');
 
+			// Only known keys are stored, each cast to what it is: the raw
+			// post must never reach oc_setting. A flag that was not submitted
+			// keeps its value.
 			$settings = $this->model_setting_setting->getSetting('other_gtr_guardian');
 
-			foreach ($this->request->post as $key => $value) {
-				if (str_starts_with($key, 'other_gtr_guardian') && !str_ends_with($key, '_select') && !str_ends_with($key, '_custom')) {
-					$settings[$key] = $value;
+			$flags = ['other_gtr_guardian_status'];
+
+			foreach ($this->model_extension_gtr_guardian_other_gtr_guardian->getDomainCodes() as $code) {
+				$flags[] = 'other_gtr_guardian_domain_' . $code;
+			}
+
+			foreach ($flags as $flag) {
+				if (isset($this->request->post[$flag])) {
+					$settings[$flag] = (int)!empty($this->request->post[$flag]);
 				}
 			}
 
-			// Each retention limit is posted as a preset select plus a custom
-			// number input; only the resolved integer is stored.
-			foreach (['runs', 'days'] as $limit) {
-				$settings['other_gtr_guardian_retention_' . $limit] = $this->resolveRetention($limit);
+			foreach ($retention as $limit => $value) {
+				$settings['other_gtr_guardian_retention_' . $limit] = $value;
 			}
 
 			$this->model_setting_setting->editSetting('other_gtr_guardian', $settings);
 
-			$this->load->model('extension/gtr_guardian/other/gtr_guardian');
+			// The matrix is applied only when its tab was actually submitted;
+			// unchecked cells are then revocations.
+			if (isset($this->request->post['permission_matrix'])) {
+				$permission = $this->request->post['permission'] ?? [];
 
-			$permission = $this->request->post['permission'] ?? [];
-
-			$this->model_extension_gtr_guardian_other_gtr_guardian->savePermissions(is_array($permission) ? $permission : []);
+				$this->model_extension_gtr_guardian_other_gtr_guardian->savePermissions(is_array($permission) ? $permission : []);
+			}
 
 			$json['success'] = $this->language->get('text_success');
 		}
@@ -264,22 +293,34 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 	}
 
 	/**
-	 * Resolve a posted retention limit (select + custom input) to an integer.
+	 * Resolve a posted retention limit (preset select + custom input).
 	 *
-	 * @param string $limit "runs" or "days"
+	 * @param string $limit   "runs" or "days"
+	 * @param int    $current value kept when the field was not submitted
 	 *
-	 * @return int
+	 * @return int|null null when the submitted value is invalid
 	 */
-	private function resolveRetention(string $limit): int {
-		$select = (string)($this->request->post['other_gtr_guardian_retention_' . $limit . '_select'] ?? '');
+	private function resolveRetention(string $limit, int $current): ?int {
+		$max = $limit === 'runs' ? self::RETENTION_RUNS_MAX : self::RETENTION_DAYS_MAX;
 
-		if ($select === 'custom') {
-			$value = (int)($this->request->post['other_gtr_guardian_retention_' . $limit . '_custom'] ?? 0);
-		} else {
-			$value = (int)$select;
+		$select = $this->request->post['other_gtr_guardian_retention_' . $limit . '_select'] ?? null;
+
+		if ($select === null) {
+			return $current;
 		}
 
-		return max(0, $value);
+		if ($select === 'custom') {
+			$select = $this->request->post['other_gtr_guardian_retention_' . $limit . '_custom'] ?? '';
+		}
+
+		// Digits only: rejects arrays, signs, exponents and anything non-numeric.
+		if (!is_string($select) || !preg_match('/^[0-9]{1,10}$/', $select)) {
+			return null;
+		}
+
+		$value = (int)$select;
+
+		return $value <= $max ? $value : null;
 	}
 
 	/**

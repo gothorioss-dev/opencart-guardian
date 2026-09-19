@@ -61,3 +61,4 @@ $_['button_clear']                = 'Очистити історію';
 
 // Error
 $_['error_permission']            = 'Увага: у вас немає прав для зміни OpenCart Guardian!';
+$_['error_retention']             = 'Введіть ціле число від 1 до %d або виберіть «Вимкнено».';

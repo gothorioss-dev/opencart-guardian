@@ -95,6 +95,7 @@
                         </div>
                       </div>
                       <div class="form-text">{{ limit == 'runs' ? help_retention_runs : help_retention_days }}</div>
+                      <div id="error-retention-{{ limit }}" class="invalid-feedback"></div>
                     </div>
                   </div>
                 {% endfor %}
@@ -109,6 +110,7 @@
               </fieldset>
             </div>
             <div id="tab-permission" class="tab-pane">
+              <input type="hidden" name="permission_matrix" value="1"/>
               <p class="text-secondary">{{ text_permission_help }}</p>
               <p class="text-secondary">{{ text_permission_admin }}</p>
               <div class="table-responsive">

@@ -61,3 +61,4 @@ $_['button_clear']                = 'Clear history';
 
 // Error
 $_['error_permission']            = 'Warning: You do not have permission to modify OpenCart Guardian!';
+$_['error_retention']             = 'Enter a whole number from 1 to %d, or choose Off.';

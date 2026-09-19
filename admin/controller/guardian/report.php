@@ -67,7 +67,9 @@ class Report extends \Opencart\System\Engine\Controller {
 					'status'   => $result ? $result['status'] : 'pending',
 					'count'    => $result ? (int)$result['count'] : 0,
 					'items'    => $result ? $result['items'] : [],
-					'message'  => $result ? $result['message'] : ''
+					// Not user input, so it never went through Request::clean() — and the
+					// Twig adaptor does not autoescape.
+					'message'  => $result ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : ''
 				];
 			}
 
