@@ -32,6 +32,45 @@
         </div>
       </div>
       <div class="card mt-3">
+        <div class="card-header"><i class="fa-solid fa-clock-rotate-left"></i> {{ text_history }}</div>
+        <div class="card-body">
+          <p class="text-secondary">{{ text_history_help }}</p>
+          {% for limit in ['runs', 'days'] %}
+            {% set value = limit == 'runs' ? retention_runs : retention_days %}
+            {% set presets = limit == 'runs' ? retention_runs_presets : retention_days_presets %}
+            {% set custom = limit == 'runs' ? retention_runs_custom : retention_days_custom %}
+            <div class="row mb-3">
+              <label for="input-retention-{{ limit }}" class="col-sm-2 col-form-label">{{ limit == 'runs' ? entry_retention_runs : entry_retention_days }}</label>
+              <div class="col-sm-10">
+                <div class="row g-2">
+                  <div class="col-sm-4">
+                    <select name="other_gtr_guardian_retention_{{ limit }}_select" id="input-retention-{{ limit }}" class="form-select" data-oc-target="#input-retention-{{ limit }}-custom">
+                      {% for preset in presets %}
+                        <option value="{{ preset }}"{% if not custom and value == preset %} selected{% endif %}>{{ preset }} {{ limit == 'runs' ? text_runs : text_days }}</option>
+                      {% endfor %}
+                      <option value="custom"{% if custom %} selected{% endif %}>{{ text_retention_custom }}</option>
+                      <option value="0"{% if not value %} selected{% endif %}>{{ text_retention_off }}</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-3">
+                    <input type="number" name="other_gtr_guardian_retention_{{ limit }}_custom" value="{{ custom ? value : '' }}" min="1" step="1" id="input-retention-{{ limit }}-custom" class="form-control"{% if not custom %} style="display: none;"{% endif %}/>
+                  </div>
+                </div>
+                <div class="form-text">{{ limit == 'runs' ? help_retention_runs : help_retention_days }}</div>
+              </div>
+            </div>
+          {% endfor %}
+          <div class="row mb-3">
+            <div class="col-sm-2"></div>
+            <div class="col-sm-10">
+              <div class="form-text mb-2">{{ text_retention_current }}</div>
+              <button type="button" id="button-clear" value="{{ clear }}" onclick="return confirm('{{ text_clear_confirm }}');" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i> {{ button_clear }}</button>
+              <span id="history-total" class="ms-2 text-secondary">{{ text_history_total }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card mt-3">
         <div class="card-header"><i class="fa-solid fa-puzzle-piece"></i> {{ text_domains }}</div>
         <div class="card-body">
           <p class="text-secondary">{{ text_domains_help }}</p>
@@ -67,4 +106,40 @@
     </form>
   </div>
 </div>
+<script type="text/javascript"><!--
+$('select[name$="_select"]').on('change', function() {
+    $($(this).attr('data-oc-target')).toggle($(this).val() == 'custom');
+});
+
+$('#button-clear').on('click', function() {
+    var element = this;
+
+    $.ajax({
+        url: $(element).val(),
+        dataType: 'json',
+        beforeSend: function() {
+            $(element).button('loading');
+        },
+        complete: function() {
+            $(element).button('reset');
+        },
+        success: function(json) {
+            $('.alert-dismissible').remove();
+
+            if (json['error']) {
+                $('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + json['error'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            }
+
+            if (json['success']) {
+                $('#alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa-solid fa-check-circle"></i> ' + json['success'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+
+                $('#history-total').text(json['total']);
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        }
+    });
+});
+//--></script>
 {{ footer }}

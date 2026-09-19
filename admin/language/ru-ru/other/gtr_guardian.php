@@ -1,32 +1,52 @@
 <?php
 // Heading
-$_['heading_title']      = 'OpenCart Guardian';
+$_['heading_title']               = 'OpenCart Guardian';
 
 // Text
-$_['text_home']          = 'Главная';
-$_['text_extension']     = 'Расширения';
-$_['text_guardian']      = 'OpenCart Guardian';
-$_['text_dashboard']     = 'Dashboard';
-$_['text_settings']      = 'Настройки';
-$_['text_edit']          = 'Редактирование OpenCart Guardian';
-$_['text_success']       = 'Готово: настройки OpenCart Guardian сохранены!';
-$_['text_enabled']       = 'Включено';
-$_['text_disabled']      = 'Отключено';
-$_['text_domains']       = 'Домены диагностики';
-$_['text_domains_help']  = 'Выключите домен, чтобы убрать его из меню и пропускать на дашборде. Домен, добавленный обновлением, включён по умолчанию.';
+$_['text_home']                   = 'Главная';
+$_['text_extension']              = 'Расширения';
+$_['text_guardian']               = 'OpenCart Guardian';
+$_['text_dashboard']              = 'Dashboard';
+$_['text_settings']               = 'Настройки';
+$_['text_edit']                   = 'Редактирование OpenCart Guardian';
+$_['text_success']                = 'Готово: настройки OpenCart Guardian сохранены!';
+$_['text_enabled']                = 'Включено';
+$_['text_disabled']               = 'Отключено';
+$_['text_domains']                = 'Домены диагностики';
+$_['text_domains_help']           = 'Выключите домен, чтобы убрать его из меню и пропускать на дашборде. Домен, добавленный обновлением, включён по умолчанию.';
+$_['text_history']                = 'История прогонов';
+$_['text_history_help']           = 'Каждый прогон домена сохраняется, чтобы сравнивать результаты во времени. Старые прогоны удаляются автоматически после каждого прогона по лимитам ниже.';
+$_['text_retention_off']          = 'Отключено';
+$_['text_retention_custom']       = 'Вручную…';
+$_['text_runs']                   = 'прогонов';
+$_['text_days']                   = 'дней';
+$_['text_retention_current_both'] = 'Сейчас: хранятся последние %d прогонов на домен, не старше %d дней — что наступит раньше.';
+$_['text_retention_current_runs'] = 'Сейчас: хранятся последние %d прогонов на домен; ограничения по сроку нет.';
+$_['text_retention_current_days'] = 'Сейчас: прогоны старше %d дней удаляются; ограничения по количеству нет.';
+$_['text_retention_current_none'] = 'Сейчас: автоматическая очистка отключена — история растёт, пока не очищена вручную.';
+$_['text_history_total']          = 'Сохранено прогонов: %d';
+$_['text_clear_confirm']          = 'Удалить всю историю прогонов по всем доменам?';
+$_['text_clear_success']          = 'Готово: история прогонов очищена!';
 
 // Entry
-$_['entry_status']       = 'Статус';
+$_['entry_status']                = 'Статус';
+$_['entry_retention_runs']        = 'Хранить прогонов';
+$_['entry_retention_days']        = 'Хранить не дольше';
+
+// Help
+$_['help_retention_runs']         = 'Сколько последних прогонов на домен сохранять. «Отключено» — без ограничения по количеству.';
+$_['help_retention_days']         = 'Максимальный возраст прогона в днях. «Отключено» — без ограничения по сроку.';
 
 // Column
-$_['column_domain']      = 'Домен';
-$_['column_enabled']     = 'Включён';
-$_['column_action']      = 'Действие';
+$_['column_domain']               = 'Домен';
+$_['column_enabled']              = 'Включён';
+$_['column_action']               = 'Действие';
 
 // Button
-$_['button_save']        = 'Сохранить';
-$_['button_back']        = 'Назад';
-$_['button_edit']        = 'Открыть';
+$_['button_save']                 = 'Сохранить';
+$_['button_back']                 = 'Назад';
+$_['button_edit']                 = 'Открыть';
+$_['button_clear']                = 'Очистить историю';
 
 // Error
-$_['error_permission']   = 'Внимание: у вас нет прав для изменения OpenCart Guardian!';
+$_['error_permission']            = 'Внимание: у вас нет прав для изменения OpenCart Guardian!';
