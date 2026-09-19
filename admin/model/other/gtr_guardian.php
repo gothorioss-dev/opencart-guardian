@@ -67,6 +67,10 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	 * @return void
 	 */
 	public function install(): void {
+		$this->load->model('extension/gtr_guardian/guardian/result');
+
+		$this->model_extension_gtr_guardian_guardian_result->createTables();
+
 		$this->load->model('setting/event');
 
 		/*
@@ -117,6 +121,10 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		}
 
 		$this->model_setting_setting->deleteSettingsByCode('other_gtr_guardian');
+
+		$this->load->model('extension/gtr_guardian/guardian/result');
+
+		$this->model_extension_gtr_guardian_guardian_result->dropTables();
 	}
 
 	/**
