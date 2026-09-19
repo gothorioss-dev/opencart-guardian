@@ -3,7 +3,7 @@ namespace Opencart\Admin\Controller\Extension\GtrGuardian\Guardian;
 /**
  * Class Commerce
  *
- * Guardian domain A screen: commerce data quality.
+ * Guardian domain B screen: commerce and operations (ORDERS, CUSTOMERS, MULTI-L10N).
  *
  * @package Opencart\Admin\Controller\Extension\GtrGuardian\Guardian
  */

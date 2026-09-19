@@ -3,7 +3,7 @@ namespace Opencart\Admin\Controller\Extension\GtrGuardian\Guardian;
 /**
  * Class Storefront
  *
- * Guardian domain A screen: storefront data quality.
+ * Guardian domain E screen: storefront / external surface (FRONTEND).
  *
  * @package Opencart\Admin\Controller\Extension\GtrGuardian\Guardian
  */

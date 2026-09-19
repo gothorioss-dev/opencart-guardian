@@ -7,26 +7,6 @@ namespace Opencart\Admin\Controller\Extension\GtrGuardian;
  */
 class Events extends \Opencart\System\Engine\Controller {
 	/**
-	 * Reconcile
-	 *
-	 * admin/view/common/column_left/before
-	 *
-	 * Self-heals a file-only package update (added/removed domain) on the next
-	 * admin page load. Cheap no-op when nothing changed.
-	 *
-	 * @return void
-	 */
-	public function reconcile(): void {
-		$this->load->model('extension/gtr_guardian/other/gtr_guardian');
-
-		if (!$this->model_extension_gtr_guardian_other_gtr_guardian->isCoreInstalled()) {
-			return;
-		}
-
-		$this->model_extension_gtr_guardian_other_gtr_guardian->sync();
-	}
-
-	/**
 	 * Add Column Left Menu
 	 *
 	 * admin/view/common/column_left/before

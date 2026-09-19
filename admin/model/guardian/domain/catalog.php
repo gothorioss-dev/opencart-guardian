@@ -26,18 +26,4 @@ class Catalog extends \Opencart\System\Engine\Model implements SubmoduleProvider
 		// for the domain from the shared Guardian results store.
 		return SubmoduleReport::pending($this->getCode());
 	}
-
-	/**
-	 * @return array<string, string>
-	 */
-	public function schema(): array {
-		return [];
-	}
-
-	/**
-	 * @return array<int, array<string, mixed>>
-	 */
-	public function cronJobs(): array {
-		return [];
-	}
 }

@@ -6,7 +6,7 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport;
 /**
  * Class Commerce
  *
- * Guardian domain A: commerce data quality (DATA, CATALOG, MEDIA, SEO, GARBAGE).
+ * Guardian domain B: commerce and operations (ORDERS, CUSTOMERS, MULTI-L10N).
  *
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Domain
  */
@@ -25,19 +25,5 @@ class Commerce extends \Opencart\System\Engine\Model implements SubmoduleProvide
 		// Scaffold stage: no check runner yet. Later this reads the latest run
 		// for the domain from the shared Guardian results store.
 		return SubmoduleReport::pending($this->getCode());
-	}
-
-	/**
-	 * @return array<string, string>
-	 */
-	public function schema(): array {
-		return [];
-	}
-
-	/**
-	 * @return array<int, array<string, mixed>>
-	 */
-	public function cronJobs(): array {
-		return [];
 	}
 }

@@ -83,8 +83,7 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 	 * Save
 	 *
 	 * Writes the core status and the per-domain enable flags — both live in the
-	 * "other_gtr_guardian" group. The internal "gtr_guardian" state group
-	 * (sync version + manifest) is never touched here.
+	 * "other_gtr_guardian" group.
 	 *
 	 * @return void
 	 */

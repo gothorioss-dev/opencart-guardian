@@ -3,7 +3,7 @@ namespace Opencart\Admin\Controller\Extension\GtrGuardian\Guardian;
 /**
  * Class System
  *
- * Guardian domain A screen: system data quality.
+ * Guardian domain C screen: system and infrastructure (CONF, EXT, PERF, LOGS, CRON, INTEGRITY).
  *
  * @package Opencart\Admin\Controller\Extension\GtrGuardian\Guardian
  */
