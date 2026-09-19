@@ -202,9 +202,15 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 
 		$group_id = $this->user->getGroupId();
 
+		// addPermission() appends blindly, so skip what the group already has.
+		$group_info = $this->model_user_user_group->getUserGroup($group_id);
+
 		foreach ($this->getRoutes() as $route) {
-			$this->model_user_user_group->addPermission($group_id, 'access', $route);
-			$this->model_user_user_group->addPermission($group_id, 'modify', $route);
+			foreach (['access', 'modify'] as $type) {
+				if (!in_array($route, $group_info['permission'][$type] ?? [], true)) {
+					$this->model_user_user_group->addPermission($group_id, $type, $route);
+				}
+			}
 		}
 
 		// Everything is on out of the box; the admin opts out explicitly.
@@ -235,7 +241,12 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 
 		$group_id = $this->user->getGroupId();
 
-		foreach ($this->getRoutes() as $route) {
+		// The settings route is granted by the core "other" lifecycle on every
+		// install and never revoked by it; revoke it here so reinstalls do not
+		// accumulate copies.
+		$routes = array_merge($this->getRoutes(), ['extension/gtr_guardian/other/gtr_guardian']);
+
+		foreach ($routes as $route) {
 			$this->model_user_user_group->removePermission($group_id, 'access', $route);
 			$this->model_user_user_group->removePermission($group_id, 'modify', $route);
 		}
