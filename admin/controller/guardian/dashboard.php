@@ -98,10 +98,36 @@ class Dashboard extends \Opencart\System\Engine\Controller {
 			$rows[] = $report + [
 				'name'          => $this->language->get($code . '_heading_title'),
 				'href'          => $this->url->link('extension/gtr_guardian/guardian/' . $code, 'user_token=' . $this->session->data['user_token']),
-				'last_run_text' => $report['last_run'] ? date('Y-m-d H:i', $report['last_run']) : $this->language->get('text_never')
+				'summary'       => $report['summary'] ?: $this->getSummaryText($report),
+				'last_run_text' => $report['last_run'] ? date($this->language->get('datetime_format'), $report['last_run']) : $this->language->get('text_never')
 			];
 		}
 
 		return $rows;
+	}
+
+	/**
+	 * Default summary line built from the counters when the domain gave none.
+	 *
+	 * @param array<string, mixed> $report
+	 *
+	 * @return string
+	 */
+	private function getSummaryText(array $report): string {
+		if (!$report['last_run']) {
+			return '';
+		}
+
+		$counts = $report['counts'];
+
+		$found = (int)($counts['critical'] ?? 0) + (int)($counts['warning'] ?? 0) + (int)($counts['info'] ?? 0);
+
+		$text = $found ? sprintf($this->language->get('text_summary_found'), $found, $report['checks_total']) : sprintf($this->language->get('text_summary_clean'), $report['checks_total']);
+
+		if (!empty($counts['errors'])) {
+			$text .= ' ' . sprintf($this->language->get('text_summary_errors'), $counts['errors']);
+		}
+
+		return $text;
 	}
 }

@@ -12,6 +12,9 @@ $_['text_status_warning']  = 'Warning';
 $_['text_status_critical'] = 'Critical';
 $_['text_status_unknown']  = 'Not run';
 $_['text_status_error']    = 'Error';
+$_['text_summary_found']   = '%d of %d checks reported findings.';
+$_['text_summary_clean']   = 'All %d checks passed.';
+$_['text_summary_errors']  = '%d check(s) failed to run.';
 
 // Column
 $_['column_domain']        = 'Domain';

@@ -12,6 +12,9 @@ $_['text_status_warning']  = 'Попередження';
 $_['text_status_critical'] = 'Критично';
 $_['text_status_unknown']  = 'Не запускалося';
 $_['text_status_error']    = 'Помилка';
+$_['text_summary_found']   = 'Спрацювало %d із %d перевірок.';
+$_['text_summary_clean']   = 'Усі %d перевірок пройдено.';
+$_['text_summary_errors']  = 'Перевірок з помилкою виконання: %d.';
 
 // Column
 $_['column_domain']        = 'Домен';
