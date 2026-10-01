@@ -1,0 +1,305 @@
+<?php
+namespace Opencart\Admin\Model\Extension\GtrGuardian\Other;
+/**
+ * Class GtrGuardian
+ *
+ * Guardian core model: install/uninstall, domain discovery and enable state.
+ *
+ * @package Opencart\Admin\Model\Extension\GtrGuardian\Other
+ */
+class GtrGuardian extends \Opencart\System\Engine\Model {
+	public const RETENTION_RUNS_DEFAULT = 30;
+	public const RETENTION_DAYS_DEFAULT = 30;
+
+	/**
+	 * @var array<int, string>|null
+	 */
+	private ?array $domain_codes = null;
+
+	/**
+	 * Whether the Guardian core extension is installed.
+	 *
+	 * @return bool
+	 */
+	public function isCoreInstalled(): bool {
+		$this->load->model('setting/extension');
+
+		return !empty($this->model_setting_extension->getExtensionByCode('other', 'gtr_guardian'));
+	}
+
+	/**
+	 * Whether Guardian is installed and switched on. Every Guardian screen and
+	 * the menu are gated on this; the settings screen itself is not.
+	 *
+	 * @return bool
+	 */
+	public function isActive(): bool {
+		// The flag is in memory, the install lookup is a query: check it first.
+		return (bool)$this->config->get('other_gtr_guardian_status') && $this->isCoreInstalled();
+	}
+
+	/**
+	 * Domain codes shipped in this package (one provider model per domain).
+	 *
+	 * @return array<int, string>
+	 */
+	public function getDomainCodes(): array {
+		if ($this->domain_codes === null) {
+			$this->domain_codes = [];
+
+			foreach ((array)glob(DIR_EXTENSION . 'gtr_guardian/admin/model/guardian/domain/*.php') as $file) {
+				$this->domain_codes[] = basename($file, '.php');
+			}
+
+			sort($this->domain_codes);
+		}
+
+		return $this->domain_codes;
+	}
+
+	/**
+	 * @param string $code
+	 *
+	 * @return bool
+	 */
+	public function isKnownDomain(string $code): bool {
+		return in_array($code, $this->getDomainCodes(), true);
+	}
+
+	/**
+	 * Whether a domain is enabled.
+	 *
+	 * An unknown key resolves to enabled — disabling is always an explicit
+	 * admin action.
+	 *
+	 * @param string $code
+	 *
+	 * @return bool
+	 */
+	public function isDomainEnabled(string $code): bool {
+		$value = $this->config->get('other_gtr_guardian_domain_' . $code);
+
+		return $value === null ? true : (bool)$value;
+	}
+
+	/**
+	 * @return array<int, string>
+	 */
+	public function getEnabledDomainCodes(): array {
+		return array_values(array_filter($this->getDomainCodes(), function (string $code): bool {
+			return $this->isDomainEnabled($code);
+		}));
+	}
+
+	/**
+	 * Enabled domains the current user may open — what the menu and the
+	 * dashboard show.
+	 *
+	 * @return array<int, string>
+	 */
+	public function getVisibleDomainCodes(): array {
+		return array_values(array_filter($this->getEnabledDomainCodes(), function (string $code): bool {
+			return $this->user->hasPermission('access', 'extension/gtr_guardian/guardian/' . $code);
+		}));
+	}
+
+	/**
+	 * Keys of the on/off settings in the "other_gtr_guardian" group: the core
+	 * status plus one flag per domain.
+	 *
+	 * @return array<int, string>
+	 */
+	public function getFlagKeys(): array {
+		$keys = ['other_gtr_guardian_status'];
+
+		foreach ($this->getDomainCodes() as $code) {
+			$keys[] = 'other_gtr_guardian_domain_' . $code;
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Functional Guardian screens managed by the permissions matrix, keyed by
+	 * a short code. The settings screen itself is deliberately absent: who may
+	 * edit Guardian settings (and thus these permissions) is decided in
+	 * System > Users > User Groups like for any other extension.
+	 *
+	 * @return array<string, string>
+	 */
+	public function getPermissionRoutes(): array {
+		$routes = [
+			'dashboard' => 'extension/gtr_guardian/guardian/dashboard'
+		];
+
+		foreach ($this->getDomainCodes() as $code) {
+			$routes[$code] = 'extension/gtr_guardian/guardian/' . $code;
+		}
+
+		return $routes;
+	}
+
+	/**
+	 * User groups the permissions matrix manages: every group except those
+	 * allowed to edit Guardian settings — they administer the matrix and must
+	 * not be able to restrict themselves through it.
+	 *
+	 * @return array<int, array<string, mixed>> user group rows with "permission" decoded
+	 */
+	public function getManagedUserGroups(): array {
+		$this->load->model('user/user_group');
+
+		$groups = [];
+
+		foreach ($this->model_user_user_group->getUserGroups() as $group) {
+			$group['permission'] = $group['permission'] ? (array)json_decode($group['permission'], true) : [];
+
+			if (in_array('extension/gtr_guardian/other/gtr_guardian', $group['permission']['modify'] ?? [], true)) {
+				continue;
+			}
+
+			$groups[] = $group;
+		}
+
+		return $groups;
+	}
+
+	/**
+	 * Apply the permissions matrix: $permission[user_group_id][code][access|modify] = 1.
+	 *
+	 * Only managed groups are touched; cells absent from the array are revoked.
+	 *
+	 * @param array<int|string, array<string, array<string, mixed>>> $permission
+	 *
+	 * @return void
+	 */
+	public function savePermissions(array $permission): void {
+		$this->load->model('user/user_group');
+
+		$routes = $this->getPermissionRoutes();
+
+		foreach ($this->getManagedUserGroups() as $group) {
+			$group_id = (int)$group['user_group_id'];
+
+			$current = $group['permission'];
+
+			foreach ($routes as $code => $route) {
+				foreach (['access', 'modify'] as $type) {
+					$granted = !empty($permission[$group_id][$code][$type]);
+
+					$has = in_array($route, $current[$type] ?? [], true);
+
+					if ($granted && !$has) {
+						$current[$type][] = $route;
+					} elseif (!$granted && $has) {
+						$current[$type] = array_values(array_diff($current[$type], [$route]));
+					}
+				}
+			}
+
+			// One write per group instead of a query pair per cell.
+			if ($current !== $group['permission']) {
+				$this->model_user_user_group->editUserGroup($group_id, ['name' => $group['name'], 'permission' => $current]);
+			}
+		}
+	}
+
+	/**
+	 * Run-history retention limits: newest runs to keep per domain and max
+	 * age in days. 0 disables that limit.
+	 *
+	 * @return array{runs: int, days: int}
+	 */
+	public function getRetention(): array {
+		$runs = $this->config->get('other_gtr_guardian_retention_runs');
+		$days = $this->config->get('other_gtr_guardian_retention_days');
+
+		return [
+			'runs' => $runs === null ? self::RETENTION_RUNS_DEFAULT : max(0, (int)$runs),
+			'days' => $days === null ? self::RETENTION_DAYS_DEFAULT : max(0, (int)$days)
+		];
+	}
+
+	/**
+	 * Install
+	 *
+	 * @return void
+	 */
+	public function install(): void {
+		$this->load->model('extension/gtr_guardian/guardian/result');
+
+		$this->model_extension_gtr_guardian_guardian_result->createTables();
+
+		$this->load->model('setting/event');
+
+		/*
+		 * The "admin/" trigger prefix is required: admin/controller/startup/event.php
+		 * only registers DB events whose trigger starts with "admin/" (prefix stripped)
+		 * or "system/". Any other prefix is silently never registered.
+		 */
+		$this->model_setting_event->deleteEventByCode('gtr_guardian_column_left');
+
+		$this->model_setting_event->addEvent([
+			'code'        => 'gtr_guardian_column_left',
+			'description' => 'Add OpenCart Guardian menu to Column Left',
+			'trigger'     => 'admin/view/common/column_left/before',
+			'action'      => 'extension/gtr_guardian/events.addColumnLeftMenu',
+			'status'      => 1,
+			'sort_order'  => 1
+		]);
+
+		$this->load->model('user/user_group');
+
+		$group_id = $this->user->getGroupId();
+
+		// addPermission() appends blindly, so skip what the group already has.
+		$group_info = $this->model_user_user_group->getUserGroup($group_id);
+
+		foreach ($this->getPermissionRoutes() as $route) {
+			foreach (['access', 'modify'] as $type) {
+				if (!in_array($route, $group_info['permission'][$type] ?? [], true)) {
+					$this->model_user_user_group->addPermission($group_id, $type, $route);
+				}
+			}
+		}
+
+		// Everything is on out of the box; the admin opts out explicitly.
+		$this->load->model('setting/setting');
+
+		$this->model_setting_setting->editSetting('other_gtr_guardian', array_fill_keys($this->getFlagKeys(), 1));
+	}
+
+	/**
+	 * Uninstall
+	 *
+	 * Removes everything the package created, including all stored data.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {
+		$this->load->model('setting/event');
+		$this->load->model('setting/setting');
+		$this->load->model('user/user_group');
+
+		$this->model_setting_event->deleteEventByCode('gtr_guardian_column_left');
+
+		$group_id = $this->user->getGroupId();
+
+		// The settings route is granted by the core "other" lifecycle on every
+		// install and never revoked by it; revoke it here so reinstalls do not
+		// accumulate copies.
+		$routes = array_merge(array_values($this->getPermissionRoutes()), ['extension/gtr_guardian/other/gtr_guardian']);
+
+		foreach ($routes as $route) {
+			$this->model_user_user_group->removePermission($group_id, 'access', $route);
+			$this->model_user_user_group->removePermission($group_id, 'modify', $route);
+		}
+
+		$this->model_setting_setting->deleteSettingsByCode('other_gtr_guardian');
+		$this->model_setting_setting->deleteSettingsByCode('gtr_guardian');
+
+		$this->load->model('extension/gtr_guardian/guardian/result');
+
+		$this->model_extension_gtr_guardian_guardian_result->dropTables();
+	}
+}
