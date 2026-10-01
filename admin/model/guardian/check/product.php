@@ -20,7 +20,9 @@ class Product extends Base {
 		'product_shipping_no_dimensions'  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'product_broken_variant'          => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
 		'product_broken_reference'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_broken_attribute_option' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_broken_attribute_option' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_empty_content'           => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
+		'product_incomplete_description'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -144,6 +146,34 @@ class Product extends Base {
 		$parts[] = $this->productSelect("'product_option' AS `type`, `pov`.`product_option_id` AS `ref_id`") . " INNER JOIN `" . DB_PREFIX . "product_option_value` `pov` ON (`pov`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` WHERE `po`.`product_option_id` = `pov`.`product_option_id`)";
 
 		return $this->collect('product_broken_attribute_option', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `link` ORDER BY `product_id`, `type`, `ref_id`");
+	}
+
+	/**
+	 * Empty name or description in an enabled language, one finding row per
+	 * description row; `field` lists which of the two is empty. Descriptions
+	 * are stored HTML-escaped, so an editor's empty markup (&lt;p&gt;&lt;br&gt;&lt;/p&gt;)
+	 * is stripped before testing. Short or duplicate texts belong to SEO.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productEmptyContent(): CheckResult {
+		$empty_name = "TRIM(`pd2`.`name`) = ''";
+		// REGEXP_REPLACE needs MySQL 8.0+ / MariaDB 10.0.5+; (?s) lets a tag span
+		// lines; media tags are kept, an image-only description is not empty
+		$empty_description = "REGEXP_REPLACE(REGEXP_REPLACE(`pd2`.`description`, '(?s)&lt;(?!(img|iframe|video|embed|object)[[:space:]&/]).*?&gt;', ''), '&amp;nbsp;|[[:space:]]', '') = ''";
+
+		return $this->collect('product_empty_content', $this->productSelect("`l`.`code` AS `language`, CONCAT_WS(', ', IF(" . $empty_name . ", 'name', NULL), IF(" . $empty_description . ", 'description', NULL)) AS `field`") . " INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') WHERE " . $empty_name . " OR " . $empty_description . " ORDER BY `p`.`product_id`, `l`.`code`");
+	}
+
+	/**
+	 * Products missing a description row for an enabled language; the
+	 * storefront then shows them with no name in that language. One finding
+	 * row per missing language.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productIncompleteDescription(): CheckResult {
+		return $this->collect('product_incomplete_description', $this->productSelect("`l`.`code` AS `language`") . " CROSS JOIN `" . DB_PREFIX . "language` `l` WHERE `l`.`status` = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_description` `pd2` WHERE `pd2`.`product_id` = `p`.`product_id` AND `pd2`.`language_id` = `l`.`language_id`) ORDER BY `p`.`product_id`, `l`.`code`");
 	}
 
 	/**
