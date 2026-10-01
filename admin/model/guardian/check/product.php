@@ -3,13 +3,13 @@ namespace Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check;
 
 use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
 /**
- * Class Data
+ * Class Product
  *
- * Category DATA: product record integrity.
+ * Category PRODUCT: product record integrity.
  *
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check
  */
-class Data extends Base {
+class Product extends Base {
 	protected array $checks = [
 		'product_no_model'                => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
 		'product_no_category'             => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
