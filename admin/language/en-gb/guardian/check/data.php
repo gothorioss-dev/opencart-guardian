@@ -1,11 +1,26 @@
 <?php
 // Heading
-$_['heading_title']                    = 'Product data integrity';
+$_['heading_title']                              = 'Product data integrity';
 
 // Checks
-$_['check_product_no_model_title']     = 'Products without model';
-$_['check_product_no_model_desc']      = 'Model is a required field; products without it break search and product feeds.';
-$_['check_product_no_model_hint']      = 'Open each product and fill in the Model field on the Data tab.';
-$_['check_product_no_category_title']  = 'Products without a category';
-$_['check_product_no_category_desc']   = 'Products not assigned to any category are unreachable from the catalog navigation.';
-$_['check_product_no_category_hint']   = 'Assign at least one category on the product Links tab.';
+$_['check_product_no_model_title']               = 'Products without model';
+$_['check_product_no_model_desc']                = 'Model is a required field; products without it break search and product feeds.';
+$_['check_product_no_model_hint']                = 'Open each product and fill in the Model field on the Data tab.';
+$_['check_product_no_category_title']            = 'Products without a category';
+$_['check_product_no_category_desc']             = 'Products not assigned to any category are unreachable from the catalog navigation.';
+$_['check_product_no_category_hint']             = 'Assign at least one category on the product Links tab.';
+$_['check_product_no_store_title']               = 'Products not assigned to a store';
+$_['check_product_no_store_desc']                = 'Products without a store link are not shown on any storefront.';
+$_['check_product_no_store_hint']                = 'Tick at least one store on the product Links tab.';
+$_['check_product_shipping_no_weight_title']     = 'Shippable products without weight';
+$_['check_product_shipping_no_weight_desc']      = 'Products that require shipping but have zero weight break weight-based shipping rates.';
+$_['check_product_shipping_no_weight_hint']      = 'Set the weight on the product Data tab, or turn off Requires Shipping for non-physical goods.';
+$_['check_product_no_manufacturer_title']        = 'Products without a manufacturer';
+$_['check_product_no_manufacturer_desc']         = 'Products without a manufacturer are missing from brand pages and filters.';
+$_['check_product_no_manufacturer_hint']         = 'Choose a manufacturer on the product Links tab if the product has one.';
+$_['check_product_future_available_title']       = 'Enabled products with a future availability date';
+$_['check_product_future_available_desc']        = 'The storefront hides products until their Date Available, even when they are enabled.';
+$_['check_product_future_available_hint']        = 'Check the Date Available field on the product Data tab; clear it or set today if the product should be visible now.';
+$_['check_product_shipping_no_dimensions_title'] = 'Shippable products without dimensions';
+$_['check_product_shipping_no_dimensions_desc']  = 'Products that require shipping but have zero length, width or height; carrier integrations that rate by size cannot quote them.';
+$_['check_product_shipping_no_dimensions_hint']  = 'Fill in Dimensions (L x W x H) on the product Data tab if your shipping methods use them.';
