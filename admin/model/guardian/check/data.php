@@ -11,13 +11,16 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Data extends Base {
 	protected array $checks = [
-		'product_no_model'               => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
-		'product_no_category'            => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_no_store'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_shipping_no_weight'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_no_manufacturer'        => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'product_future_available'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'product_shipping_no_dimensions' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'product_no_model'                => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
+		'product_no_category'             => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_no_store'                => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_shipping_no_weight'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_no_manufacturer'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'product_future_available'        => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'product_shipping_no_dimensions'  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'product_broken_variant'          => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
+		'product_broken_reference'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_broken_attribute_option' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -83,6 +86,64 @@ class Data extends Base {
 	 */
 	protected function productShippingNoDimensions(): CheckResult {
 		return $this->collect('product_shipping_no_dimensions', $this->productSelect('`p`.`length`, `p`.`width`, `p`.`height`') . " WHERE `p`.`shipping` = '1' AND (`p`.`length` <= '0' OR `p`.`width` <= '0' OR `p`.`height` <= '0') ORDER BY `p`.`product_id`");
+	}
+
+	/**
+	 * Variants whose master is missing, is the variant itself, or is a variant
+	 * too. The storefront and cart load a variant's options from its master
+	 * (catalog/controller/product/product.php, checkout/cart.php), so such
+	 * variants lose their options. A disabled master is not reported: options
+	 * still load from it, and hiding the master while selling variants is a
+	 * legitimate setup.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productBrokenVariant(): CheckResult {
+		return $this->collect('product_broken_variant', $this->productSelect('`p`.`master_id`, `m`.`master_id` AS `master_master_id`') . " LEFT JOIN `" . DB_PREFIX . "product` `m` ON (`m`.`product_id` = `p`.`master_id`) WHERE `p`.`master_id` != '0' AND (`m`.`product_id` IS NULL OR `p`.`master_id` = `p`.`product_id` OR `m`.`master_id` != '0') ORDER BY `p`.`product_id`");
+	}
+
+	/**
+	 * Product fields pointing at a deleted lookup record, one finding row per
+	 * broken field. tax_class_id and manufacturer_id use 0 for "none"; the
+	 * weight/length class and stock status have no such value, so 0 is broken.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productBrokenReference(): CheckResult {
+		$references = [
+			'tax_class_id'    => ['tax_class', true],
+			'weight_class_id' => ['weight_class', false],
+			'length_class_id' => ['length_class', false],
+			'stock_status_id' => ['stock_status', false],
+			'manufacturer_id' => ['manufacturer', true]
+		];
+
+		$parts = [];
+
+		foreach ($references as $field => [$table, $zero_allowed]) {
+			$parts[] = $this->productSelect("'" . $field . "' AS `field`, `p`.`" . $field . "` AS `value`") . " WHERE " . ($zero_allowed ? "`p`.`" . $field . "` != '0' AND " : "") . "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $table . "` `r` WHERE `r`.`" . $field . "` = `p`.`" . $field . "`)";
+		}
+
+		return $this->collect('product_broken_reference', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `ref` ORDER BY `product_id`, `field`");
+	}
+
+	/**
+	 * Attribute and option links pointing at a deleted attribute, option,
+	 * option value or parent product option, one finding row per broken link.
+	 * Links of deleted products are GARBAGE, not reported here.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productBrokenAttributeOption(): CheckResult {
+		$parts = [];
+
+		// product_attribute holds one row per language; collapse to one per attribute
+		$parts[] = $this->productSelect("'attribute' AS `type`, `pa`.`attribute_id` AS `ref_id`") . " INNER JOIN (SELECT DISTINCT `product_id`, `attribute_id` FROM `" . DB_PREFIX . "product_attribute`) `pa` ON (`pa`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "attribute` `a` WHERE `a`.`attribute_id` = `pa`.`attribute_id`)";
+		$parts[] = $this->productSelect("'option' AS `type`, `po`.`option_id` AS `ref_id`") . " INNER JOIN `" . DB_PREFIX . "product_option` `po` ON (`po`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "option` `o` WHERE `o`.`option_id` = `po`.`option_id`)";
+		$parts[] = $this->productSelect("'option_value' AS `type`, `pov`.`option_value_id` AS `ref_id`") . " INNER JOIN `" . DB_PREFIX . "product_option_value` `pov` ON (`pov`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "option_value` `ov` WHERE `ov`.`option_value_id` = `pov`.`option_value_id`)";
+		$parts[] = $this->productSelect("'product_option' AS `type`, `pov`.`product_option_id` AS `ref_id`") . " INNER JOIN `" . DB_PREFIX . "product_option_value` `pov` ON (`pov`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` WHERE `po`.`product_option_id` = `pov`.`product_option_id`)";
+
+		return $this->collect('product_broken_attribute_option', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `link` ORDER BY `product_id`, `type`, `ref_id`");
 	}
 
 	/**
