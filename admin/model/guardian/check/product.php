@@ -179,18 +179,21 @@ class Product extends Base {
 	}
 
 	/**
-	 * Enabled products priced at zero or below that some customer group can
-	 * buy for free: the group has no active special with a positive price
-	 * for a single item (the cart applies a row only from its quantity up).
-	 * The special's final price and date window follow
-	 * catalog/model/catalog/product.php.
+	 * Enabled products that cost zero or less for a single item in at least
+	 * one customer group; `customer_groups` lists those groups. Mirrors the
+	 * cart (system/library/cart/cart.php): of the group's product_discount
+	 * rows active by date with quantity <= 1, special or not, the first by
+	 * quantity DESC, priority ASC, price ASC sets the price; without such a
+	 * row the base price applies.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productZeroPrice(): CheckResult {
-		$special_price = "(CASE WHEN `ps`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`ps`.`price` / 100))) WHEN `ps`.`type` = 'S' THEN (`p`.`price` - `ps`.`price`) ELSE `ps`.`price` END)";
+		$final_price = "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
 
-		return $this->collect('product_zero_price', $this->productSelect('`p`.`price`') . " WHERE `p`.`status` = '1' AND `p`.`price` <= '0' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "customer_group` `cg` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_discount` `ps` WHERE `ps`.`product_id` = `p`.`product_id` AND `ps`.`customer_group_id` = `cg`.`customer_group_id` AND `ps`.`special` = '1' AND `ps`.`quantity` <= '1' AND (`ps`.`date_start` = '0000-00-00' OR `ps`.`date_start` < NOW()) AND (`ps`.`date_end` = '0000-00-00' OR `ps`.`date_end` > NOW()) AND " . $special_price . " > '0')) ORDER BY `p`.`product_id`");
+		$cart_price = "COALESCE((SELECT " . $final_price . " FROM `" . DB_PREFIX . "product_discount` `dc` WHERE `dc`.`product_id` = `p`.`product_id` AND `dc`.`customer_group_id` = `cg`.`customer_group_id` AND `dc`.`quantity` <= '1' AND (`dc`.`date_start` = '0000-00-00' OR `dc`.`date_start` < NOW()) AND (`dc`.`date_end` = '0000-00-00' OR `dc`.`date_end` > NOW()) ORDER BY `dc`.`quantity` DESC, `dc`.`priority` ASC, `dc`.`price` ASC LIMIT 1), `p`.`price`)";
+
+		return $this->collect('product_zero_price', $this->productSelect("`p`.`price`, GROUP_CONCAT(`cg`.`customer_group_id` ORDER BY `cg`.`customer_group_id` SEPARATOR ', ') AS `customer_groups`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' GROUP BY `p`.`product_id`, `pd`.`name`, `p`.`status`, `p`.`price` ORDER BY `p`.`product_id`");
 	}
 
 	/**
