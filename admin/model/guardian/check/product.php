@@ -24,7 +24,8 @@ class Product extends Base {
 		'product_empty_content'           => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
 		'product_incomplete_description'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_zero_price'              => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
-		'product_discount_dates_inverted' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_discount_dates_inverted' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_discount_not_lower'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -216,6 +217,20 @@ class Product extends Base {
 	 */
 	protected function productDiscountDatesInverted(): CheckResult {
 		return $this->collect('product_discount_dates_inverted', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`date_start`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_start` != '0000-00-00' AND `dc`.`date_end` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+	}
+
+	/**
+	 * Discount and special rows whose final price is not below the product
+	 * price. Such a row still wins by priority in the cart and storefront and
+	 * hides a real discount behind it. Dates are ignored; zero-priced
+	 * products belong to product_zero_price. One finding row per discount row.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productDiscountNotLower(): CheckResult {
+		$final_price = "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
+
+		return $this->collect('product_discount_not_lower', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `p`.`price`, ROUND(" . $final_price . ", 4) AS `final_price`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `p`.`price` > '0' AND " . $final_price . " >= `p`.`price` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**

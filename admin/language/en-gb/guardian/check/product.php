@@ -45,3 +45,6 @@ $_['check_product_zero_price_hint']               = 'Check the price on the prod
 $_['check_product_discount_dates_inverted_title'] = 'Discounts and specials that can never apply';
 $_['check_product_discount_dates_inverted_desc']  = 'The start date of a discount or special is the same as or later than its end date, so the storefront and the cart never apply it.';
 $_['check_product_discount_dates_inverted_hint']  = 'Open the product and correct the dates of the listed row on the Discount tab.';
+$_['check_product_discount_not_lower_title']      = 'Discounts and specials that do not lower the price';
+$_['check_product_discount_not_lower_desc']       = 'The final price of a discount or special is the same as or higher than the regular price. Such a row still takes priority and can hide a real discount for the same customer group.';
+$_['check_product_discount_not_lower_hint']       = 'Open the product and correct or remove the listed row on the Discount tab.';
