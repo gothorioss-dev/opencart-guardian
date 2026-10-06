@@ -57,3 +57,6 @@ $_['check_product_minimum_over_stock_hint']       = 'Lower the Minimum Quantity 
 $_['check_product_duplicate_model_title']         = 'Products with a duplicate model';
 $_['check_product_duplicate_model_desc']          = 'Several products share the same model (ignoring case and surrounding spaces); variants of one product are not counted. Search, feeds and stock tools that identify products by model mix them up.';
 $_['check_product_duplicate_model_hint']          = 'Give each product a unique Model on the product Data tab, or turn the products into variants of one master product.';
+$_['check_product_duplicate_identifier_title']    = 'Products with a duplicate identifier';
+$_['check_product_duplicate_identifier_desc']     = 'Several products have the same value for one identifier type (SKU, EAN, MPN and so on), ignoring case and surrounding spaces; variants of one product are not counted. Feeds and marketplaces reject or merge such products.';
+$_['check_product_duplicate_identifier_hint']     = 'Open the listed products and correct the identifier value on the Data tab.';

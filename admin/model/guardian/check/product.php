@@ -28,7 +28,8 @@ class Product extends Base {
 		'product_discount_not_lower'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_negative_stock'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_minimum_over_stock'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_duplicate_model'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_duplicate_model'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_duplicate_identifier'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -275,6 +276,24 @@ class Product extends Base {
 		$families = "SELECT `p2`.`product_id`, TRIM(`p2`.`model`) AS `model`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family` FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE TRIM(`p2`.`model`) != '' AND (`p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL)";
 
 		return $this->collect('product_duplicate_model', $this->productSelect("`f`.`model`, `g`.`group_size`") . " INNER JOIN (" . $families . ") `f` ON (`f`.`product_id` = `p`.`product_id`) INNER JOIN (SELECT `model`, COUNT(DISTINCT `family`) AS `group_size` FROM (" . $families . ") `f2` GROUP BY `model` HAVING `group_size` > 1) `g` ON (`g`.`model` = `f`.`model`) ORDER BY `f`.`model`, `p`.`product_id`");
+	}
+
+	/**
+	 * Products sharing an identifier value (same code type, e.g. two EANs)
+	 * with another product outside their variant family, one finding row per
+	 * product and value; `group_size` is the number of families using it.
+	 * Only enabled identifier types count; values are trimmed and compared
+	 * case-insensitively, empty ones skipped. Families as in
+	 * product_duplicate_model.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productDuplicateIdentifier(): CheckResult {
+		$families = "SELECT `p2`.`product_id`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family` FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE `p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL";
+
+		$codes = "SELECT DISTINCT `f`.`product_id`, `f`.`family`, `pc`.`code`, TRIM(`pc`.`value`) AS `value` FROM `" . DB_PREFIX . "product_code` `pc` INNER JOIN `" . DB_PREFIX . "identifier` `i` ON (`i`.`code` = `pc`.`code` AND `i`.`status` = '1') INNER JOIN (" . $families . ") `f` ON (`f`.`product_id` = `pc`.`product_id`) WHERE TRIM(`pc`.`value`) != ''";
+
+		return $this->collect('product_duplicate_identifier', $this->productSelect("`c`.`code`, `c`.`value`, `g`.`group_size`") . " INNER JOIN (" . $codes . ") `c` ON (`c`.`product_id` = `p`.`product_id`) INNER JOIN (SELECT `code`, `value`, COUNT(DISTINCT `family`) AS `group_size` FROM (" . $codes . ") `c2` GROUP BY `code`, `value` HAVING `group_size` > 1) `g` ON (`g`.`code` = `c`.`code` AND `g`.`value` = `c`.`value`) ORDER BY `c`.`code`, `c`.`value`, `p`.`product_id`");
 	}
 
 	/**
