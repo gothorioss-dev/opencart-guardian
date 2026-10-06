@@ -31,7 +31,8 @@ class Product extends Base {
 		'product_duplicate_model'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_duplicate_identifier'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_related_broken'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'product_related_one_way'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'product_related_one_way'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'product_broken_layout'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -317,6 +318,19 @@ class Product extends Base {
 	 */
 	protected function productRelatedOneWay(): CheckResult {
 		return $this->collect('product_related_one_way', $this->productSelect('`pr`.`related_id`') . " INNER JOIN `" . DB_PREFIX . "product_related` `pr` ON (`pr`.`product_id` = `p`.`product_id`) WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `r` WHERE `r`.`product_id` = `pr`.`related_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_related` `rr` WHERE `rr`.`product_id` = `pr`.`related_id` AND `rr`.`related_id` = `pr`.`product_id`) ORDER BY `p`.`product_id`, `pr`.`related_id`");
+	}
+
+	/**
+	 * Layout overrides pointing at a deleted layout, one finding row per store.
+	 * The storefront falls back to the route layout only for layout_id 0
+	 * (catalog/controller/common/column_left.php), so the product page loses
+	 * all its modules. The admin refuses to delete a layout in use, so these
+	 * come from imports or direct SQL.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productBrokenLayout(): CheckResult {
+		return $this->collect('product_broken_layout', $this->productSelect('`p2l`.`store_id`, `p2l`.`layout_id`') . " INNER JOIN `" . DB_PREFIX . "product_to_layout` `p2l` ON (`p2l`.`product_id` = `p`.`product_id`) WHERE `p2l`.`layout_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "layout` `l` WHERE `l`.`layout_id` = `p2l`.`layout_id`) ORDER BY `p`.`product_id`, `p2l`.`store_id`");
 	}
 
 	/**

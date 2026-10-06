@@ -66,3 +66,6 @@ $_['check_product_related_broken_hint']           = 'Open the product and remove
 $_['check_product_related_one_way_title']         = 'One-way related product links';
 $_['check_product_related_one_way_desc']          = 'The product lists a related product that does not list it back. The admin always links related products both ways, so the link was added by an import, another module or a direct database change.';
 $_['check_product_related_one_way_hint']          = 'Open the listed product and save it: the admin rewrites its links in both directions. To drop the link instead, remove it from Related Products on the Links tab before saving.';
+$_['check_product_broken_layout_title']           = 'Products with a deleted layout override';
+$_['check_product_broken_layout_desc']            = 'The product is set to use a layout that no longer exists in the listed store. The storefront does not fall back to the default layout, so the product page is shown without any modules.';
+$_['check_product_broken_layout_hint']            = 'Open the product and choose an existing Layout Override for the listed store on the Design tab, or leave it empty.';
