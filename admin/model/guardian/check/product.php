@@ -29,7 +29,8 @@ class Product extends Base {
 		'product_negative_stock'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_minimum_over_stock'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_duplicate_model'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_duplicate_identifier'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_duplicate_identifier'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_related_broken'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -292,6 +293,17 @@ class Product extends Base {
 		$codes = "SELECT DISTINCT `f`.`product_id`, `f`.`family`, `pc`.`code`, TRIM(`pc`.`value`) AS `value` FROM `" . DB_PREFIX . "product_code` `pc` INNER JOIN `" . DB_PREFIX . "identifier` `i` ON (`i`.`code` = `pc`.`code` AND `i`.`status` = '1') INNER JOIN (" . $this->variantFamilies() . ") `f` ON (`f`.`product_id` = `pc`.`product_id`) WHERE TRIM(`pc`.`value`) != ''";
 
 		return $this->collect('product_duplicate_identifier', $this->productSelect("`c`.`code`, `c`.`value`, `g`.`group_size`") . " INNER JOIN (" . $codes . ") `c` ON (`c`.`product_id` = `p`.`product_id`) INNER JOIN (SELECT `code`, `value`, COUNT(DISTINCT `family`) AS `group_size` FROM (" . $codes . ") `c2` GROUP BY `code`, `value` HAVING `group_size` > 1) `g` ON (`g`.`code` = `c`.`code` AND `g`.`value` = `c`.`value`) ORDER BY `c`.`code`, `c`.`value`, `p`.`product_id`");
+	}
+
+	/**
+	 * Related product links pointing at a deleted product, one finding row per
+	 * link. The storefront drops such links (getRelated joins the product), so
+	 * this is leftover data. Links of deleted products are GARBAGE.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productRelatedBroken(): CheckResult {
+		return $this->collect('product_related_broken', $this->productSelect('`pr`.`related_id`') . " INNER JOIN `" . DB_PREFIX . "product_related` `pr` ON (`pr`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `r` WHERE `r`.`product_id` = `pr`.`related_id`) ORDER BY `p`.`product_id`, `pr`.`related_id`");
 	}
 
 	/**

@@ -60,3 +60,6 @@ $_['check_product_duplicate_model_hint']          = 'Give each product a unique 
 $_['check_product_duplicate_identifier_title']    = 'Products with a duplicate identifier';
 $_['check_product_duplicate_identifier_desc']     = 'Several products have the same value for one identifier type (SKU, EAN, MPN and so on), ignoring case and surrounding spaces; variants of one product are not counted. Feeds and marketplaces reject or merge such products.';
 $_['check_product_duplicate_identifier_hint']     = 'Open the listed products and correct the identifier value on the Data tab.';
+$_['check_product_related_broken_title']          = 'Related products that no longer exist';
+$_['check_product_related_broken_desc']           = 'The product lists a related product that was deleted; the storefront skips it, so only an unused link remains.';
+$_['check_product_related_broken_hint']           = 'Open the product and remove the missing entry from Related Products on the Links tab, then save.';
