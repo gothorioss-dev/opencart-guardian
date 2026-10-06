@@ -27,7 +27,8 @@ class Product extends Base {
 		'product_discount_dates_inverted' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_discount_not_lower'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_negative_stock'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_minimum_over_stock'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_minimum_over_stock'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_duplicate_model'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -255,6 +256,25 @@ class Product extends Base {
 	 */
 	protected function productMinimumOverStock(): CheckResult {
 		return $this->collect('product_minimum_over_stock', $this->productSelect('`p`.`quantity`, `p`.`minimum`') . " WHERE `p`.`status` = '1' AND `p`.`subtract` = '1' AND `p`.`quantity` > '0' AND `p`.`minimum` > `p`.`quantity` ORDER BY `p`.`product_id`");
+	}
+
+	/**
+	 * Products sharing a model with another product outside their variant
+	 * family, one finding row per product; `group_size` is the number of
+	 * families using that model. Models are trimmed, and the column collation
+	 * already ignores case. Variants share the master's model by design
+	 * (admin addVariant/editVariants copy it unless overridden), so a family
+	 * counts once: the master's id, also for a variant of a variant. Core only
+	 * validates the model's length, not uniqueness. Products with a missing
+	 * master belong to
+	 * product_broken_variant and are skipped, as are empty models.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productDuplicateModel(): CheckResult {
+		$families = "SELECT `p2`.`product_id`, TRIM(`p2`.`model`) AS `model`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family` FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE TRIM(`p2`.`model`) != '' AND (`p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL)";
+
+		return $this->collect('product_duplicate_model', $this->productSelect("`f`.`model`, `g`.`group_size`") . " INNER JOIN (" . $families . ") `f` ON (`f`.`product_id` = `p`.`product_id`) INNER JOIN (SELECT `model`, COUNT(DISTINCT `family`) AS `group_size` FROM (" . $families . ") `f2` GROUP BY `model` HAVING `group_size` > 1) `g` ON (`g`.`model` = `f`.`model`) ORDER BY `f`.`model`, `p`.`product_id`");
 	}
 
 	/**

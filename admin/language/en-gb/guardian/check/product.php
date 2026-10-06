@@ -54,3 +54,6 @@ $_['check_product_negative_stock_hint']           = 'Count the actual stock and 
 $_['check_product_minimum_over_stock_title']      = 'Products with stock below the minimum order quantity';
 $_['check_product_minimum_over_stock_desc']       = 'The product is in stock, but the stock is smaller than the minimum quantity a customer must order, so the remaining items cannot be bought.';
 $_['check_product_minimum_over_stock_hint']       = 'Lower the Minimum Quantity or restock the product on the product Data tab.';
+$_['check_product_duplicate_model_title']         = 'Products with a duplicate model';
+$_['check_product_duplicate_model_desc']          = 'Several products share the same model (ignoring case and surrounding spaces); variants of one product are not counted. Search, feeds and stock tools that identify products by model mix them up.';
+$_['check_product_duplicate_model_hint']          = 'Give each product a unique Model on the product Data tab, or turn the products into variants of one master product.';
