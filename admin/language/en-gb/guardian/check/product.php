@@ -40,5 +40,5 @@ $_['check_product_incomplete_description_title']  = 'Products not translated to 
 $_['check_product_incomplete_description_desc']   = 'The product has no description record for an enabled language; in that language the storefront shows it without a name.';
 $_['check_product_incomplete_description_hint']   = 'Open the product, fill in the General tab for the listed language and save.';
 $_['check_product_zero_price_title']              = 'Enabled products with zero price';
-$_['check_product_zero_price_desc']               = 'The product is enabled, its price is zero or below and no active special sets a positive price, so customers can order it for free.';
+$_['check_product_zero_price_desc']               = 'The product is enabled, its price is zero or below and at least one customer group has no active special with a positive price for a single item, so those customers can order it for free.';
 $_['check_product_zero_price_hint']               = 'Set the price on the product Data tab, or disable the product if it is not for sale.';

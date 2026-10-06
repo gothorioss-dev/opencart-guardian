@@ -97,12 +97,13 @@ class Product extends Base {
 	 * (catalog/controller/product/product.php, checkout/cart.php), so such
 	 * variants lose their options. A disabled master is not reported: options
 	 * still load from it, and hiding the master while selling variants is a
-	 * legitimate setup.
+	 * legitimate setup. A self-referencing variant joins itself as `m`, so the
+	 * `m`.`master_id` test covers it.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productBrokenVariant(): CheckResult {
-		return $this->collect('product_broken_variant', $this->productSelect('`p`.`master_id`, `m`.`master_id` AS `master_master_id`') . " LEFT JOIN `" . DB_PREFIX . "product` `m` ON (`m`.`product_id` = `p`.`master_id`) WHERE `p`.`master_id` != '0' AND (`m`.`product_id` IS NULL OR `p`.`master_id` = `p`.`product_id` OR `m`.`master_id` != '0') ORDER BY `p`.`product_id`");
+		return $this->collect('product_broken_variant', $this->productSelect('`p`.`master_id`, `m`.`master_id` AS `master_master_id`') . " LEFT JOIN `" . DB_PREFIX . "product` `m` ON (`m`.`product_id` = `p`.`master_id`) WHERE `p`.`master_id` != '0' AND (`m`.`product_id` IS NULL OR `m`.`master_id` != '0') ORDER BY `p`.`product_id`");
 	}
 
 	/**
@@ -178,16 +179,18 @@ class Product extends Base {
 	}
 
 	/**
-	 * Enabled products priced at zero or below with no active special that
-	 * gives a positive price, in any customer group. The special's final
-	 * price and date window follow catalog/model/catalog/product.php.
+	 * Enabled products priced at zero or below that some customer group can
+	 * buy for free: the group has no active special with a positive price
+	 * for a single item (the cart applies a row only from its quantity up).
+	 * The special's final price and date window follow
+	 * catalog/model/catalog/product.php.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productZeroPrice(): CheckResult {
 		$special_price = "(CASE WHEN `ps`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`ps`.`price` / 100))) WHEN `ps`.`type` = 'S' THEN (`p`.`price` - `ps`.`price`) ELSE `ps`.`price` END)";
 
-		return $this->collect('product_zero_price', $this->productSelect('`p`.`price`') . " WHERE `p`.`status` = '1' AND `p`.`price` <= '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_discount` `ps` WHERE `ps`.`product_id` = `p`.`product_id` AND `ps`.`special` = '1' AND (`ps`.`date_start` = '0000-00-00' OR `ps`.`date_start` < NOW()) AND (`ps`.`date_end` = '0000-00-00' OR `ps`.`date_end` > NOW()) AND " . $special_price . " > '0') ORDER BY `p`.`product_id`");
+		return $this->collect('product_zero_price', $this->productSelect('`p`.`price`') . " WHERE `p`.`status` = '1' AND `p`.`price` <= '0' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "customer_group` `cg` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_discount` `ps` WHERE `ps`.`product_id` = `p`.`product_id` AND `ps`.`customer_group_id` = `cg`.`customer_group_id` AND `ps`.`special` = '1' AND `ps`.`quantity` <= '1' AND (`ps`.`date_start` = '0000-00-00' OR `ps`.`date_start` < NOW()) AND (`ps`.`date_end` = '0000-00-00' OR `ps`.`date_end` > NOW()) AND " . $special_price . " > '0')) ORDER BY `p`.`product_id`");
 	}
 
 	/**
