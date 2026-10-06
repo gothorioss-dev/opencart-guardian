@@ -25,7 +25,8 @@ class Product extends Base {
 		'product_incomplete_description'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_zero_price'              => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
 		'product_discount_dates_inverted' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_discount_not_lower'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_discount_not_lower'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_negative_stock'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -231,6 +232,17 @@ class Product extends Base {
 		$final_price = "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
 
 		return $this->collect('product_discount_not_lower', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `p`.`price`, ROUND(" . $final_price . ", 4) AS `final_price`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `p`.`price` > '0' AND " . $final_price . " >= `p`.`price` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+	}
+
+	/**
+	 * Products whose stock went below zero while orders subtract it: oversold
+	 * or edited by hand. Disabled products are included, the count is wrong
+	 * either way.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productNegativeStock(): CheckResult {
+		return $this->collect('product_negative_stock', $this->productSelect('`p`.`quantity`') . " WHERE `p`.`subtract` = '1' AND `p`.`quantity` < '0' ORDER BY `p`.`product_id`");
 	}
 
 	/**

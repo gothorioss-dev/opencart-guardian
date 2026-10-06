@@ -48,3 +48,6 @@ $_['check_product_discount_dates_inverted_hint']  = 'Open the product and correc
 $_['check_product_discount_not_lower_title']      = 'Discounts and specials that do not lower the price';
 $_['check_product_discount_not_lower_desc']       = 'The final price of a discount or special is the same as or higher than the regular price. Such a row still takes priority and can hide a real discount for the same customer group.';
 $_['check_product_discount_not_lower_hint']       = 'Open the product and correct or remove the listed row on the Discount tab.';
+$_['check_product_negative_stock_title']          = 'Products with negative stock';
+$_['check_product_negative_stock_desc']           = 'The stock quantity is below zero although orders subtract stock: more items were sold than were in stock, or the quantity was changed by hand.';
+$_['check_product_negative_stock_hint']           = 'Count the actual stock and set the Quantity on the product Data tab.';
