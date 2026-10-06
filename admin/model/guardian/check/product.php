@@ -23,7 +23,8 @@ class Product extends Base {
 		'product_broken_attribute_option' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_empty_content'           => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
 		'product_incomplete_description'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_zero_price'              => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql']
+		'product_zero_price'              => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
+		'product_discount_dates_inverted' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -203,6 +204,18 @@ class Product extends Base {
 		$subscription_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_subscription` `psb` INNER JOIN `" . DB_PREFIX . "subscription_plan` `sp` ON (`sp`.`subscription_plan_id` = `psb`.`subscription_plan_id`) WHERE `psb`.`product_id` = `p`.`product_id` AND `psb`.`customer_group_id` = `cg`.`customer_group_id` AND `sp`.`status` = '1')";
 
 		return $this->collect('product_zero_price', $this->productSelect("`p`.`price`, GROUP_CONCAT(`cg`.`customer_group_id` ORDER BY `cg`.`customer_group_id` SEPARATOR ', ') AS `customer_groups`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " GROUP BY `p`.`product_id`, `pd`.`name`, `p`.`status`, `p`.`price` ORDER BY `p`.`product_id`");
+	}
+
+	/**
+	 * Discount and special rows that can never apply: both dates are set and
+	 * the start is not before the end. The cart and storefront need
+	 * date_start < NOW() < date_end on midnight-based dates, so equal dates
+	 * never match either. One finding row per discount row.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productDiscountDatesInverted(): CheckResult {
+		return $this->collect('product_discount_dates_inverted', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`date_start`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_start` != '0000-00-00' AND `dc`.`date_end` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**

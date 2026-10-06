@@ -42,3 +42,6 @@ $_['check_product_incomplete_description_hint']   = 'Open the product, fill in t
 $_['check_product_zero_price_title']              = 'Enabled products with zero price';
 $_['check_product_zero_price_desc']               = 'The product is enabled and one item costs zero or less in the cart for the listed customer groups: either its price is zero or an applicable discount or special brings it down to zero.';
 $_['check_product_zero_price_hint']               = 'Check the price on the product Data tab and the rows for the listed customer groups on the Discount tab, or disable the product if it is not for sale.';
+$_['check_product_discount_dates_inverted_title'] = 'Discounts and specials that can never apply';
+$_['check_product_discount_dates_inverted_desc']  = 'The start date of a discount or special is the same as or later than its end date, so the storefront and the cart never apply it.';
+$_['check_product_discount_dates_inverted_hint']  = 'Open the product and correct the dates of the listed row on the Discount tab.';
