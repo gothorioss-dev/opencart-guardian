@@ -51,3 +51,6 @@ $_['check_product_discount_not_lower_hint']       = 'Open the product and correc
 $_['check_product_negative_stock_title']          = 'Products with negative stock';
 $_['check_product_negative_stock_desc']           = 'The stock quantity is below zero although orders subtract stock: more items were sold than were in stock, or the quantity was changed by hand.';
 $_['check_product_negative_stock_hint']           = 'Count the actual stock and set the Quantity on the product Data tab.';
+$_['check_product_minimum_over_stock_title']      = 'Products with stock below the minimum order quantity';
+$_['check_product_minimum_over_stock_desc']       = 'The product is in stock, but the stock is smaller than the minimum quantity a customer must order, so the remaining items cannot be bought.';
+$_['check_product_minimum_over_stock_hint']       = 'Lower the Minimum Quantity or restock the product on the product Data tab.';

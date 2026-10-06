@@ -26,7 +26,8 @@ class Product extends Base {
 		'product_zero_price'              => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
 		'product_discount_dates_inverted' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_discount_not_lower'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_negative_stock'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_negative_stock'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_minimum_over_stock'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -243,6 +244,17 @@ class Product extends Base {
 	 */
 	protected function productNegativeStock(): CheckResult {
 		return $this->collect('product_negative_stock', $this->productSelect('`p`.`quantity`') . " WHERE `p`.`subtract` = '1' AND `p`.`quantity` < '0' ORDER BY `p`.`product_id`");
+	}
+
+	/**
+	 * Enabled products in stock but below their minimum order quantity, so
+	 * the stock that is there cannot be bought. Out-of-stock products are not
+	 * reported: that is a normal state shown by the stock status.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productMinimumOverStock(): CheckResult {
+		return $this->collect('product_minimum_over_stock', $this->productSelect('`p`.`quantity`, `p`.`minimum`') . " WHERE `p`.`status` = '1' AND `p`.`subtract` = '1' AND `p`.`quantity` > '0' AND `p`.`minimum` > `p`.`quantity` ORDER BY `p`.`product_id`");
 	}
 
 	/**
