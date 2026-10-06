@@ -63,3 +63,6 @@ $_['check_product_duplicate_identifier_hint']     = 'Open the listed products an
 $_['check_product_related_broken_title']          = 'Related products that no longer exist';
 $_['check_product_related_broken_desc']           = 'The product lists a related product that was deleted; the storefront skips it, so only an unused link remains.';
 $_['check_product_related_broken_hint']           = 'Open the product and remove the missing entry from Related Products on the Links tab, then save.';
+$_['check_product_related_one_way_title']         = 'One-way related product links';
+$_['check_product_related_one_way_desc']          = 'The product lists a related product that does not list it back. The admin always links related products both ways, so the link was added by an import, another module or a direct database change.';
+$_['check_product_related_one_way_hint']          = 'Open the listed product and save it: the admin rewrites its links in both directions. To drop the link instead, remove it from Related Products on the Links tab before saving.';

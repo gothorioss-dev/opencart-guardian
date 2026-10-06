@@ -30,7 +30,8 @@ class Product extends Base {
 		'product_minimum_over_stock'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_duplicate_model'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_duplicate_identifier'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'product_related_broken'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'product_related_broken'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'product_related_one_way'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -304,6 +305,18 @@ class Product extends Base {
 	 */
 	protected function productRelatedBroken(): CheckResult {
 		return $this->collect('product_related_broken', $this->productSelect('`pr`.`related_id`') . " INNER JOIN `" . DB_PREFIX . "product_related` `pr` ON (`pr`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `r` WHERE `r`.`product_id` = `pr`.`related_id`) ORDER BY `p`.`product_id`, `pr`.`related_id`");
+	}
+
+	/**
+	 * Related links stored in one direction only, one finding row per link.
+	 * Admin addRelated always writes both directions, so a one-way link came
+	 * from an import, another module or direct SQL. Links to deleted
+	 * products belong to product_related_broken.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productRelatedOneWay(): CheckResult {
+		return $this->collect('product_related_one_way', $this->productSelect('`pr`.`related_id`') . " INNER JOIN `" . DB_PREFIX . "product_related` `pr` ON (`pr`.`product_id` = `p`.`product_id`) WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `r` WHERE `r`.`product_id` = `pr`.`related_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_related` `rr` WHERE `rr`.`product_id` = `pr`.`related_id` AND `rr`.`related_id` = `pr`.`product_id`) ORDER BY `p`.`product_id`, `pr`.`related_id`");
 	}
 
 	/**
