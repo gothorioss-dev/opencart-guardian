@@ -187,7 +187,9 @@ class Product extends Base {
 	 * row the base price applies. Products with a required select, radio or
 	 * checkbox option whose every value adds a positive price are skipped:
 	 * the cart cannot take them without a surcharge. Variants take options
-	 * from their master, as the cart does.
+	 * from their master, as the cart does. A group is skipped when the product
+	 * has an enabled subscription plan for it: the cart then takes the plan's
+	 * price, looked up by the product's own id.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
@@ -198,7 +200,9 @@ class Product extends Base {
 
 		$option_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` INNER JOIN `" . DB_PREFIX . "option` `o` ON (`o`.`option_id` = `po`.`option_id`) WHERE `po`.`product_id` = IF(`p`.`master_id` != '0', `p`.`master_id`, `p`.`product_id`) AND `po`.`required` = '1' AND `o`.`type` IN ('select', 'radio', 'checkbox') AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`product_option_id` = `po`.`product_option_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`product_option_id` = `po`.`product_option_id` AND NOT (`pov`.`price_prefix` = '+' AND `pov`.`price` > '0')))";
 
-		return $this->collect('product_zero_price', $this->productSelect("`p`.`price`, GROUP_CONCAT(`cg`.`customer_group_id` ORDER BY `cg`.`customer_group_id` SEPARATOR ', ') AS `customer_groups`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " GROUP BY `p`.`product_id`, `pd`.`name`, `p`.`status`, `p`.`price` ORDER BY `p`.`product_id`");
+		$subscription_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_subscription` `psb` INNER JOIN `" . DB_PREFIX . "subscription_plan` `sp` ON (`sp`.`subscription_plan_id` = `psb`.`subscription_plan_id`) WHERE `psb`.`product_id` = `p`.`product_id` AND `psb`.`customer_group_id` = `cg`.`customer_group_id` AND `sp`.`status` = '1')";
+
+		return $this->collect('product_zero_price', $this->productSelect("`p`.`price`, GROUP_CONCAT(`cg`.`customer_group_id` ORDER BY `cg`.`customer_group_id` SEPARATOR ', ') AS `customer_groups`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " GROUP BY `p`.`product_id`, `pd`.`name`, `p`.`status`, `p`.`price` ORDER BY `p`.`product_id`");
 	}
 
 	/**
