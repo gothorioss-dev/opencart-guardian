@@ -22,7 +22,8 @@ class Product extends Base {
 		'product_broken_reference'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_broken_attribute_option' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_empty_content'           => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
-		'product_incomplete_description'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_incomplete_description'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_zero_price'              => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql']
 	];
 
 	/**
@@ -174,6 +175,19 @@ class Product extends Base {
 	 */
 	protected function productIncompleteDescription(): CheckResult {
 		return $this->collect('product_incomplete_description', $this->productSelect("`l`.`code` AS `language`") . " CROSS JOIN `" . DB_PREFIX . "language` `l` WHERE `l`.`status` = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_description` `pd2` WHERE `pd2`.`product_id` = `p`.`product_id` AND `pd2`.`language_id` = `l`.`language_id`) ORDER BY `p`.`product_id`, `l`.`code`");
+	}
+
+	/**
+	 * Enabled products priced at zero or below with no active special that
+	 * gives a positive price, in any customer group. The special's final
+	 * price and date window follow catalog/model/catalog/product.php.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productZeroPrice(): CheckResult {
+		$special_price = "(CASE WHEN `ps`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`ps`.`price` / 100))) WHEN `ps`.`type` = 'S' THEN (`p`.`price` - `ps`.`price`) ELSE `ps`.`price` END)";
+
+		return $this->collect('product_zero_price', $this->productSelect('`p`.`price`') . " WHERE `p`.`status` = '1' AND `p`.`price` <= '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_discount` `ps` WHERE `ps`.`product_id` = `p`.`product_id` AND `ps`.`special` = '1' AND (`ps`.`date_start` = '0000-00-00' OR `ps`.`date_start` < NOW()) AND (`ps`.`date_end` = '0000-00-00' OR `ps`.`date_end` > NOW()) AND " . $special_price . " > '0') ORDER BY `p`.`product_id`");
 	}
 
 	/**
