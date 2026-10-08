@@ -5,7 +5,7 @@ use Opencart\Admin\Model\Extension\GtrGuardian\Guardian\DomainBase;
 /**
  * Class Catalog
  *
- * Guardian domain A: catalog data quality (DATA, CATALOG, MEDIA, SEO, GARBAGE).
+ * Guardian domain A: catalog data quality (PRODUCT, CATEGORY, MEDIA, SEO, GARBAGE).
  *
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Domain
  */
@@ -21,6 +21,6 @@ class Catalog extends DomainBase {
 	 * @return array<int, string>
 	 */
 	public function categories(): array {
-		return ['data', 'catalog', 'media', 'seo', 'garbage'];
+		return ['product', 'category', 'media', 'seo', 'garbage'];
 	}
 }
