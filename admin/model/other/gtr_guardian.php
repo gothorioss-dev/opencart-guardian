@@ -283,19 +283,31 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 
 		$this->model_setting_event->deleteEventByCode('gtr_guardian_column_left');
 
-		$group_id = $this->user->getGroupId();
-
 		// The settings route is granted by the core "other" lifecycle on every
 		// install and never revoked by it; revoke it here so reinstalls do not
 		// accumulate copies.
 		$routes = array_merge(array_values($this->getPermissionRoutes()), ['extension/gtr_guardian/other/gtr_guardian']);
 
-		foreach ($routes as $route) {
-			$this->model_user_user_group->removePermission($group_id, 'access', $route);
-			$this->model_user_user_group->removePermission($group_id, 'modify', $route);
+		// Every group, since the permissions matrix grants routes to any of them.
+		// Core removePermission() is not used: its array_diff() keeps keys, so
+		// the list would be saved as a JSON object.
+		foreach ($this->model_user_user_group->getUserGroups() as $group) {
+			$permission = $group['permission'] ? (array)json_decode($group['permission'], true) : [];
+
+			$current = $permission;
+
+			foreach (['access', 'modify'] as $type) {
+				if (isset($current[$type])) {
+					$current[$type] = array_values(array_diff($current[$type], $routes));
+				}
+			}
+
+			if ($current !== $permission) {
+				$this->model_user_user_group->editUserGroup((int)$group['user_group_id'], ['name' => $group['name'], 'permission' => $current]);
+			}
 		}
 
-		$this->model_setting_setting->deleteSettingsByCode('other_gtr_guardian');
+		// "other_gtr_guardian" settings are already deleted by the core uninstall.
 		$this->model_setting_setting->deleteSettingsByCode('gtr_guardian');
 
 		$this->load->model('extension/gtr_guardian/guardian/result');
