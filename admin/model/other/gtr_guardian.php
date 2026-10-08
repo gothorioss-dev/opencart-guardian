@@ -17,25 +17,17 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	private ?array $domain_codes = null;
 
 	/**
-	 * Whether the Guardian core extension is installed.
-	 *
-	 * @return bool
-	 */
-	public function isCoreInstalled(): bool {
-		$this->load->model('setting/extension');
-
-		return !empty($this->model_setting_extension->getExtensionByCode('other', 'gtr_guardian'));
-	}
-
-	/**
 	 * Whether Guardian is installed and switched on. Every Guardian screen and
 	 * the menu are gated on this; the settings screen itself is not.
+	 *
+	 * The status flag alone implies the install: it is only saved from the
+	 * settings screen, and the core uninstall deletes the whole
+	 * "other_gtr_guardian" settings group.
 	 *
 	 * @return bool
 	 */
 	public function isActive(): bool {
-		// The flag is in memory, the install lookup is a query: check it first.
-		return (bool)$this->config->get('other_gtr_guardian_status') && $this->isCoreInstalled();
+		return (bool)$this->config->get('other_gtr_guardian_status');
 	}
 
 	/**
