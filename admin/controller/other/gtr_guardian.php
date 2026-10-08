@@ -219,10 +219,8 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 
 		if (!$json) {
 			$this->load->model('extension/gtr_guardian/guardian/result');
-			$this->load->model('extension/gtr_guardian/guardian/runner');
 
 			$this->model_extension_gtr_guardian_guardian_result->clear();
-			$this->model_extension_gtr_guardian_guardian_runner->clearSummary();
 
 			$json['success'] = $this->language->get('text_clear_success');
 			$json['total'] = sprintf($this->language->get('text_history_total'), 0);

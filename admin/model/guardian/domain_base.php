@@ -6,9 +6,8 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport;
 /**
  * Class DomainBase
  *
- * Shared SubmoduleProvider implementation: the report is served from the
- * gtr_guardian_summary setting the runner maintains, so the dashboard never
- * touches the run tables.
+ * Shared SubmoduleProvider implementation: the report is built from the
+ * domain's latest finished run.
  *
  * Lives outside admin/model/guardian/domain/ on purpose — that folder is
  * globbed for domain discovery.
@@ -22,23 +21,40 @@ abstract class DomainBase extends \Opencart\System\Engine\Model implements Submo
 	public function report(): SubmoduleReport {
 		$code = $this->getCode();
 
-		$summary = $this->config->get('gtr_guardian_summary');
+		$this->load->model('extension/gtr_guardian/guardian/result');
 
-		if (!is_array($summary) || empty($summary[$code])) {
+		$run = $this->model_extension_gtr_guardian_guardian_result->getLatestRun($code);
+
+		if (!$run) {
 			$this->load->model('extension/gtr_guardian/guardian/runner');
 
 			return SubmoduleReport::pending($code, $this->model_extension_gtr_guardian_guardian_runner->getChecksTotal($this->categories()));
 		}
 
-		$row = $summary[$code];
+		$counts = [
+			'critical' => (int)$run['critical'],
+			'warning'  => (int)$run['warning'],
+			'info'     => (int)$run['info'],
+			'errors'   => (int)$run['errors']
+		];
+
+		if ($counts['critical']) {
+			$status = SubmoduleReport::STATUS_CRITICAL;
+		} elseif ($counts['warning']) {
+			$status = SubmoduleReport::STATUS_WARNING;
+		} elseif ($counts['errors']) {
+			$status = SubmoduleReport::STATUS_ERROR;
+		} else {
+			$status = SubmoduleReport::STATUS_OK;
+		}
 
 		return new SubmoduleReport(
 			$code,
-			(string)$row['status'],
+			$status,
 			'',
-			(array)$row['counts'],
-			(int)$row['last_run'],
-			(int)$row['checks_total']
+			$counts,
+			strtotime($run['date_finished']),
+			(int)$run['checks_total']
 		);
 	}
 }
