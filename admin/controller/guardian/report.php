@@ -27,6 +27,12 @@ class Report extends \Opencart\System\Engine\Controller {
 	private const DATE_COLUMNS = ['date_available', 'date_start', 'date_end'];
 
 	/**
+	 * Report order: checks with findings or a failed run first, then the
+	 * rest; within each group by severity.
+	 */
+	private const SEVERITY_ORDER = ['critical' => 0, 'warning' => 1, 'info' => 2];
+
+	/**
 	 * Finding columns holding a record id (or a comma-separated list of ids)
 	 * shown by name; a deleted record keeps its id.
 	 */
@@ -105,10 +111,15 @@ class Report extends \Opencart\System\Engine\Controller {
 
 				$items = $result ? $this->getItems($category, $result['items']) : [];
 
+				// Optional per check: an empty string hides the line.
+				$impact_key = $category . '_check_' . $code . '_impact';
+				$impact = $this->language->get($impact_key) !== $impact_key ? $this->language->get($impact_key) : '';
+
 				$checks[] = [
 					'code'     => $code,
 					'title'    => $this->language->get($category . '_check_' . $code . '_title'),
 					'desc'     => $this->language->get($category . '_check_' . $code . '_desc'),
+					'impact'   => $impact,
 					'hint'     => $this->language->get($category . '_check_' . $code . '_hint'),
 					'severity' => $meta['severity'],
 					'status'   => $result ? $result['status'] : 'pending',
@@ -118,6 +129,11 @@ class Report extends \Opencart\System\Engine\Controller {
 					'message'  => $message
 				];
 			}
+
+			// usort is stable, so equal checks keep their registry order.
+			usort($checks, function (array $a, array $b): int {
+				return [!in_array($a['status'], ['found', 'error']), self::SEVERITY_ORDER[$a['severity']] ?? 3] <=> [!in_array($b['status'], ['found', 'error']), self::SEVERITY_ORDER[$b['severity']] ?? 3];
+			});
 
 			$data['categories'][] = [
 				'code'   => $category,

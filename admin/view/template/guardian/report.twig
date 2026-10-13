@@ -36,33 +36,32 @@
                   <td>
                     <strong>{{ check.title }}</strong>
                     <div class="form-text">{{ check.desc }}</div>
-                    {% if check.status == 'found' or check.status == 'error' %}
-                      <a data-bs-toggle="collapse" href="#{{ row_id }}" class="small">{{ button_details }}</a>
-                      <div id="{{ row_id }}" class="collapse mt-2">
-                        {% if check.status == 'error' %}
-                          <pre class="small text-danger mb-2">{{ check.message }}</pre>
-                        {% else %}
-                          <p class="small mb-2"><i class="fa-solid fa-lightbulb"></i> <strong>{{ text_hint }}</strong> {{ check.hint }}</p>
-                          {% if check.items %}
-                            {% if check.count > items_limit %}<p class="small text-secondary mb-1">{{ text_sample|format(items_limit, check.count) }}</p>{% endif %}
-                            <div class="table-responsive">
-                              <table class="table table-sm table-striped small mb-0">
-                                <thead>
-                                  <tr>{% for column in check.columns %}<th>{{ column }}</th>{% endfor %}<th></th></tr>
-                                </thead>
-                                <tbody>
-                                  {% for item in check.items %}
-                                    <tr>
-                                      {% for value in item.cells %}<td>{{ value }}</td>{% endfor %}
-                                      <td class="text-end">{% if item.edit %}<a href="{{ item.edit }}" target="_blank" data-bs-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pencil"></i></a>{% endif %}</td>
-                                    </tr>
-                                  {% endfor %}
-                                </tbody>
-                              </table>
-                            </div>
-                          {% endif %}
-                        {% endif %}
-                      </div>
+                    {% if check.status == 'error' %}
+                      <pre class="small text-danger mt-2 mb-0">{{ check.message }}</pre>
+                    {% elseif check.status == 'found' %}
+                      {% if check.impact %}<p class="small mt-2 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> <strong>{{ text_impact }}</strong> {{ check.impact }}</p>{% endif %}
+                      <p class="small mb-1{% if not check.impact %} mt-2{% endif %}"><i class="fa-solid fa-lightbulb"></i> <strong>{{ text_hint }}</strong> {{ check.hint }}</p>
+                      {% if check.items %}
+                        <a data-bs-toggle="collapse" href="#{{ row_id }}" class="small">{{ button_items|format(check.count) }}</a>
+                        <div id="{{ row_id }}" class="collapse mt-2">
+                          {% if check.count > items_limit %}<p class="small text-secondary mb-1">{{ text_sample|format(items_limit, check.count) }}</p>{% endif %}
+                          <div class="table-responsive">
+                            <table class="table table-sm table-striped small mb-0">
+                              <thead>
+                                <tr>{% for column in check.columns %}<th>{{ column }}</th>{% endfor %}<th></th></tr>
+                              </thead>
+                              <tbody>
+                                {% for item in check.items %}
+                                  <tr>
+                                    {% for value in item.cells %}<td>{{ value }}</td>{% endfor %}
+                                    <td class="text-end">{% if item.edit %}<a href="{{ item.edit }}" target="_blank" data-bs-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pencil"></i></a>{% endif %}</td>
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      {% endif %}
                     {% endif %}
                   </td>
                   <td class="text-center">
