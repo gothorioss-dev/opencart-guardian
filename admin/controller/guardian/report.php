@@ -22,6 +22,10 @@ class Report extends \Opencart\System\Engine\Controller {
 	 */
 	private const CODE_COLUMNS = ['type', 'kind', 'field'];
 
+	private const PRICE_COLUMNS = ['price', 'final_price'];
+
+	private const DATE_COLUMNS = ['date_available', 'date_start', 'date_end'];
+
 	/**
 	 * Render the latest run of a domain as an HTML block.
 	 *
@@ -247,6 +251,26 @@ class Report extends \Opencart\System\Engine\Controller {
 			}
 
 			return implode(', ', $texts);
+		}
+
+		if (in_array($key, self::PRICE_COLUMNS)) {
+			return $this->currency->format((float)$value, $this->config->get('config_currency'));
+		}
+
+		if (in_array($key, self::DATE_COLUMNS)) {
+			if ($value == '0000-00-00') {
+				return '—';
+			}
+
+			$time = strtotime($value);
+
+			return $time ? date($this->language->get('date_format_short'), $time) : $value;
+		}
+
+		// Decimal columns come back as "0.00000000". Only the trailing zeros
+		// go: no thousands separator, so IDs and barcodes stay intact.
+		if (is_numeric($value) && str_contains($value, '.')) {
+			return str_replace('.', $this->language->get('decimal_point'), rtrim(rtrim($value, '0'), '.'));
 		}
 
 		return $value;
