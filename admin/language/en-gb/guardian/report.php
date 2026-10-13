@@ -28,6 +28,7 @@ $_['column_count']           = 'Count';
 // Button
 $_['button_run']             = 'Run checks';
 $_['button_details']         = 'Details';
+$_['button_edit']            = 'Edit';
 
 // Error
 $_['error_permission']       = 'Warning: You do not have permission to run checks!';

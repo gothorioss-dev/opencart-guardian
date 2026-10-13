@@ -11,6 +11,12 @@ namespace Opencart\Admin\Controller\Extension\GtrGuardian\Guardian;
  */
 class Report extends \Opencart\System\Engine\Controller {
 	/**
+	 * Finding keys that identify a store record, mapped to the admin form that
+	 * edits it. Such a key is shown as an edit button instead of a column.
+	 */
+	private const EDIT_ROUTES = ['product_id' => 'catalog/product.form'];
+
+	/**
 	 * Render the latest run of a domain as an HTML block.
 	 *
 	 * @param string $domain
@@ -79,7 +85,7 @@ class Report extends \Opencart\System\Engine\Controller {
 					'severity' => $meta['severity'],
 					'status'   => $result ? $result['status'] : 'pending',
 					'count'    => $result ? (int)$result['count'] : 0,
-					'items'    => $result ? $this->escapeItems($result['items']) : [],
+					'items'    => $result ? $this->getItems($result['items']) : [],
 					'message'  => $message
 				];
 			}
@@ -146,23 +152,32 @@ class Report extends \Opencart\System\Engine\Controller {
 	 * (Request::clean); imports and API writes bypass that. double_encode=false
 	 * keeps already-escaped values intact.
 	 *
+	 * Keys listed in EDIT_ROUTES leave the cells and become the row's edit link.
+	 *
 	 * @param array<int, array<string, mixed>> $items
 	 *
-	 * @return array<int, array<string, string>>
+	 * @return array<int, array{cells: array<string, string>, edit: string}>
 	 */
-	private function escapeItems(array $items): array {
-		$escaped = [];
+	private function getItems(array $items): array {
+		$rows = [];
 
 		foreach ($items as $row) {
-			$clean = [];
+			$cells = [];
+			$edit = '';
 
 			foreach ($row as $key => $value) {
-				$clean[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8', false);
+				if (isset(self::EDIT_ROUTES[$key])) {
+					$edit = $this->url->link(self::EDIT_ROUTES[$key], 'user_token=' . $this->session->data['user_token'] . '&' . $key . '=' . (int)$value);
+
+					continue;
+				}
+
+				$cells[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8', false);
 			}
 
-			$escaped[] = $clean;
+			$rows[] = ['cells' => $cells, 'edit' => $edit];
 		}
 
-		return $escaped;
+		return $rows;
 	}
 }

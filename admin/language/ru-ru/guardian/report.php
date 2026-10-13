@@ -28,6 +28,7 @@ $_['column_count']           = 'Кол-во';
 // Button
 $_['button_run']             = 'Запустить проверки';
 $_['button_details']         = 'Подробнее';
+$_['button_edit']            = 'Редактировать';
 
 // Error
 $_['error_permission']       = 'Внимание: у вас нет прав для запуска проверок!';
