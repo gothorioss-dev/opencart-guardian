@@ -106,3 +106,21 @@ $_['check_product_empty_content_column_field']    = 'Пустые поля';
 $_['check_product_discount_not_lower_column_type'] = 'Тип скидки';
 $_['check_product_discount_not_lower_column_value'] = 'Размер скидки';
 $_['check_product_duplicate_identifier_column_value'] = 'Значение идентификатора';
+
+// Value
+$_['value_type_attribute']                        = 'Атрибут';
+$_['value_type_option']                           = 'Опция';
+$_['value_type_option_value']                     = 'Значение опции';
+$_['value_type_product_option']                   = 'Опция товара';
+$_['value_type_F']                                = 'Фиксированная';
+$_['value_type_P']                                = 'Процент';
+$_['value_type_S']                                = 'Вычесть';
+$_['value_kind_special']                          = 'Акция';
+$_['value_kind_discount']                         = 'Скидка';
+$_['value_field_tax_class_id']                    = 'Налоговый класс';
+$_['value_field_weight_class_id']                 = 'Единица веса';
+$_['value_field_length_class_id']                 = 'Единица длины';
+$_['value_field_stock_status_id']                 = 'Статус при отсутствии';
+$_['value_field_manufacturer_id']                 = 'Производитель';
+$_['value_field_name']                            = 'Название';
+$_['value_field_description']                     = 'Описание';

@@ -106,3 +106,21 @@ $_['check_product_empty_content_column_field']    = 'Порожні поля';
 $_['check_product_discount_not_lower_column_type'] = 'Тип знижки';
 $_['check_product_discount_not_lower_column_value'] = 'Розмір знижки';
 $_['check_product_duplicate_identifier_column_value'] = 'Значення ідентифікатора';
+
+// Value
+$_['value_type_attribute']                        = 'Атрибут';
+$_['value_type_option']                           = 'Опція';
+$_['value_type_option_value']                     = 'Значення опції';
+$_['value_type_product_option']                   = 'Опція товару';
+$_['value_type_F']                                = 'Фіксована';
+$_['value_type_P']                                = 'Відсоток';
+$_['value_type_S']                                = 'Відняти';
+$_['value_kind_special']                          = 'Акція';
+$_['value_kind_discount']                         = 'Знижка';
+$_['value_field_tax_class_id']                    = 'Податковий клас';
+$_['value_field_weight_class_id']                 = 'Одиниця ваги';
+$_['value_field_length_class_id']                 = 'Одиниця довжини';
+$_['value_field_stock_status_id']                 = 'Статус за відсутності';
+$_['value_field_manufacturer_id']                 = 'Виробник';
+$_['value_field_name']                            = 'Назва';
+$_['value_field_description']                     = 'Опис';

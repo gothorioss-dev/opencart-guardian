@@ -17,6 +17,12 @@ class Report extends \Opencart\System\Engine\Controller {
 	private const EDIT_ROUTES = ['product_id' => 'catalog/product.form'];
 
 	/**
+	 * Finding columns holding a code (or a comma-separated list of codes)
+	 * translated through the category's value_<column>_<code> keys.
+	 */
+	private const CODE_COLUMNS = ['type', 'kind', 'field'];
+
+	/**
 	 * Render the latest run of a domain as an HTML block.
 	 *
 	 * @param string $domain
@@ -77,7 +83,7 @@ class Report extends \Opencart\System\Engine\Controller {
 					$message = $show_message ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : $this->language->get('text_error_hidden');
 				}
 
-				$items = $result ? $this->getItems($result['items']) : [];
+				$items = $result ? $this->getItems($category, $result['items']) : [];
 
 				$checks[] = [
 					'code'     => $code,
@@ -157,11 +163,12 @@ class Report extends \Opencart\System\Engine\Controller {
 	 *
 	 * Keys listed in EDIT_ROUTES leave the cells and become the row's edit link.
 	 *
+	 * @param string                           $category
 	 * @param array<int, array<string, mixed>> $items
 	 *
 	 * @return array<int, array{cells: array<string, string>, edit: string}>
 	 */
-	private function getItems(array $items): array {
+	private function getItems(string $category, array $items): array {
 		$rows = [];
 
 		foreach ($items as $row) {
@@ -175,7 +182,7 @@ class Report extends \Opencart\System\Engine\Controller {
 					continue;
 				}
 
-				$cells[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8', false);
+				$cells[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars($this->formatValue($category, (string)$key, (string)$value), ENT_QUOTES, 'UTF-8', false);
 			}
 
 			$rows[] = ['cells' => $cells, 'edit' => $edit];
@@ -214,5 +221,34 @@ class Report extends \Opencart\System\Engine\Controller {
 		}
 
 		return $columns;
+	}
+
+	/**
+	 * Human-readable cell value. A code without a translation is shown as is.
+	 *
+	 * @param string $category
+	 * @param string $key
+	 * @param string $value
+	 *
+	 * @return string
+	 */
+	private function formatValue(string $category, string $key, string $value): string {
+		if ($key == 'status') {
+			return $this->language->get((int)$value ? 'text_enabled' : 'text_disabled');
+		}
+
+		if (in_array($key, self::CODE_COLUMNS)) {
+			$texts = [];
+
+			foreach (explode(', ', $value) as $code) {
+				$language_key = $category . '_value_' . $key . '_' . $code;
+
+				$texts[] = $this->language->get($language_key) !== $language_key ? $this->language->get($language_key) : $code;
+			}
+
+			return implode(', ', $texts);
+		}
+
+		return $value;
 	}
 }

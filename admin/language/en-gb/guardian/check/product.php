@@ -106,3 +106,21 @@ $_['check_product_empty_content_column_field']    = 'Empty fields';
 $_['check_product_discount_not_lower_column_type'] = 'Discount type';
 $_['check_product_discount_not_lower_column_value'] = 'Discount value';
 $_['check_product_duplicate_identifier_column_value'] = 'Identifier value';
+
+// Value
+$_['value_type_attribute']                        = 'Attribute';
+$_['value_type_option']                           = 'Option';
+$_['value_type_option_value']                     = 'Option value';
+$_['value_type_product_option']                   = 'Product option';
+$_['value_type_F']                                = 'Fixed';
+$_['value_type_P']                                = 'Percentage';
+$_['value_type_S']                                = 'Subtract';
+$_['value_kind_special']                          = 'Special';
+$_['value_kind_discount']                         = 'Discount';
+$_['value_field_tax_class_id']                    = 'Tax class';
+$_['value_field_weight_class_id']                 = 'Weight class';
+$_['value_field_length_class_id']                 = 'Length class';
+$_['value_field_stock_status_id']                 = 'Out of stock status';
+$_['value_field_manufacturer_id']                 = 'Manufacturer';
+$_['value_field_name']                            = 'Name';
+$_['value_field_description']                     = 'Description';
