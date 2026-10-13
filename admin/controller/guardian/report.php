@@ -27,6 +27,23 @@ class Report extends \Opencart\System\Engine\Controller {
 	private const DATE_COLUMNS = ['date_available', 'date_start', 'date_end'];
 
 	/**
+	 * Finding columns holding a record id (or a comma-separated list of ids)
+	 * shown by name; a deleted record keeps its id.
+	 */
+	private const NAME_COLUMNS = [
+		'customer_group_id' => 'customer_group',
+		'customer_groups'   => 'customer_group',
+		'store_id'          => 'store'
+	];
+
+	/**
+	 * Record names per NAME_COLUMNS source, loaded once per request.
+	 *
+	 * @var array<string, array<int, string>>
+	 */
+	private array $names = [];
+
+	/**
 	 * Render the latest run of a domain as an HTML block.
 	 *
 	 * @param string $domain
@@ -253,6 +270,18 @@ class Report extends \Opencart\System\Engine\Controller {
 			return implode(', ', $texts);
 		}
 
+		if (isset(self::NAME_COLUMNS[$key])) {
+			$names = $this->getNames(self::NAME_COLUMNS[$key]);
+
+			$texts = [];
+
+			foreach (explode(', ', $value) as $id) {
+				$texts[] = $names[(int)$id] ?? $id;
+			}
+
+			return implode(', ', $texts);
+		}
+
 		if (in_array($key, self::PRICE_COLUMNS)) {
 			return $this->currency->format((float)$value, $this->config->get('config_currency'));
 		}
@@ -274,5 +303,34 @@ class Report extends \Opencart\System\Engine\Controller {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * @param string $source "customer_group" or "store"
+	 *
+	 * @return array<int, string> name by id
+	 */
+	private function getNames(string $source): array {
+		if (!isset($this->names[$source])) {
+			$this->names[$source] = [];
+
+			if ($source == 'customer_group') {
+				$this->load->model('customer/customer_group');
+
+				foreach ($this->model_customer_customer_group->getCustomerGroups() as $customer_group) {
+					$this->names[$source][(int)$customer_group['customer_group_id']] = $customer_group['name'];
+				}
+			} elseif ($source == 'store') {
+				$this->names[$source][0] = $this->config->get('config_name');
+
+				$this->load->model('setting/store');
+
+				foreach ($this->model_setting_store->getStores() as $store) {
+					$this->names[$source][(int)$store['store_id']] = $store['name'];
+				}
+			}
+		}
+
+		return $this->names[$source];
 	}
 }
