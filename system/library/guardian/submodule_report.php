@@ -16,13 +16,6 @@ class SubmoduleReport {
 	public const STATUS_ERROR    = 'error';
 
 	/**
-	 * Canonical severity order used for the counts map.
-	 *
-	 * @var array<int, string>
-	 */
-	public const SEVERITIES = ['critical', 'warning', 'info'];
-
-	/**
 	 * @param string             $code
 	 * @param string             $status       one of the STATUS_* constants
 	 * @param string             $summary      short plain-text summary

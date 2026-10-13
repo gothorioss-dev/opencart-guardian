@@ -17,25 +17,17 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 	private ?array $domain_codes = null;
 
 	/**
-	 * Whether the Guardian core extension is installed.
-	 *
-	 * @return bool
-	 */
-	public function isCoreInstalled(): bool {
-		$this->load->model('setting/extension');
-
-		return !empty($this->model_setting_extension->getExtensionByCode('other', 'gtr_guardian'));
-	}
-
-	/**
 	 * Whether Guardian is installed and switched on. Every Guardian screen and
 	 * the menu are gated on this; the settings screen itself is not.
+	 *
+	 * The status flag alone implies the install: it is only saved from the
+	 * settings screen, and the core uninstall deletes the whole
+	 * "other_gtr_guardian" settings group.
 	 *
 	 * @return bool
 	 */
 	public function isActive(): bool {
-		// The flag is in memory, the install lookup is a query: check it first.
-		return (bool)$this->config->get('other_gtr_guardian_status') && $this->isCoreInstalled();
+		return (bool)$this->config->get('other_gtr_guardian_status');
 	}
 
 	/**
@@ -283,19 +275,31 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 
 		$this->model_setting_event->deleteEventByCode('gtr_guardian_column_left');
 
-		$group_id = $this->user->getGroupId();
-
 		// The settings route is granted by the core "other" lifecycle on every
 		// install and never revoked by it; revoke it here so reinstalls do not
 		// accumulate copies.
 		$routes = array_merge(array_values($this->getPermissionRoutes()), ['extension/gtr_guardian/other/gtr_guardian']);
 
-		foreach ($routes as $route) {
-			$this->model_user_user_group->removePermission($group_id, 'access', $route);
-			$this->model_user_user_group->removePermission($group_id, 'modify', $route);
+		// Every group, since the permissions matrix grants routes to any of them.
+		// Core removePermission() is not used: its array_diff() keeps keys, so
+		// the list would be saved as a JSON object.
+		foreach ($this->model_user_user_group->getUserGroups() as $group) {
+			$permission = $group['permission'] ? (array)json_decode($group['permission'], true) : [];
+
+			$current = $permission;
+
+			foreach (['access', 'modify'] as $type) {
+				if (isset($current[$type])) {
+					$current[$type] = array_values(array_diff($current[$type], $routes));
+				}
+			}
+
+			if ($current !== $permission) {
+				$this->model_user_user_group->editUserGroup((int)$group['user_group_id'], ['name' => $group['name'], 'permission' => $current]);
+			}
 		}
 
-		$this->model_setting_setting->deleteSettingsByCode('other_gtr_guardian');
+		// "other_gtr_guardian" settings are already deleted by the core uninstall.
 		$this->model_setting_setting->deleteSettingsByCode('gtr_guardian');
 
 		$this->load->model('extension/gtr_guardian/guardian/result');

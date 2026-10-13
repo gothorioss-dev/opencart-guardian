@@ -2,12 +2,10 @@
 namespace Opencart\Admin\Model\Extension\GtrGuardian\Guardian;
 
 use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
-use Opencart\System\Library\Extension\GtrGuardian\Guardian\SubmoduleReport;
 /**
  * Class Runner
  *
- * Executes every check of a domain, persists the run, applies retention and
- * refreshes the per-domain summary setting read by the dashboard and menu.
+ * Executes every check of a domain, persists the run and applies retention.
  *
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian
  */
@@ -70,8 +68,6 @@ class Runner extends \Opencart\System\Engine\Model {
 
 		$store->prune($domain, $retention['runs'], $retention['days']);
 
-		$this->updateSummary($domain, $store->getLatestRun($domain));
-
 		return $run_id;
 	}
 
@@ -110,77 +106,6 @@ class Runner extends \Opencart\System\Engine\Model {
 	 */
 	public function getChecksTotal(array $categories): int {
 		return $this->countChecks($this->getCategoryModels($categories));
-	}
-
-	/**
-	 * Drop the summary of every domain (after the history was cleared).
-	 *
-	 * @return void
-	 */
-	public function clearSummary(): void {
-		$this->saveSummary([]);
-	}
-
-	/**
-	 * Refresh one domain's entry in the gtr_guardian_summary setting.
-	 *
-	 * @param string               $domain
-	 * @param array<string, mixed> $run latest finished run row
-	 *
-	 * @return void
-	 */
-	private function updateSummary(string $domain, array $run): void {
-		$summary = $this->config->get('gtr_guardian_summary');
-		$summary = is_array($summary) ? $summary : [];
-
-		if ($run) {
-			$counts = [
-				'critical' => (int)$run['critical'],
-				'warning'  => (int)$run['warning'],
-				'info'     => (int)$run['info'],
-				'errors'   => (int)$run['errors']
-			];
-
-			if ($counts['critical']) {
-				$status = SubmoduleReport::STATUS_CRITICAL;
-			} elseif ($counts['warning']) {
-				$status = SubmoduleReport::STATUS_WARNING;
-			} elseif ($counts['errors']) {
-				$status = SubmoduleReport::STATUS_ERROR;
-			} else {
-				$status = SubmoduleReport::STATUS_OK;
-			}
-
-			$summary[$domain] = [
-				'run_id'       => (int)$run['run_id'],
-				'status'       => $status,
-				'counts'       => $counts,
-				'last_run'     => strtotime($run['date_finished']),
-				'checks_total' => (int)$run['checks_total']
-			];
-		} else {
-			unset($summary[$domain]);
-		}
-
-		$this->saveSummary($summary);
-	}
-
-	/**
-	 * @param array<string, array<string, mixed>> $summary
-	 *
-	 * @return void
-	 */
-	private function saveSummary(array $summary): void {
-		$this->load->model('setting/setting');
-
-		$settings = $this->model_setting_setting->getSetting('gtr_guardian');
-
-		$settings['gtr_guardian_summary'] = $summary;
-
-		$this->model_setting_setting->editSetting('gtr_guardian', $settings);
-
-		// Keep the in-request view consistent with what was just written.
-		$this->config->set('gtr_guardian_summary', $summary);
 	}
 
 	/**

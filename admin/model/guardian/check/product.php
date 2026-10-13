@@ -203,7 +203,7 @@ class Product extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productZeroPrice(): CheckResult {
-		$final_price = "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
+		$final_price = $this->discountFinalPrice();
 
 		$cart_price = "COALESCE((SELECT " . $final_price . " FROM `" . DB_PREFIX . "product_discount` `dc` WHERE `dc`.`product_id` = `p`.`product_id` AND `dc`.`customer_group_id` = `cg`.`customer_group_id` AND `dc`.`quantity` <= '1' AND (`dc`.`date_start` = '0000-00-00' OR `dc`.`date_start` < NOW()) AND (`dc`.`date_end` = '0000-00-00' OR `dc`.`date_end` > NOW()) ORDER BY `dc`.`quantity` DESC, `dc`.`priority` ASC, `dc`.`price` ASC LIMIT 1), `p`.`price`)";
 
@@ -235,7 +235,7 @@ class Product extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productDiscountNotLower(): CheckResult {
-		$final_price = "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
+		$final_price = $this->discountFinalPrice();
 
 		return $this->collect('product_discount_not_lower', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `p`.`price`, ROUND(" . $final_price . ", 4) AS `final_price`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `p`.`price` > '0' AND " . $final_price . " >= `p`.`price` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
@@ -355,5 +355,16 @@ class Product extends Base {
 	 */
 	private function variantFamilies(string $columns = ''): string {
 		return "SELECT `p2`.`product_id`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE (`p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL)";
+	}
+
+	/**
+	 * Price of one item under a product_discount row `dc` of product `p`, as
+	 * the cart computes it: type P is a percentage off, S an amount off, F a
+	 * fixed price.
+	 *
+	 * @return string SQL expression
+	 */
+	private function discountFinalPrice(): string {
+		return "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
 	}
 }
