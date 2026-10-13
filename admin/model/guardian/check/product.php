@@ -32,7 +32,8 @@ class Product extends Base {
 		'product_duplicate_identifier'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_related_broken'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'product_related_one_way'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'product_broken_layout'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_broken_layout'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_discount_invalid_type'   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -331,6 +332,22 @@ class Product extends Base {
 	 */
 	protected function productBrokenLayout(): CheckResult {
 		return $this->collect('product_broken_layout', $this->productSelect('`p2l`.`store_id`, `p2l`.`layout_id`') . " INNER JOIN `" . DB_PREFIX . "product_to_layout` `p2l` ON (`p2l`.`product_id` = `p`.`product_id`) WHERE `p2l`.`layout_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "layout` `l` WHERE `l`.`layout_id` = `p2l`.`layout_id`) ORDER BY `p`.`product_id`, `p2l`.`store_id`");
+	}
+
+	/**
+	 * Discount and special rows whose type is not F, P or S (NULL and empty
+	 * included). The admin form offers only these three, but the column is a
+	 * nullable char(1) the core never validates, so such rows come from
+	 * imports or direct SQL. The storefront compares in SQL under the
+	 * column's _ci collation (p/s act as P/S, anything else as a fixed
+	 * price); the cart (system/library/cart/cart.php) compares in PHP,
+	 * case-sensitively, and leaves the regular price for any such value.
+	 * Hence BINARY. One finding row per discount row.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productDiscountInvalidType(): CheckResult {
+		return $this->collect('product_discount_invalid_type', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`type` IS NULL OR BINARY `dc`.`type` NOT IN ('F', 'P', 'S') ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**

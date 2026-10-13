@@ -69,6 +69,9 @@ $_['check_product_related_one_way_hint']          = 'Відкрийте вказ
 $_['check_product_broken_layout_title']           = 'Товари з видаленим макетом сторінки';
 $_['check_product_broken_layout_desc']            = 'Для товару у вказаному магазині обрано макет, якого більше немає. Вітрина не перемикається на макет за замовчуванням, тому сторінка товару показується без модулів.';
 $_['check_product_broken_layout_hint']            = 'Відкрийте товар і на вкладці «Дизайн» оберіть наявний макет для вказаного магазину або залиште поле порожнім.';
+$_['check_product_discount_invalid_type_title']   = 'Знижки та акції з невідомим типом';
+$_['check_product_discount_invalid_type_desc']    = 'У рядка знижки або акції тип не «Фіксована», «Відсоток» чи «Відняти» (не заданий або записаний малою літерою). Адмінка такий рядок зберегти не може, отже, він прийшов з імпорту, іншого модуля або прямої правки бази. Вітрина і кошик рахують такий рядок по-різному: кошик його не застосовує й бере звичайну ціну.';
+$_['check_product_discount_invalid_type_hint']    = 'Відкрийте товар і на вкладці «Знижки» явно оберіть правильний тип рядка (форма підставить «Фіксована», якщо тип не розпізнано) і збережіть; або виправте імпорт, який його записує.';
 
 // Column
 $_['column_name']                                 = 'Назва';
@@ -106,6 +109,8 @@ $_['check_product_empty_content_column_field']    = 'Порожні поля';
 $_['check_product_discount_not_lower_column_type'] = 'Тип знижки';
 $_['check_product_discount_not_lower_column_value'] = 'Розмір знижки';
 $_['check_product_duplicate_identifier_column_value'] = 'Значення ідентифікатора';
+$_['check_product_discount_invalid_type_column_type'] = 'Тип знижки';
+$_['check_product_discount_invalid_type_column_value'] = 'Розмір знижки';
 
 // Value
 $_['value_type_attribute']                        = 'Атрибут';

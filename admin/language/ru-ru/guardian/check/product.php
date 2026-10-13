@@ -69,6 +69,9 @@ $_['check_product_related_one_way_hint']          = 'Откройте указа
 $_['check_product_broken_layout_title']           = 'Товары с удалённым макетом страницы';
 $_['check_product_broken_layout_desc']            = 'Для товара в указанном магазине выбран макет, которого больше нет. Витрина не переключается на макет по умолчанию, поэтому страница товара показывается без модулей.';
 $_['check_product_broken_layout_hint']            = 'Откройте товар и на вкладке «Дизайн» выберите существующий макет для указанного магазина или оставьте поле пустым.';
+$_['check_product_discount_invalid_type_title']   = 'Скидки и акции с неизвестным типом';
+$_['check_product_discount_invalid_type_desc']    = 'У строки скидки или акции тип не «Фиксированная», «Процент» или «Вычесть» (не задан или записан строчной буквой). Админка такую строку сохранить не может, значит, она пришла из импорта, другого модуля или прямой правки базы. Витрина и корзина считают такую строку по-разному: корзина её не применяет и берёт обычную цену.';
+$_['check_product_discount_invalid_type_hint']    = 'Откройте товар и на вкладке «Скидки» явно выберите правильный тип строки (форма подставит «Фиксированная», если тип не распознан) и сохраните; или исправьте импорт, который её записывает.';
 
 // Column
 $_['column_name']                                 = 'Название';
@@ -106,6 +109,8 @@ $_['check_product_empty_content_column_field']    = 'Пустые поля';
 $_['check_product_discount_not_lower_column_type'] = 'Тип скидки';
 $_['check_product_discount_not_lower_column_value'] = 'Размер скидки';
 $_['check_product_duplicate_identifier_column_value'] = 'Значение идентификатора';
+$_['check_product_discount_invalid_type_column_type'] = 'Тип скидки';
+$_['check_product_discount_invalid_type_column_value'] = 'Размер скидки';
 
 // Value
 $_['value_type_attribute']                        = 'Атрибут';

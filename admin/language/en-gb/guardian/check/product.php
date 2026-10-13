@@ -69,6 +69,9 @@ $_['check_product_related_one_way_hint']          = 'Open the listed product and
 $_['check_product_broken_layout_title']           = 'Products with a deleted layout override';
 $_['check_product_broken_layout_desc']            = 'The product is set to use a layout that no longer exists in the listed store. The storefront does not fall back to the default layout, so the product page is shown without any modules.';
 $_['check_product_broken_layout_hint']            = 'Open the product and choose an existing Layout Override for the listed store on the Design tab, or leave it empty.';
+$_['check_product_discount_invalid_type_title']   = 'Discounts and specials with an unknown type';
+$_['check_product_discount_invalid_type_desc']    = 'The discount or special row has a type other than Fixed, Percentage or Subtract (or none, or in lower case). The admin cannot save such a row, so it came from an import, another module or a direct database change. The storefront and the cart price it differently: the cart ignores the row and charges the regular price.';
+$_['check_product_discount_invalid_type_hint']    = 'Open the product, explicitly choose the correct type for the row on the Discount tab (the form falls back to Fixed when it does not recognise the type) and save; or fix the import that writes it.';
 
 // Column
 $_['column_name']                                 = 'Name';
@@ -106,6 +109,8 @@ $_['check_product_empty_content_column_field']    = 'Empty fields';
 $_['check_product_discount_not_lower_column_type'] = 'Discount type';
 $_['check_product_discount_not_lower_column_value'] = 'Discount value';
 $_['check_product_duplicate_identifier_column_value'] = 'Identifier value';
+$_['check_product_discount_invalid_type_column_type'] = 'Discount type';
+$_['check_product_discount_invalid_type_column_value'] = 'Discount value';
 
 // Value
 $_['value_type_attribute']                        = 'Attribute';
