@@ -32,7 +32,6 @@ class Report extends \Opencart\System\Engine\Controller {
 	 */
 	private const NAME_COLUMNS = [
 		'customer_group_id' => 'customer_group',
-		'customer_groups'   => 'customer_group',
 		'store_id'          => 'store'
 	];
 

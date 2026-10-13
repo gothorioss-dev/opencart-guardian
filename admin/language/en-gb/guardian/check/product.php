@@ -95,7 +95,6 @@ $_['column_store_id']                             = 'Store ID';
 $_['column_layout_id']                            = 'Layout ID';
 $_['column_language']                             = 'Language';
 $_['column_customer_group_id']                    = 'Customer group ID';
-$_['column_customer_groups']                      = 'Customer groups';
 $_['column_kind']                                 = 'Kind';
 $_['column_type']                                 = 'Type';
 $_['column_field']                                = 'Field';
@@ -111,6 +110,9 @@ $_['check_product_discount_not_lower_column_value'] = 'Discount value';
 $_['check_product_duplicate_identifier_column_value'] = 'Identifier value';
 $_['check_product_discount_invalid_type_column_type'] = 'Discount type';
 $_['check_product_discount_invalid_type_column_value'] = 'Discount value';
+$_['check_product_zero_price_column_kind']        = 'Price source';
+$_['check_product_zero_price_column_type']        = 'Discount type';
+$_['check_product_zero_price_column_value']       = 'Discount value';
 
 // Value
 $_['value_type_attribute']                        = 'Attribute';
@@ -122,6 +124,7 @@ $_['value_type_P']                                = 'Percentage';
 $_['value_type_S']                                = 'Subtract';
 $_['value_kind_special']                          = 'Special';
 $_['value_kind_discount']                         = 'Discount';
+$_['value_kind_base']                             = 'Base price';
 $_['value_field_tax_class_id']                    = 'Tax class';
 $_['value_field_weight_class_id']                 = 'Weight class';
 $_['value_field_length_class_id']                 = 'Length class';

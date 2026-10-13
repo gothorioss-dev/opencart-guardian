@@ -95,7 +95,6 @@ $_['column_store_id']                             = 'ID магазина';
 $_['column_layout_id']                            = 'ID макета';
 $_['column_language']                             = 'Язык';
 $_['column_customer_group_id']                    = 'ID группы покупателей';
-$_['column_customer_groups']                      = 'Группы покупателей';
 $_['column_kind']                                 = 'Вид';
 $_['column_type']                                 = 'Тип';
 $_['column_field']                                = 'Поле';
@@ -111,6 +110,9 @@ $_['check_product_discount_not_lower_column_value'] = 'Размер скидки
 $_['check_product_duplicate_identifier_column_value'] = 'Значение идентификатора';
 $_['check_product_discount_invalid_type_column_type'] = 'Тип скидки';
 $_['check_product_discount_invalid_type_column_value'] = 'Размер скидки';
+$_['check_product_zero_price_column_kind']        = 'Источник цены';
+$_['check_product_zero_price_column_type']        = 'Тип скидки';
+$_['check_product_zero_price_column_value']       = 'Размер скидки';
 
 // Value
 $_['value_type_attribute']                        = 'Атрибут';
@@ -122,6 +124,7 @@ $_['value_type_P']                                = 'Процент';
 $_['value_type_S']                                = 'Вычесть';
 $_['value_kind_special']                          = 'Акция';
 $_['value_kind_discount']                         = 'Скидка';
+$_['value_kind_base']                             = 'Базовая цена';
 $_['value_field_tax_class_id']                    = 'Налоговый класс';
 $_['value_field_weight_class_id']                 = 'Единица веса';
 $_['value_field_length_class_id']                 = 'Единица длины';

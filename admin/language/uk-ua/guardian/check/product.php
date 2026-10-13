@@ -95,7 +95,6 @@ $_['column_store_id']                             = 'ID магазину';
 $_['column_layout_id']                            = 'ID макета';
 $_['column_language']                             = 'Мова';
 $_['column_customer_group_id']                    = 'ID групи покупців';
-$_['column_customer_groups']                      = 'Групи покупців';
 $_['column_kind']                                 = 'Вид';
 $_['column_type']                                 = 'Тип';
 $_['column_field']                                = 'Поле';
@@ -111,6 +110,9 @@ $_['check_product_discount_not_lower_column_value'] = 'Розмір знижки
 $_['check_product_duplicate_identifier_column_value'] = 'Значення ідентифікатора';
 $_['check_product_discount_invalid_type_column_type'] = 'Тип знижки';
 $_['check_product_discount_invalid_type_column_value'] = 'Розмір знижки';
+$_['check_product_zero_price_column_kind']        = 'Джерело ціни';
+$_['check_product_zero_price_column_type']        = 'Тип знижки';
+$_['check_product_zero_price_column_value']       = 'Розмір знижки';
 
 // Value
 $_['value_type_attribute']                        = 'Атрибут';
@@ -122,6 +124,7 @@ $_['value_type_P']                                = 'Відсоток';
 $_['value_type_S']                                = 'Відняти';
 $_['value_kind_special']                          = 'Акція';
 $_['value_kind_discount']                         = 'Знижка';
+$_['value_kind_base']                             = 'Базова ціна';
 $_['value_field_tax_class_id']                    = 'Податковий клас';
 $_['value_field_weight_class_id']                 = 'Одиниця ваги';
 $_['value_field_length_class_id']                 = 'Одиниця довжини';

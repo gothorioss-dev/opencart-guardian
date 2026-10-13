@@ -190,30 +190,33 @@ class Product extends Base {
 	}
 
 	/**
-	 * Enabled products that cost zero or less for a single item in at least
-	 * one customer group; `customer_groups` lists those groups. Mirrors the
-	 * cart (system/library/cart/cart.php): of the group's product_discount
-	 * rows active by date with quantity <= 1, special or not, the first by
-	 * quantity DESC, priority ASC, price ASC sets the price; without such a
-	 * row the base price applies. Products with a required select, radio or
-	 * checkbox option whose every value adds a positive price are skipped:
-	 * the cart cannot take them without a surcharge. Variants take options
-	 * from their master, as the cart does. A group is skipped when the product
-	 * has an enabled subscription plan for it: the cart then takes the plan's
-	 * price, looked up by the product's own id.
+	 * Enabled products that cost zero or less for a single item, one finding
+	 * row per affected customer group with the reason: the price source
+	 * (`kind`: base price, discount or special) and, for a discount row, its
+	 * type and value. Mirrors the cart (system/library/cart/cart.php): of the
+	 * group's product_discount rows active by date with quantity <= 1,
+	 * special or not, the first by quantity DESC, priority ASC, price ASC
+	 * sets the price; without such a row the base price applies. Discount
+	 * rows have no status of their own, so the dates are all that makes one
+	 * active. Products with a required select, radio or checkbox option whose
+	 * every value adds a positive price are skipped: the cart cannot take
+	 * them without a surcharge. Variants take options from their master, as
+	 * the cart does. A group is skipped when the product has an enabled
+	 * subscription plan for it: the cart then takes the plan's price, looked
+	 * up by the product's own id.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productZeroPrice(): CheckResult {
-		$final_price = $this->discountFinalPrice();
+		$winner = "(SELECT `w`.`product_discount_id` FROM `" . DB_PREFIX . "product_discount` `w` WHERE `w`.`product_id` = `p`.`product_id` AND `w`.`customer_group_id` = `cg`.`customer_group_id` AND `w`.`quantity` <= '1' AND (`w`.`date_start` = '0000-00-00' OR `w`.`date_start` < NOW()) AND (`w`.`date_end` = '0000-00-00' OR `w`.`date_end` > NOW()) ORDER BY `w`.`quantity` DESC, `w`.`priority` ASC, `w`.`price` ASC LIMIT 1)";
 
-		$cart_price = "COALESCE((SELECT " . $final_price . " FROM `" . DB_PREFIX . "product_discount` `dc` WHERE `dc`.`product_id` = `p`.`product_id` AND `dc`.`customer_group_id` = `cg`.`customer_group_id` AND `dc`.`quantity` <= '1' AND (`dc`.`date_start` = '0000-00-00' OR `dc`.`date_start` < NOW()) AND (`dc`.`date_end` = '0000-00-00' OR `dc`.`date_end` > NOW()) ORDER BY `dc`.`quantity` DESC, `dc`.`priority` ASC, `dc`.`price` ASC LIMIT 1), `p`.`price`)";
+		$cart_price = "IF(`dc`.`product_discount_id` IS NULL, `p`.`price`, " . $this->discountFinalPrice() . ")";
 
 		$option_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` INNER JOIN `" . DB_PREFIX . "option` `o` ON (`o`.`option_id` = `po`.`option_id`) WHERE `po`.`product_id` = IF(`p`.`master_id` != '0', `p`.`master_id`, `p`.`product_id`) AND `po`.`required` = '1' AND `o`.`type` IN ('select', 'radio', 'checkbox') AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`product_option_id` = `po`.`product_option_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`product_option_id` = `po`.`product_option_id` AND NOT (`pov`.`price_prefix` = '+' AND `pov`.`price` > '0')))";
 
 		$subscription_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_subscription` `psb` INNER JOIN `" . DB_PREFIX . "subscription_plan` `sp` ON (`sp`.`subscription_plan_id` = `psb`.`subscription_plan_id`) WHERE `psb`.`product_id` = `p`.`product_id` AND `psb`.`customer_group_id` = `cg`.`customer_group_id` AND `sp`.`status` = '1')";
 
-		return $this->collect('product_zero_price', $this->productSelect("`p`.`price`, GROUP_CONCAT(`cg`.`customer_group_id` ORDER BY `cg`.`customer_group_id` SEPARATOR ', ') AS `customer_groups`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " GROUP BY `p`.`product_id`, `pd`.`name`, `p`.`status`, `p`.`price` ORDER BY `p`.`product_id`");
+		return $this->collect('product_zero_price', $this->productSelect("`cg`.`customer_group_id`, `p`.`price`, " . $cart_price . " AS `final_price`, IF(`dc`.`product_discount_id` IS NULL, 'base', IF(`dc`.`special` = '1', 'special', 'discount')) AS `kind`, `dc`.`type`, `dc`.`price` AS `value`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` LEFT JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_discount_id` = " . $winner . ") WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " ORDER BY `p`.`product_id`, `cg`.`customer_group_id`");
 	}
 
 	/**
