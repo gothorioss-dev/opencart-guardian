@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']        = 'Dashboard';
+$_['heading_title']        = 'Огляд';
 
 // Text
 $_['text_overview']        = 'Зведення стану доменів';
