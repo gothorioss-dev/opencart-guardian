@@ -39,8 +39,10 @@
                     {% if check.status == 'error' %}
                       <pre class="small text-danger mt-2 mb-0">{{ check.message }}</pre>
                     {% elseif check.status == 'found' %}
-                      {% if check.impact %}<p class="small mt-2 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> <strong>{{ text_impact }}</strong> {{ check.impact }}</p>{% endif %}
-                      <p class="small mb-1{% if not check.impact %} mt-2{% endif %}"><i class="fa-solid fa-lightbulb"></i> <strong>{{ text_hint }}</strong> {{ check.hint }}</p>
+                      <div class="mt-2">
+                        {% if check.impact %}<p class="small mb-1"><i class="fa-solid fa-triangle-exclamation"></i> <strong>{{ text_impact }}</strong> {{ check.impact }}</p>{% endif %}
+                        <p class="small mb-1"><i class="fa-solid fa-lightbulb"></i> <strong>{{ text_hint }}</strong> {{ check.hint }}</p>
+                      </div>
                       {% if check.items %}
                         <a data-bs-toggle="collapse" href="#{{ row_id }}" class="small">{{ button_items|format(check.count) }}</a>
                         <div id="{{ row_id }}" class="collapse mt-2">

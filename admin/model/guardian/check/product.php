@@ -218,7 +218,7 @@ class Product extends Base {
 
 		$subscription_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_subscription` `psb` INNER JOIN `" . DB_PREFIX . "subscription_plan` `sp` ON (`sp`.`subscription_plan_id` = `psb`.`subscription_plan_id`) WHERE `psb`.`product_id` = `p`.`product_id` AND `psb`.`customer_group_id` = `cg`.`customer_group_id` AND `sp`.`status` = '1')";
 
-		return $this->collect('product_zero_price', $this->productSelect("`cg`.`customer_group_id`, `p`.`price`, " . $cart_price . " AS `final_price`, IF(`dc`.`product_discount_id` IS NULL, 'base', IF(`dc`.`special` = '1', 'special', 'discount')) AS `kind`, `dc`.`type`, `dc`.`price` AS `value`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` LEFT JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_discount_id` = " . $winner . ") WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " ORDER BY `p`.`product_id`, `cg`.`customer_group_id`");
+		return $this->collect('product_zero_price', $this->productSelect("`cg`.`customer_group_id`, `p`.`price`, " . $cart_price . " AS `final_price`, IF(`dc`.`product_discount_id` IS NULL, 'base', " . $this->discountKind() . ") AS `kind`, `dc`.`type`, `dc`.`price` AS `value`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` LEFT JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id` AND `dc`.`customer_group_id` = `cg`.`customer_group_id` AND `dc`.`product_discount_id` = " . $winner . ") WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " ORDER BY `p`.`product_id`, `cg`.`customer_group_id`");
 	}
 
 	/**
@@ -230,7 +230,7 @@ class Product extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productDiscountDatesInverted(): CheckResult {
-		return $this->collect('product_discount_dates_inverted', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`date_start`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_start` != '0000-00-00' AND `dc`.`date_end` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+		return $this->collect('product_discount_dates_inverted', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`date_start`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_start` != '0000-00-00' AND `dc`.`date_end` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**
@@ -244,7 +244,7 @@ class Product extends Base {
 	protected function productDiscountNotLower(): CheckResult {
 		$final_price = $this->discountFinalPrice();
 
-		return $this->collect('product_discount_not_lower', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `p`.`price`, ROUND(" . $final_price . ", 4) AS `final_price`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `p`.`price` > '0' AND " . $final_price . " >= `p`.`price` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+		return $this->collect('product_discount_not_lower', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `p`.`price`, ROUND(" . $final_price . ", 4) AS `final_price`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `p`.`price` > '0' AND " . $final_price . " >= `p`.`price` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**
@@ -353,7 +353,7 @@ class Product extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productDiscountInvalidType(): CheckResult {
-		return $this->collect('product_discount_invalid_type', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`type` IS NULL OR BINARY `dc`.`type` NOT IN ('F', 'P', 'S') ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+		return $this->collect('product_discount_invalid_type', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`type` IS NULL OR BINARY `dc`.`type` NOT IN ('F', 'P', 'S') ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**
@@ -389,5 +389,15 @@ class Product extends Base {
 	 */
 	private function discountFinalPrice(): string {
 		return "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
+	}
+
+	/**
+	 * Kind of a product_discount row `dc`: "special" or "discount", the codes
+	 * translated by the category's value_kind_* keys.
+	 *
+	 * @return string SQL expression
+	 */
+	private function discountKind(): string {
+		return "IF(`dc`.`special` = '1', 'special', 'discount')";
 	}
 }
