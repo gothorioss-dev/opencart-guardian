@@ -254,6 +254,11 @@ class Report extends \Opencart\System\Engine\Controller {
 	 * @return string
 	 */
 	private function formatValue(string $category, string $key, string $value): string {
+		// SQL NULL (e.g. a LEFT JOIN that found nothing) arrives as ''.
+		if ($value === '') {
+			return '—';
+		}
+
 		if ($key == 'status') {
 			return $this->language->get((int)$value ? 'text_enabled' : 'text_disabled');
 		}
