@@ -109,18 +109,6 @@ class Result extends \Opencart\System\Engine\Model {
 	}
 
 	/**
-	 * @param string $domain
-	 * @param int    $limit
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	public function getRuns(string $domain, int $limit = 10): array {
-		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "gtr_guardian_run` WHERE `domain` = '" . $this->db->escape($domain) . "' ORDER BY `run_id` DESC LIMIT " . (int)$limit);
-
-		return $query->rows;
-	}
-
-	/**
 	 * Results of a run with the items JSON decoded.
 	 *
 	 * @param int $run_id

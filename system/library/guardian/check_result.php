@@ -67,18 +67,4 @@ class CheckResult {
 	public static function error(string $code, string $severity, string $message = ''): self {
 		return new self($code, $severity, self::STATUS_ERROR, 0, [], $message);
 	}
-
-	/**
-	 * @return array<string, mixed>
-	 */
-	public function toArray(): array {
-		return [
-			'code'     => $this->code,
-			'severity' => $this->severity,
-			'status'   => $this->status,
-			'count'    => $this->count,
-			'items'    => $this->items,
-			'message'  => $this->message
-		];
-	}
 }
