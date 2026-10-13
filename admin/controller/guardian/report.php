@@ -77,6 +77,8 @@ class Report extends \Opencart\System\Engine\Controller {
 					$message = $show_message ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : $this->language->get('text_error_hidden');
 				}
 
+				$items = $result ? $this->getItems($result['items']) : [];
+
 				$checks[] = [
 					'code'     => $code,
 					'title'    => $this->language->get($category . '_check_' . $code . '_title'),
@@ -85,7 +87,8 @@ class Report extends \Opencart\System\Engine\Controller {
 					'severity' => $meta['severity'],
 					'status'   => $result ? $result['status'] : 'pending',
 					'count'    => $result ? (int)$result['count'] : 0,
-					'items'    => $result ? $this->getItems($result['items']) : [],
+					'columns'  => $items ? $this->getColumns($category, $code, array_keys($items[0]['cells'])) : [],
+					'items'    => $items,
 					'message'  => $message
 				];
 			}
@@ -179,5 +182,37 @@ class Report extends \Opencart\System\Engine\Controller {
 		}
 
 		return $rows;
+	}
+
+	/**
+	 * Localised headers for the findings sample: a per-check key wins where a
+	 * column means something specific to that check, then the category-wide
+	 * key, then the raw column name. Language::get() returns the key itself
+	 * when it is missing.
+	 *
+	 * @param string             $category
+	 * @param string             $code
+	 * @param array<int, string> $keys
+	 *
+	 * @return array<int, string>
+	 */
+	private function getColumns(string $category, string $code, array $keys): array {
+		$columns = [];
+
+		foreach ($keys as $key) {
+			$title = $key;
+
+			foreach ([$category . '_check_' . $code . '_column_' . $key, $category . '_column_' . $key] as $language_key) {
+				if ($this->language->get($language_key) !== $language_key) {
+					$title = $this->language->get($language_key);
+
+					break;
+				}
+			}
+
+			$columns[] = $title;
+		}
+
+		return $columns;
 	}
 }

@@ -48,7 +48,7 @@
                             <div class="table-responsive">
                               <table class="table table-sm table-striped small mb-0">
                                 <thead>
-                                  <tr>{% for key, value in (check.items|first).cells %}<th>{{ key }}</th>{% endfor %}<th></th></tr>
+                                  <tr>{% for column in check.columns %}<th>{{ column }}</th>{% endfor %}<th></th></tr>
                                 </thead>
                                 <tbody>
                                   {% for item in check.items %}
