@@ -11,6 +11,39 @@ namespace Opencart\Admin\Controller\Extension\GtrGuardian\Guardian;
  */
 class Report extends \Opencart\System\Engine\Controller {
 	/**
+	 * Finding keys that identify a store record, mapped to the admin form that
+	 * edits it. Such a key is shown as an edit button instead of a column.
+	 */
+	private const EDIT_ROUTES = ['product_id' => 'catalog/product.form'];
+
+	/**
+	 * Finding columns holding a code (or a comma-separated list of codes)
+	 * translated through the category's value_<column>_<code> keys.
+	 */
+	private const CODE_COLUMNS = ['type', 'kind', 'field'];
+
+	private const PRICE_COLUMNS = ['price', 'final_price'];
+
+	private const DATE_COLUMNS = ['date_available', 'date_start', 'date_end'];
+
+	/**
+	 * Finding columns holding a record id (or a comma-separated list of ids)
+	 * shown by name; a deleted record keeps its id.
+	 */
+	private const NAME_COLUMNS = [
+		'customer_group_id' => 'customer_group',
+		'customer_groups'   => 'customer_group',
+		'store_id'          => 'store'
+	];
+
+	/**
+	 * Record names per NAME_COLUMNS source, loaded once per request.
+	 *
+	 * @var array<string, array<int, string>>
+	 */
+	private array $names = [];
+
+	/**
 	 * Render the latest run of a domain as an HTML block.
 	 *
 	 * @param string $domain
@@ -71,6 +104,8 @@ class Report extends \Opencart\System\Engine\Controller {
 					$message = $show_message ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : $this->language->get('text_error_hidden');
 				}
 
+				$items = $result ? $this->getItems($category, $result['items']) : [];
+
 				$checks[] = [
 					'code'     => $code,
 					'title'    => $this->language->get($category . '_check_' . $code . '_title'),
@@ -79,7 +114,8 @@ class Report extends \Opencart\System\Engine\Controller {
 					'severity' => $meta['severity'],
 					'status'   => $result ? $result['status'] : 'pending',
 					'count'    => $result ? (int)$result['count'] : 0,
-					'items'    => $result ? $this->escapeItems($result['items']) : [],
+					'columns'  => $items ? $this->getColumns($category, $code, array_keys($items[0]['cells'])) : [],
+					'items'    => $items,
 					'message'  => $message
 				];
 			}
@@ -146,23 +182,155 @@ class Report extends \Opencart\System\Engine\Controller {
 	 * (Request::clean); imports and API writes bypass that. double_encode=false
 	 * keeps already-escaped values intact.
 	 *
+	 * Keys listed in EDIT_ROUTES leave the cells and become the row's edit link.
+	 *
+	 * @param string                           $category
 	 * @param array<int, array<string, mixed>> $items
 	 *
-	 * @return array<int, array<string, string>>
+	 * @return array<int, array{cells: array<string, string>, edit: string}>
 	 */
-	private function escapeItems(array $items): array {
-		$escaped = [];
+	private function getItems(string $category, array $items): array {
+		$rows = [];
 
 		foreach ($items as $row) {
-			$clean = [];
+			$cells = [];
+			$edit = '';
 
 			foreach ($row as $key => $value) {
-				$clean[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8', false);
+				if (isset(self::EDIT_ROUTES[$key])) {
+					$edit = $this->url->link(self::EDIT_ROUTES[$key], 'user_token=' . $this->session->data['user_token'] . '&' . $key . '=' . (int)$value);
+
+					continue;
+				}
+
+				$cells[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars($this->formatValue($category, (string)$key, (string)$value), ENT_QUOTES, 'UTF-8', false);
 			}
 
-			$escaped[] = $clean;
+			$rows[] = ['cells' => $cells, 'edit' => $edit];
 		}
 
-		return $escaped;
+		return $rows;
+	}
+
+	/**
+	 * Localised headers for the findings sample: a per-check key wins where a
+	 * column means something specific to that check, then the category-wide
+	 * key, then the raw column name. Language::get() returns the key itself
+	 * when it is missing.
+	 *
+	 * @param string             $category
+	 * @param string             $code
+	 * @param array<int, string> $keys
+	 *
+	 * @return array<int, string>
+	 */
+	private function getColumns(string $category, string $code, array $keys): array {
+		$columns = [];
+
+		foreach ($keys as $key) {
+			$title = $key;
+
+			foreach ([$category . '_check_' . $code . '_column_' . $key, $category . '_column_' . $key] as $language_key) {
+				if ($this->language->get($language_key) !== $language_key) {
+					$title = $this->language->get($language_key);
+
+					break;
+				}
+			}
+
+			$columns[] = $title;
+		}
+
+		return $columns;
+	}
+
+	/**
+	 * Human-readable cell value. A code without a translation is shown as is.
+	 *
+	 * @param string $category
+	 * @param string $key
+	 * @param string $value
+	 *
+	 * @return string
+	 */
+	private function formatValue(string $category, string $key, string $value): string {
+		if ($key == 'status') {
+			return $this->language->get((int)$value ? 'text_enabled' : 'text_disabled');
+		}
+
+		if (in_array($key, self::CODE_COLUMNS)) {
+			$texts = [];
+
+			foreach (explode(', ', $value) as $code) {
+				$language_key = $category . '_value_' . $key . '_' . $code;
+
+				$texts[] = $this->language->get($language_key) !== $language_key ? $this->language->get($language_key) : $code;
+			}
+
+			return implode(', ', $texts);
+		}
+
+		if (isset(self::NAME_COLUMNS[$key])) {
+			$names = $this->getNames(self::NAME_COLUMNS[$key]);
+
+			$texts = [];
+
+			foreach (explode(', ', $value) as $id) {
+				$texts[] = $names[(int)$id] ?? $id;
+			}
+
+			return implode(', ', $texts);
+		}
+
+		if (in_array($key, self::PRICE_COLUMNS)) {
+			return $this->currency->format((float)$value, $this->config->get('config_currency'));
+		}
+
+		if (in_array($key, self::DATE_COLUMNS)) {
+			if ($value == '0000-00-00') {
+				return '—';
+			}
+
+			$time = strtotime($value);
+
+			return $time ? date($this->language->get('date_format_short'), $time) : $value;
+		}
+
+		// Decimal columns come back as "0.00000000". Only the trailing zeros
+		// go: no thousands separator, so IDs and barcodes stay intact.
+		if (is_numeric($value) && str_contains($value, '.')) {
+			return str_replace('.', $this->language->get('decimal_point'), rtrim(rtrim($value, '0'), '.'));
+		}
+
+		return $value;
+	}
+
+	/**
+	 * @param string $source "customer_group" or "store"
+	 *
+	 * @return array<int, string> name by id
+	 */
+	private function getNames(string $source): array {
+		if (!isset($this->names[$source])) {
+			$this->names[$source] = [];
+
+			if ($source == 'customer_group') {
+				$this->load->model('customer/customer_group');
+
+				foreach ($this->model_customer_customer_group->getCustomerGroups() as $customer_group) {
+					$this->names[$source][(int)$customer_group['customer_group_id']] = $customer_group['name'];
+				}
+			} elseif ($source == 'store') {
+				$this->names[$source][0] = $this->config->get('config_name');
+
+				$this->load->model('setting/store');
+
+				foreach ($this->model_setting_store->getStores() as $store) {
+					$this->names[$source][(int)$store['store_id']] = $store['name'];
+				}
+			}
+		}
+
+		return $this->names[$source];
 	}
 }

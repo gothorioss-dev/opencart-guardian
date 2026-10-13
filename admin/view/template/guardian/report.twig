@@ -48,11 +48,14 @@
                             <div class="table-responsive">
                               <table class="table table-sm table-striped small mb-0">
                                 <thead>
-                                  <tr>{% for key, value in check.items|first %}<th>{{ key }}</th>{% endfor %}</tr>
+                                  <tr>{% for column in check.columns %}<th>{{ column }}</th>{% endfor %}<th></th></tr>
                                 </thead>
                                 <tbody>
                                   {% for item in check.items %}
-                                    <tr>{% for value in item %}<td>{{ value }}</td>{% endfor %}</tr>
+                                    <tr>
+                                      {% for value in item.cells %}<td>{{ value }}</td>{% endfor %}
+                                      <td class="text-end">{% if item.edit %}<a href="{{ item.edit }}" target="_blank" data-bs-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pencil"></i></a>{% endif %}</td>
+                                    </tr>
                                   {% endfor %}
                                 </tbody>
                               </table>
