@@ -178,9 +178,10 @@ class Product extends Base {
 	}
 
 	/**
-	 * Products missing a description row for an enabled language; the
-	 * storefront then shows them with no name in that language. One finding
-	 * row per missing language.
+	 * Products missing a description row for an enabled language. The
+	 * storefront product page, listings and cart all filter on
+	 * pd.language_id, so in that language the product is not shown at all
+	 * and cannot be bought. One finding row per missing language.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
