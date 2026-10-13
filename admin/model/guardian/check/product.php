@@ -37,7 +37,8 @@ class Product extends Base {
 	];
 
 	/**
-	 * Products with an empty model (required field; breaks search and feeds).
+	 * Products with an empty model. The admin requires one (trimmed), so these
+	 * come from imports or direct SQL; such a product cannot be saved again.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
@@ -64,7 +65,8 @@ class Product extends Base {
 	}
 
 	/**
-	 * Shippable products with zero weight break weight-based shipping rates.
+	 * Shippable products with zero weight: weight-based shipping undercharges
+	 * them (the bundled weight method takes the first rate band).
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
