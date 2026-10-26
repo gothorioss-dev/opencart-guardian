@@ -22,7 +22,8 @@ class Category extends Base {
 		'category_no_store'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_empty'                  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'category_duplicate_name'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'category_too_deep'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'category_too_deep'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'category_broken_layout'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -120,6 +121,19 @@ class Category extends Base {
 	 */
 	protected function categoryTooDeep(): CheckResult {
 		return $this->collect('category_too_deep', $this->categorySelect("`d`.`depth`") . " INNER JOIN (SELECT `category_id`, COUNT(*) AS `depth` FROM `" . DB_PREFIX . "category_path` GROUP BY `category_id` HAVING `depth` > '" . (int)self::MAX_DEPTH . "') `d` ON (`d`.`category_id` = `c`.`category_id`) ORDER BY `c`.`category_id`");
+	}
+
+	/**
+	 * Layout overrides pointing at a deleted layout, one finding row per store.
+	 * The storefront falls back to the route layout only for layout_id 0
+	 * (catalog/controller/common/column_left.php), so the category page loses
+	 * all its modules. The admin refuses to delete a layout in use, so these
+	 * come from imports or direct SQL.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function categoryBrokenLayout(): CheckResult {
+		return $this->collect('category_broken_layout', $this->categorySelect('`c2l`.`store_id`, `c2l`.`layout_id`') . " INNER JOIN `" . DB_PREFIX . "category_to_layout` `c2l` ON (`c2l`.`category_id` = `c`.`category_id`) WHERE `c2l`.`layout_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "layout` `l` WHERE `l`.`layout_id` = `c2l`.`layout_id`) ORDER BY `c`.`category_id`, `c2l`.`store_id`");
 	}
 
 	/**
