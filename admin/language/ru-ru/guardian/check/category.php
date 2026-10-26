@@ -35,6 +35,10 @@ $_['check_category_broken_layout_title']                = 'Категории с
 $_['check_category_broken_layout_desc']                 = 'Для категории выбран макет, которого больше нет в указанном магазине.';
 $_['check_category_broken_layout_impact']               = 'Витрина не подставляет макет по умолчанию, поэтому страница категории в этом магазине выводится без модулей.';
 $_['check_category_broken_layout_hint']                 = 'Откройте категорию и на вкладке «Дизайн» выберите существующий макет для указанного магазина или оставьте поле пустым.';
+$_['check_category_broken_filter_title']                = 'Фильтры категорий, которых больше нет';
+$_['check_category_broken_filter_desc']                 = 'Категория привязана к фильтру, который удалён.';
+$_['check_category_broken_filter_impact']               = 'Покупатель ничего не заметит: витрина пропускает отсутствующий фильтр; в данных остаётся лишь ненужная связь.';
+$_['check_category_broken_filter_hint']                 = 'Откройте категорию и сохраните её: отсутствующий фильтр не показывается на вкладке «Данные», и связь удаляется при сохранении.';
 
 // Column
 $_['column_name']                                       = 'Название';
@@ -47,4 +51,5 @@ $_['column_group_size']                                 = 'Категорий с
 $_['column_depth']                                      = 'Уровень';
 $_['column_store_id']                                   = 'Магазин';
 $_['column_layout_id']                                  = 'ID макета';
+$_['column_filter_id']                                  = 'ID удалённого фильтра';
 $_['check_category_broken_parent_column_parent_id']     = 'ID удалённого родителя';

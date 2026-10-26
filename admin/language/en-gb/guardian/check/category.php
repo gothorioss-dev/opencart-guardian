@@ -35,6 +35,10 @@ $_['check_category_broken_layout_title']                = 'Categories with a del
 $_['check_category_broken_layout_desc']                 = 'The category is set to use a layout that no longer exists in the listed store.';
 $_['check_category_broken_layout_impact']               = 'The storefront does not fall back to the default layout, so the category page in that store is shown without any modules.';
 $_['check_category_broken_layout_hint']                 = 'Open the category and choose an existing Layout Override for the listed store on the Design tab, or leave it empty.';
+$_['check_category_broken_filter_title']                = 'Category filters that no longer exist';
+$_['check_category_broken_filter_desc']                 = 'The category is linked to a filter that has been deleted.';
+$_['check_category_broken_filter_impact']               = 'Customers will not notice: the storefront skips the missing filter; only an unneeded link remains in the data.';
+$_['check_category_broken_filter_hint']                 = 'Open the category and save it: the missing filter is not shown on the Data tab and the link is removed on save.';
 
 // Column
 $_['column_name']                                       = 'Name';
@@ -47,4 +51,5 @@ $_['column_group_size']                                 = 'Categories with this 
 $_['column_depth']                                      = 'Level';
 $_['column_store_id']                                   = 'Store';
 $_['column_layout_id']                                  = 'Layout ID';
+$_['column_filter_id']                                  = 'Missing filter ID';
 $_['check_category_broken_parent_column_parent_id']     = 'Missing parent ID';

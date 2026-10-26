@@ -23,7 +23,8 @@ class Category extends Base {
 		'category_empty'                  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'category_duplicate_name'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_too_deep'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'category_broken_layout'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'category_broken_layout'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'category_broken_filter'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -134,6 +135,19 @@ class Category extends Base {
 	 */
 	protected function categoryBrokenLayout(): CheckResult {
 		return $this->collect('category_broken_layout', $this->categorySelect('`c2l`.`store_id`, `c2l`.`layout_id`') . " INNER JOIN `" . DB_PREFIX . "category_to_layout` `c2l` ON (`c2l`.`category_id` = `c`.`category_id`) WHERE `c2l`.`layout_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "layout` `l` WHERE `l`.`layout_id` = `c2l`.`layout_id`) ORDER BY `c`.`category_id`, `c2l`.`store_id`");
+	}
+
+	/**
+	 * Category filter links to a deleted filter, one finding row per link.
+	 * Info only: the storefront looks filters up by id and skips missing
+	 * ones, and the admin form hides them, so saving the category drops the
+	 * link. The admin deletes these links with the filter, so they come from
+	 * imports or direct SQL.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function categoryBrokenFilter(): CheckResult {
+		return $this->collect('category_broken_filter', $this->categorySelect('`cf`.`filter_id`') . " INNER JOIN `" . DB_PREFIX . "category_filter` `cf` ON (`cf`.`category_id` = `c`.`category_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_id` = `cf`.`filter_id`) ORDER BY `c`.`category_id`, `cf`.`filter_id`");
 	}
 
 	/**
