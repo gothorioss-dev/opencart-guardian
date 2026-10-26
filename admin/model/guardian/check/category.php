@@ -14,7 +14,8 @@ class Category extends Base {
 		'category_broken_parent'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_path_mismatch'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_incomplete_description' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'category_no_store'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'category_no_store'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'category_empty'                  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -70,6 +71,21 @@ class Category extends Base {
 	 */
 	protected function categoryNoStore(): CheckResult {
 		return $this->collect('category_no_store', $this->categorySelect() . " LEFT JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c2s`.`category_id` = `c`.`category_id`) WHERE `c2s`.`category_id` IS NULL ORDER BY `c`.`category_id`");
+	}
+
+	/**
+	 * Enabled categories with no enabled product in themselves or any
+	 * subcategory: customers reach a page that leads to no product. The
+	 * subtree comes from the stored paths, as the storefront takes it; the
+	 * category's own products are checked directly, so a category missing
+	 * its own path row is not reported as empty.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function categoryEmpty(): CheckResult {
+		$product = "INNER JOIN `" . DB_PREFIX . "product` `p` ON (`p`.`product_id` = `p2c`.`product_id` AND `p`.`status` = '1')";
+
+		return $this->collect('category_empty', $this->categorySelect() . " WHERE `c`.`status` = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_category` `p2c` " . $product . " WHERE `p2c`.`category_id` = `c`.`category_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_path` `cp` INNER JOIN `" . DB_PREFIX . "product_to_category` `p2c` ON (`p2c`.`category_id` = `cp`.`category_id`) " . $product . " WHERE `cp`.`path_id` = `c`.`category_id`) ORDER BY `c`.`category_id`");
 	}
 
 	/**

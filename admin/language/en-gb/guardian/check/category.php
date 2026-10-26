@@ -19,6 +19,10 @@ $_['check_category_no_store_title']                     = 'Categories not assign
 $_['check_category_no_store_desc']                      = 'The category is not assigned to any store.';
 $_['check_category_no_store_impact']                    = 'It is not shown on any storefront: it is missing from the menu and category lists, and its page cannot be opened.';
 $_['check_category_no_store_hint']                      = 'Tick at least one store on the category Data tab.';
+$_['check_category_empty_title']                        = 'Empty categories';
+$_['check_category_empty_desc']                         = 'The category is enabled, but neither it nor its subcategories contain an enabled product.';
+$_['check_category_empty_impact']                       = 'Customers who open it from the menu or a link find no products, only subcategories that are empty too or the message that there are no products.';
+$_['check_category_empty_hint']                         = 'Add products to the category or its subcategories, or disable it on the Data tab if it is not needed yet.';
 
 // Column
 $_['column_name']                                       = 'Name';
