@@ -43,6 +43,10 @@ $_['check_filter_group_empty_title']                    = 'Empty filter groups';
 $_['check_filter_group_empty_desc']                     = 'The filter group contains no filters.';
 $_['check_filter_group_empty_impact']                   = 'Customers will not notice: the storefront never shows a group without filters; it only clutters the filter group list and the group choice when adding a filter.';
 $_['check_filter_group_empty_hint']                     = 'Add filters to the group in Catalog > Filters > Filters, or delete the group in Catalog > Filters > Filter Groups if it is not needed.';
+$_['check_attribute_unused_title']                      = 'Unused attributes';
+$_['check_attribute_unused_desc']                       = 'The attribute is not set on any product.';
+$_['check_attribute_unused_impact']                     = 'Customers will not notice: attributes are shown only on the products that have them; it only clutters the attribute list and the attribute choice in the product form.';
+$_['check_attribute_unused_hint']                       = 'Set the attribute on products on their Attribute tab, or delete it in Catalog > Attributes > Attributes if it is not needed.';
 
 // Column
 $_['column_name']                                       = 'Name';

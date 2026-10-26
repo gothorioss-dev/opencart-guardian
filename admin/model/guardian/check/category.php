@@ -25,7 +25,8 @@ class Category extends Base {
 		'category_too_deep'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'category_broken_layout'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_broken_filter'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -160,6 +161,17 @@ class Category extends Base {
 	 */
 	protected function filterGroupEmpty(): CheckResult {
 		return $this->collect('filter_group_empty', "SELECT `fg`.`filter_group_id`, `fgd`.`name` FROM `" . DB_PREFIX . "filter_group` `fg` LEFT JOIN `" . DB_PREFIX . "filter_group_description` `fgd` ON (`fgd`.`filter_group_id` = `fg`.`filter_group_id` AND `fgd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_group_id` = `fg`.`filter_group_id`) ORDER BY `fg`.`filter_group_id`");
+	}
+
+	/**
+	 * Attributes not set on any product. Any product link counts, even one
+	 * left by a deleted product, as in the admin delete guard, so every
+	 * finding can be deleted; such leftovers belong to the GARBAGE category.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function attributeUnused(): CheckResult {
+		return $this->collect('attribute_unused', "SELECT `a`.`attribute_id`, `ad`.`name` FROM `" . DB_PREFIX . "attribute` `a` LEFT JOIN `" . DB_PREFIX . "attribute_description` `ad` ON (`ad`.`attribute_id` = `a`.`attribute_id` AND `ad`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_attribute` `pa` WHERE `pa`.`attribute_id` = `a`.`attribute_id`) ORDER BY `a`.`attribute_id`");
 	}
 
 	/**
