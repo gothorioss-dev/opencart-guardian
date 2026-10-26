@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                                     = 'Цілісність категорій і довідників';
+$_['heading_title']                                     = 'Категорії та довідники';
 
 // Checks
 $_['check_category_broken_parent_title']                = 'Категорії з неіснуючим батьком';

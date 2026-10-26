@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                               = 'Цілісність даних товарів';
+$_['heading_title']                               = 'Товари';
 
 // Checks
 $_['check_product_no_model_title']                = 'Товари без моделі';

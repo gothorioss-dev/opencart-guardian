@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                                     = 'Целостность категорий и справочников';
+$_['heading_title']                                     = 'Категории и справочники';
 
 // Checks
 $_['check_category_broken_parent_title']                = 'Категории с несуществующим родителем';

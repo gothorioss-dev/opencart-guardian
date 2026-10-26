@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                                     = 'Category and catalog list integrity';
+$_['heading_title']                                     = 'Categories and catalog lists';
 
 // Checks
 $_['check_category_broken_parent_title']                = 'Categories with a missing parent';
