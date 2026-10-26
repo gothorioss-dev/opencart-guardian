@@ -15,7 +15,8 @@ class Seo extends Base {
 	protected array $checks = [
 		'seo_duplicate_keyword' => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_empty_keyword'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_invalid_keyword'   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id']
+		'seo_invalid_keyword'   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_url'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id']
 	];
 
 	/**
@@ -57,6 +58,34 @@ class Seo extends Base {
 	 */
 	protected function seoInvalidKeyword(): CheckResult {
 		return $this->collect('seo_invalid_keyword', $this->seoUrlSelect() . " WHERE `su`.`keyword` REGEXP '[^\\\\p{Latin}\\\\p{Cyrillic}\\\\p{Greek}0-9/_-]' ORDER BY `su`.`store_id`, `su`.`keyword`, `su`.`seo_url_id`");
+	}
+
+	/**
+	 * SEO URLs of a deleted record. Every admin delete removes the record's
+	 * SEO URLs, so these come from imports or direct SQL. The keyword stays
+	 * taken: the admin refuses it for another page of the store. A category
+	 * path points at its last id; `language` and `route` keys name no record.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoOrphanUrl(): CheckResult {
+		// SEO URL key => [table, id column, record id taken from `su`.`value`]
+		$targets = [
+			'product_id'      => ['product', 'product_id', "`su`.`value`"],
+			'path'            => ['category', 'category_id', "SUBSTRING_INDEX(`su`.`value`, '_', -1)"],
+			'manufacturer_id' => ['manufacturer', 'manufacturer_id', "`su`.`value`"],
+			'information_id'  => ['information', 'information_id', "`su`.`value`"],
+			'article_id'      => ['article', 'article_id', "`su`.`value`"],
+			'topic_id'        => ['topic', 'topic_id', "`su`.`value`"]
+		];
+
+		$implode = [];
+
+		foreach ($targets as $key => [$table, $column, $id]) {
+			$implode[] = "(`su`.`key` = '" . $key . "' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $table . "` `t` WHERE `t`.`" . $column . "` = " . $id . "))";
+		}
+
+		return $this->collect('seo_orphan_url', $this->seoUrlSelect() . " WHERE " . implode(" OR ", $implode) . " ORDER BY `su`.`store_id`, `su`.`key`, `su`.`value`, `su`.`seo_url_id`");
 	}
 
 	/**

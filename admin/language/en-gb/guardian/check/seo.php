@@ -15,6 +15,10 @@ $_['check_seo_invalid_keyword_title']           = 'SEO URLs with invalid charact
 $_['check_seo_invalid_keyword_desc']            = 'The keyword contains characters other than letters, digits, / - and _ (for example a space, ?, %, #, & or a dot).';
 $_['check_seo_invalid_keyword_impact']          = 'Browsers encode such characters or treat them as part of the address syntax (? starts parameters, # an anchor), so the link may open a "not found" page or look like %20 codes; the page also cannot be saved in the admin until the keyword is fixed.';
 $_['check_seo_invalid_keyword_hint']            = 'Change the keyword in Design > SEO URL or on the SEO tab of the page, using only letters, digits, - and _.';
+$_['check_seo_orphan_url_title']                = 'SEO URLs of deleted pages';
+$_['check_seo_orphan_url_desc']                 = 'The SEO URL points to a product, category, manufacturer, information page or article that no longer exists.';
+$_['check_seo_orphan_url_impact']               = 'Its address opens a "not found" page, and the keyword stays taken: the admin will not let you give it to another page of the store.';
+$_['check_seo_orphan_url_hint']                 = 'Delete the record in Design > SEO URL, or point it at an existing page.';
 
 // Column
 $_['column_store_id']                           = 'Store';
