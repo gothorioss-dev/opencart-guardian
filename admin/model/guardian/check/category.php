@@ -10,13 +10,19 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check
  */
 class Category extends Base {
+	/**
+	 * Deepest acceptable level for category_too_deep; a top-level category is 1.
+	 */
+	private const MAX_DEPTH = 5;
+
 	protected array $checks = [
 		'category_broken_parent'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_path_mismatch'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_incomplete_description' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_no_store'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_empty'                  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'category_duplicate_name'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'category_duplicate_name'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'category_too_deep'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -102,6 +108,18 @@ class Category extends Base {
 		$groups = "SELECT `c3`.`parent_id`, `cd3`.`language_id`, TRIM(`cd3`.`name`) AS `name`, COUNT(*) AS `group_size` FROM `" . DB_PREFIX . "category` `c3` INNER JOIN `" . DB_PREFIX . "category_description` `cd3` ON (`cd3`.`category_id` = `c3`.`category_id`) WHERE TRIM(`cd3`.`name`) != '' GROUP BY `c3`.`parent_id`, `cd3`.`language_id`, TRIM(`cd3`.`name`) HAVING `group_size` > 1";
 
 		return $this->collect('category_duplicate_name', $this->categorySelect("`c`.`parent_id`, `l`.`code` AS `language`, TRIM(`cd2`.`name`) AS `duplicate`, `g`.`group_size`") . " INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (" . $groups . ") `g` ON (`g`.`parent_id` = `c`.`parent_id` AND `g`.`language_id` = `cd2`.`language_id` AND `g`.`name` = TRIM(`cd2`.`name`)) ORDER BY `c`.`parent_id`, `l`.`code`, TRIM(`cd2`.`name`), `c`.`category_id`");
+	}
+
+	/**
+	 * Categories nested deeper than MAX_DEPTH, the depth taken from the
+	 * stored path as the storefront does. The menu and the category module
+	 * show two levels only, so deeper categories are reached only through
+	 * the subcategory list of each page on the way down.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function categoryTooDeep(): CheckResult {
+		return $this->collect('category_too_deep', $this->categorySelect("`d`.`depth`") . " INNER JOIN (SELECT `category_id`, COUNT(*) AS `depth` FROM `" . DB_PREFIX . "category_path` GROUP BY `category_id` HAVING `depth` > '" . (int)self::MAX_DEPTH . "') `d` ON (`d`.`category_id` = `c`.`category_id`) ORDER BY `c`.`category_id`");
 	}
 
 	/**
