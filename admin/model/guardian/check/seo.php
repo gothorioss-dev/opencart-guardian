@@ -1,6 +1,7 @@
 <?php
 namespace Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check;
 
+use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
 /**
  * Class Seo
  *
@@ -11,5 +12,23 @@ namespace Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check;
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check
  */
 class Seo extends Base {
-	protected array $checks = [];
+	protected array $checks = [
+		'seo_duplicate_keyword' => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id']
+	];
+
+	/**
+	 * Keywords that lead to different records in one store, one finding row
+	 * per SEO URL; `targets` is the number of records sharing the keyword.
+	 * The storefront looks a keyword up by store only, without the language,
+	 * and takes the first match (catalog/model/design/seo_url.php), so all
+	 * but one of those records become unreachable by their SEO URL. The same
+	 * keyword for the same record in several languages is not a conflict:
+	 * adding a language copies every SEO URL of the default one. Keywords
+	 * compare as the storefront does, through the case-insensitive collation.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoDuplicateKeyword(): CheckResult {
+		return $this->collect('seo_duplicate_keyword', "SELECT `su`.`seo_url_id`, `su`.`store_id`, `l`.`code` AS `language`, `su`.`keyword`, `su`.`key`, `su`.`value`, `g`.`targets` FROM `" . DB_PREFIX . "seo_url` `su` LEFT JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `su`.`language_id`) INNER JOIN (SELECT `store_id`, `keyword`, COUNT(DISTINCT `key`, `value`) AS `targets` FROM `" . DB_PREFIX . "seo_url` WHERE `keyword` != '' GROUP BY `store_id`, `keyword` HAVING `targets` > 1) `g` ON (`g`.`store_id` = `su`.`store_id` AND `g`.`keyword` = `su`.`keyword`) ORDER BY `su`.`store_id`, `su`.`keyword`, `su`.`seo_url_id`");
+	}
 }
