@@ -5,7 +5,8 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
 /**
  * Class Category
  *
- * Category CATEGORY: category tree and catalog lookup integrity.
+ * Category CATEGORY: category tree and catalog list (filters, attributes,
+ * options, manufacturers) integrity.
  *
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check
  */

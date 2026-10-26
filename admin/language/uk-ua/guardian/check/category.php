@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                                     = 'Цілісність дерева категорій';
+$_['heading_title']                                     = 'Цілісність категорій і довідників';
 
 // Checks
 $_['check_category_broken_parent_title']                = 'Категорії з неіснуючим батьком';
