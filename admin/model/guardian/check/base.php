@@ -18,17 +18,33 @@ abstract class Base extends \Opencart\System\Engine\Model {
 	public const ITEMS_LIMIT = 50;
 
 	/**
-	 * Registry: check code => ['severity' => CheckResult::SEVERITY_*, 'source' => 'sql'|'fs'|'http'|'log'|'conf'].
+	 * Registry: check code => ['severity' => CheckResult::SEVERITY_*, 'source' => 'sql'|'fs'|'http'|'log'|'conf'],
+	 * plus an optional 'edit' finding column that overrides $edit for that check.
 	 *
 	 * @var array<string, array<string, string>>
 	 */
 	protected array $checks = [];
 
 	/**
+	 * Finding column holding the id of the record the report's edit button
+	 * opens; empty for no button.
+	 */
+	protected string $edit = '';
+
+	/**
 	 * @return array<string, array<string, string>>
 	 */
 	public function getChecks(): array {
 		return $this->checks;
+	}
+
+	/**
+	 * @param string $code
+	 *
+	 * @return string finding column for the edit button, empty for none
+	 */
+	public function getEditKey(string $code): string {
+		return $this->checks[$code]['edit'] ?? $this->edit;
 	}
 
 	/**
