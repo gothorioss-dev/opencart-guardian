@@ -15,7 +15,8 @@ class Category extends Base {
 		'category_path_mismatch'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_incomplete_description' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_no_store'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'category_empty'                  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'category_empty'                  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'category_duplicate_name'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -86,6 +87,21 @@ class Category extends Base {
 		$product = "INNER JOIN `" . DB_PREFIX . "product` `p` ON (`p`.`product_id` = `p2c`.`product_id` AND `p`.`status` = '1')";
 
 		return $this->collect('category_empty', $this->categorySelect() . " WHERE `c`.`status` = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_category` `p2c` " . $product . " WHERE `p2c`.`category_id` = `c`.`category_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_path` `cp` INNER JOIN `" . DB_PREFIX . "product_to_category` `p2c` ON (`p2c`.`category_id` = `cp`.`category_id`) " . $product . " WHERE `cp`.`path_id` = `c`.`category_id`) ORDER BY `c`.`category_id`");
+	}
+
+	/**
+	 * Sibling categories sharing a name in the same enabled language, one
+	 * finding row per category and language; `group_size` is the number of
+	 * siblings with that name. Names are trimmed, and the column collation
+	 * already ignores case. Core does not check name uniqueness. Empty names
+	 * are skipped.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function categoryDuplicateName(): CheckResult {
+		$groups = "SELECT `c3`.`parent_id`, `cd3`.`language_id`, TRIM(`cd3`.`name`) AS `name`, COUNT(*) AS `group_size` FROM `" . DB_PREFIX . "category` `c3` INNER JOIN `" . DB_PREFIX . "category_description` `cd3` ON (`cd3`.`category_id` = `c3`.`category_id`) WHERE TRIM(`cd3`.`name`) != '' GROUP BY `c3`.`parent_id`, `cd3`.`language_id`, TRIM(`cd3`.`name`) HAVING `group_size` > 1";
+
+		return $this->collect('category_duplicate_name', $this->categorySelect("`c`.`parent_id`, `l`.`code` AS `language`, TRIM(`cd2`.`name`) AS `duplicate`, `g`.`group_size`") . " INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (" . $groups . ") `g` ON (`g`.`parent_id` = `c`.`parent_id` AND `g`.`language_id` = `cd2`.`language_id` AND `g`.`name` = TRIM(`cd2`.`name`)) ORDER BY `c`.`parent_id`, `l`.`code`, TRIM(`cd2`.`name`), `c`.`category_id`");
 	}
 
 	/**

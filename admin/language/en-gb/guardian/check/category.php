@@ -23,6 +23,10 @@ $_['check_category_empty_title']                        = 'Empty categories';
 $_['check_category_empty_desc']                         = 'The category is enabled, but neither it nor its subcategories contain an enabled product.';
 $_['check_category_empty_impact']                       = 'Customers who open it from the menu or a link find no products, only subcategories that are empty too or the message that there are no products.';
 $_['check_category_empty_hint']                         = 'Add products to the category or its subcategories, or disable it on the Data tab if it is not needed yet.';
+$_['check_category_duplicate_name_title']               = 'Categories with a duplicate name';
+$_['check_category_duplicate_name_desc']                = 'Several categories with the same parent have the same name in one language (ignoring case and surrounding spaces).';
+$_['check_category_duplicate_name_impact']              = 'Customers see identical entries in the menu and subcategory lists, and in the admin the category picker of the product form shows identical paths, so products are easily assigned to the wrong one.';
+$_['check_category_duplicate_name_hint']                = 'Rename one of the categories on its General tab, or move its products to the other one and delete it.';
 
 // Column
 $_['column_name']                                       = 'Name';
@@ -30,4 +34,6 @@ $_['column_status']                                     = 'Status';
 $_['column_parent_id']                                  = 'Parent ID';
 $_['column_path']                                       = 'Stored path (IDs)';
 $_['column_language']                                   = 'Language';
+$_['column_duplicate']                                  = 'Duplicate name';
+$_['column_group_size']                                 = 'Categories with this name';
 $_['check_category_broken_parent_column_parent_id']     = 'Missing parent ID';
