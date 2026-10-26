@@ -11,10 +11,15 @@ $_['check_category_path_mismatch_title']                = 'Categories with a bro
 $_['check_category_path_mismatch_desc']                 = 'The category\'s stored path from the top level does not match its chain of parent categories.';
 $_['check_category_path_mismatch_impact']               = 'Menu product counts, search in subcategories and coupons limited to a category miss or wrongly include its products; in the admin category list it shows a wrong full name or is missing.';
 $_['check_category_path_mismatch_hint']                 = 'Click Rebuild in the category list. If the category is still reported, its chain of parents loops back on itself: open it and choose a correct category in the Parent field on the Data tab, then rebuild again.';
+$_['check_category_incomplete_description_title']       = 'Categories not translated to every language';
+$_['check_category_incomplete_description_desc']        = 'The category has no description record for an enabled language.';
+$_['check_category_incomplete_description_impact']      = 'In that language the storefront does not show it at all: it is missing from the menu and category lists, and its page cannot be opened.';
+$_['check_category_incomplete_description_hint']        = 'Open the category, fill in the General tab for the listed language and save.';
 
 // Column
 $_['column_name']                                       = 'Name';
 $_['column_status']                                     = 'Status';
 $_['column_parent_id']                                  = 'Parent ID';
 $_['column_path']                                       = 'Stored path (IDs)';
+$_['column_language']                                   = 'Language';
 $_['check_category_broken_parent_column_parent_id']     = 'Missing parent ID';

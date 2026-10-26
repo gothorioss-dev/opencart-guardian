@@ -11,8 +11,9 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Category extends Base {
 	protected array $checks = [
-		'category_broken_parent' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'category_path_mismatch' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'category_broken_parent'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'category_path_mismatch'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'category_incomplete_description' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -47,6 +48,18 @@ class Category extends Base {
 		$path = "(SELECT GROUP_CONCAT(`cp`.`path_id` ORDER BY `cp`.`level` SEPARATOR ' > ') FROM `" . DB_PREFIX . "category_path` `cp` WHERE `cp`.`category_id` = `c`.`category_id`) AS `path`";
 
 		return $this->collect('category_path_mismatch', $this->categorySelect('`c`.`parent_id`, ' . $path) . " WHERE (`c`.`parent_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category` `pc` WHERE `pc`.`category_id` = `c`.`parent_id`)) AND ((SELECT COUNT(*) FROM `" . DB_PREFIX . "category_path` `cp` WHERE `cp`.`category_id` = `c`.`category_id`) != " . $parent_depth . " + 1 OR " . $matched . " != " . $parent_depth . " + 1) ORDER BY `c`.`category_id`");
+	}
+
+	/**
+	 * Categories missing a description row for an enabled language. The
+	 * storefront category page and every category list filter on
+	 * cd.language_id, so in that language the category is not shown at all.
+	 * One finding row per missing language.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function categoryIncompleteDescription(): CheckResult {
+		return $this->collect('category_incomplete_description', $this->categorySelect("`l`.`code` AS `language`") . " CROSS JOIN `" . DB_PREFIX . "language` `l` WHERE `l`.`status` = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_description` `cd2` WHERE `cd2`.`category_id` = `c`.`category_id` AND `cd2`.`language_id` = `l`.`language_id`) ORDER BY `c`.`category_id`, `l`.`code`");
 	}
 
 	/**
