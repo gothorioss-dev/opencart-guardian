@@ -14,7 +14,8 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
 class Seo extends Base {
 	protected array $checks = [
 		'seo_duplicate_keyword' => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_empty_keyword'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id']
+		'seo_empty_keyword'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_invalid_keyword'   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id']
 	];
 
 	/**
@@ -44,6 +45,18 @@ class Seo extends Base {
 	 */
 	protected function seoEmptyKeyword(): CheckResult {
 		return $this->collect('seo_empty_keyword', $this->seoUrlSelect() . " WHERE TRIM(`su`.`keyword`) = '' ORDER BY `su`.`store_id`, `su`.`key`, `su`.`value`, `su`.`seo_url_id`");
+	}
+
+	/**
+	 * Keywords with characters the admin refuses: the same rule as core's
+	 * oc_validate_path() (Latin, Cyrillic and Greek letters in any case,
+	 * digits, / - _), so these come from imports. Cyrillic and upper case are
+	 * valid; the storefront compares keywords case-insensitively.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoInvalidKeyword(): CheckResult {
+		return $this->collect('seo_invalid_keyword', $this->seoUrlSelect() . " WHERE `su`.`keyword` REGEXP '[^\\\\p{Latin}\\\\p{Cyrillic}\\\\p{Greek}0-9/_-]' ORDER BY `su`.`store_id`, `su`.`keyword`, `su`.`seo_url_id`");
 	}
 
 	/**
