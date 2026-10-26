@@ -16,7 +16,7 @@ class Report extends \Opencart\System\Engine\Controller {
 	 * Finding keys that identify a store record, mapped to the admin form that
 	 * edits it. Such a key is shown as an edit button instead of a column.
 	 */
-	private const EDIT_ROUTES = ['product_id' => 'catalog/product.form', 'category_id' => 'catalog/category.form'];
+	private const EDIT_ROUTES = ['product_id' => 'catalog/product.form', 'category_id' => 'catalog/category.form', 'filter_group_id' => 'catalog/filter_group.form'];
 
 	/**
 	 * Finding columns holding a code (or a comma-separated list of codes)

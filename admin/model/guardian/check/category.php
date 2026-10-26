@@ -24,7 +24,8 @@ class Category extends Base {
 		'category_duplicate_name'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_too_deep'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'category_broken_layout'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'category_broken_filter'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'category_broken_filter'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -148,6 +149,17 @@ class Category extends Base {
 	 */
 	protected function categoryBrokenFilter(): CheckResult {
 		return $this->collect('category_broken_filter', $this->categorySelect('`cf`.`filter_id`') . " INNER JOIN `" . DB_PREFIX . "category_filter` `cf` ON (`cf`.`category_id` = `c`.`category_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_id` = `cf`.`filter_id`) ORDER BY `c`.`category_id`, `cf`.`filter_id`");
+	}
+
+	/**
+	 * Filter groups without a single filter. The storefront reaches groups
+	 * only through the filters linked to a category, so such a group is
+	 * never shown; it only clutters the admin lists.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function filterGroupEmpty(): CheckResult {
+		return $this->collect('filter_group_empty', "SELECT `fg`.`filter_group_id`, `fgd`.`name` FROM `" . DB_PREFIX . "filter_group` `fg` LEFT JOIN `" . DB_PREFIX . "filter_group_description` `fgd` ON (`fgd`.`filter_group_id` = `fg`.`filter_group_id` AND `fgd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_group_id` = `fg`.`filter_group_id`) ORDER BY `fg`.`filter_group_id`");
 	}
 
 	/**
