@@ -59,13 +59,14 @@ class Category extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function categoryPathMismatch(): CheckResult {
-		$parent_depth = "(SELECT COUNT(*) FROM `" . DB_PREFIX . "category_path` `pp` WHERE `pp`.`category_id` = `c`.`parent_id`)";
+		// Depth and path of every category, read once and joined for the category and its parent
+		$paths = "(SELECT `category_id`, COUNT(*) AS `depth`, GROUP_CONCAT(`path_id` ORDER BY `level` SEPARATOR ' > ') AS `path` FROM `" . DB_PREFIX . "category_path` GROUP BY `category_id`)";
+
+		$parent_depth = "COALESCE(`pd`.`depth`, 0)";
 
 		$matched = "(SELECT COUNT(*) FROM `" . DB_PREFIX . "category_path` `cp` WHERE `cp`.`category_id` = `c`.`category_id` AND ((`cp`.`path_id` = `c`.`category_id` AND `cp`.`level` = " . $parent_depth . ") OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_path` `pp` WHERE `pp`.`category_id` = `c`.`parent_id` AND `pp`.`path_id` = `cp`.`path_id` AND `pp`.`level` = `cp`.`level`)))";
 
-		$path = "(SELECT GROUP_CONCAT(`cp`.`path_id` ORDER BY `cp`.`level` SEPARATOR ' > ') FROM `" . DB_PREFIX . "category_path` `cp` WHERE `cp`.`category_id` = `c`.`category_id`) AS `path`";
-
-		return $this->collect('category_path_mismatch', $this->categorySelect('`c`.`parent_id`, ' . $path) . " WHERE (`c`.`parent_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category` `pc` WHERE `pc`.`category_id` = `c`.`parent_id`)) AND ((SELECT COUNT(*) FROM `" . DB_PREFIX . "category_path` `cp` WHERE `cp`.`category_id` = `c`.`category_id`) != " . $parent_depth . " + 1 OR " . $matched . " != " . $parent_depth . " + 1) ORDER BY `c`.`category_id`");
+		return $this->collect('category_path_mismatch', $this->categorySelect('`c`.`parent_id`, `od`.`path`') . " LEFT JOIN " . $paths . " `od` ON (`od`.`category_id` = `c`.`category_id`) LEFT JOIN " . $paths . " `pd` ON (`pd`.`category_id` = `c`.`parent_id`) WHERE (`c`.`parent_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category` `pc` WHERE `pc`.`category_id` = `c`.`parent_id`)) AND (COALESCE(`od`.`depth`, 0) != " . $parent_depth . " + 1 OR " . $matched . " != " . $parent_depth . " + 1) ORDER BY `c`.`category_id`");
 	}
 
 	/**
@@ -101,7 +102,10 @@ class Category extends Base {
 	protected function categoryEmpty(): CheckResult {
 		$product = "INNER JOIN `" . DB_PREFIX . "product` `p` ON (`p`.`product_id` = `p2c`.`product_id` AND `p`.`status` = '1')";
 
-		return $this->collect('category_empty', $this->categorySelect() . " WHERE `c`.`status` = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_category` `p2c` " . $product . " WHERE `p2c`.`category_id` = `c`.`category_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_path` `cp` INNER JOIN `" . DB_PREFIX . "product_to_category` `p2c` ON (`p2c`.`category_id` = `cp`.`category_id`) " . $product . " WHERE `cp`.`path_id` = `c`.`category_id`) ORDER BY `c`.`category_id`");
+		// Every category holding an enabled product in its subtree or directly, built once
+		$filled = "SELECT `cp`.`path_id` AS `category_id` FROM `" . DB_PREFIX . "category_path` `cp` INNER JOIN `" . DB_PREFIX . "product_to_category` `p2c` ON (`p2c`.`category_id` = `cp`.`category_id`) " . $product . " UNION SELECT `p2c`.`category_id` FROM `" . DB_PREFIX . "product_to_category` `p2c` " . $product;
+
+		return $this->collect('category_empty', $this->categorySelect() . " LEFT JOIN (" . $filled . ") `f` ON (`f`.`category_id` = `c`.`category_id`) WHERE `c`.`status` = '1' AND `f`.`category_id` IS NULL ORDER BY `c`.`category_id`");
 	}
 
 	/**
@@ -215,7 +219,7 @@ class Category extends Base {
 	protected function filterUnused(): CheckResult {
 		$language_id = (int)$this->config->get('config_language_id');
 
-		return $this->collect('filter_unused', "SELECT `f`.`filter_id`, `fd`.`name`, `fgd`.`name` AS `group`, (SELECT COUNT(*) FROM `" . DB_PREFIX . "category_filter` `cf` WHERE `cf`.`filter_id` = `f`.`filter_id`) AS `categories` FROM `" . DB_PREFIX . "filter` `f` LEFT JOIN `" . DB_PREFIX . "filter_description` `fd` ON (`fd`.`filter_id` = `f`.`filter_id` AND `fd`.`language_id` = '" . $language_id . "') LEFT JOIN `" . DB_PREFIX . "filter_group_description` `fgd` ON (`fgd`.`filter_group_id` = `f`.`filter_group_id` AND `fgd`.`language_id` = '" . $language_id . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_filter` `pf` INNER JOIN `" . DB_PREFIX . "product` `p` ON (`p`.`product_id` = `pf`.`product_id`) WHERE `pf`.`filter_id` = `f`.`filter_id`) ORDER BY `f`.`filter_id`");
+		return $this->collect('filter_unused', "SELECT `f`.`filter_id`, `fd`.`name`, `fgd`.`name` AS `group`, COALESCE(`cc`.`categories`, 0) AS `categories` FROM `" . DB_PREFIX . "filter` `f` LEFT JOIN `" . DB_PREFIX . "filter_description` `fd` ON (`fd`.`filter_id` = `f`.`filter_id` AND `fd`.`language_id` = '" . $language_id . "') LEFT JOIN `" . DB_PREFIX . "filter_group_description` `fgd` ON (`fgd`.`filter_group_id` = `f`.`filter_group_id` AND `fgd`.`language_id` = '" . $language_id . "') LEFT JOIN (SELECT DISTINCT `pf`.`filter_id` FROM `" . DB_PREFIX . "product_filter` `pf` INNER JOIN `" . DB_PREFIX . "product` `p` ON (`p`.`product_id` = `pf`.`product_id`)) `u` ON (`u`.`filter_id` = `f`.`filter_id`) LEFT JOIN (SELECT `filter_id`, COUNT(*) AS `categories` FROM `" . DB_PREFIX . "category_filter` GROUP BY `filter_id`) `cc` ON (`cc`.`filter_id` = `f`.`filter_id`) WHERE `u`.`filter_id` IS NULL ORDER BY `f`.`filter_id`");
 	}
 
 	/**
@@ -228,7 +232,7 @@ class Category extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function manufacturerNoProducts(): CheckResult {
-		return $this->collect('manufacturer_no_products', "SELECT `m`.`manufacturer_id`, `m`.`name`, (SELECT COUNT(*) FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`manufacturer_id` = `m`.`manufacturer_id`) AS `products` FROM `" . DB_PREFIX . "manufacturer` `m` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`manufacturer_id` = `m`.`manufacturer_id` AND `p`.`status` = '1') ORDER BY `m`.`manufacturer_id`");
+		return $this->collect('manufacturer_no_products', "SELECT `m`.`manufacturer_id`, `m`.`name`, COALESCE(`pm`.`products`, 0) AS `products` FROM `" . DB_PREFIX . "manufacturer` `m` LEFT JOIN (SELECT `manufacturer_id`, COUNT(*) AS `products`, SUM(`status` = '1') AS `enabled` FROM `" . DB_PREFIX . "product` GROUP BY `manufacturer_id`) `pm` ON (`pm`.`manufacturer_id` = `m`.`manufacturer_id`) WHERE COALESCE(`pm`.`enabled`, 0) = '0' ORDER BY `m`.`manufacturer_id`");
 	}
 
 	/**
