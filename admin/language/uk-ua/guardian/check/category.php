@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                                     = 'Цілісність категорій і довідників';
+$_['heading_title']                                     = 'Категорії та довідники';
 
 // Checks
 $_['check_category_broken_parent_title']                = 'Категорії з неіснуючим батьком';
@@ -75,7 +75,7 @@ $_['column_group_size']                                 = 'Категорій і
 $_['column_depth']                                      = 'Рівень';
 $_['column_store_id']                                   = 'Магазин';
 $_['column_layout_id']                                  = 'ID макета';
-$_['column_ref_id']                                     = 'ID видаленого фільтра';
+$_['column_filter_id']                                  = 'ID видаленого фільтра';
 $_['column_group']                                      = 'Група фільтрів';
 $_['column_categories']                                 = 'Категорій із фільтром';
 $_['column_products']                                   = 'Товарів (включно з вимкненими)';

@@ -13,8 +13,8 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Report extends \Opencart\System\Engine\Controller {
 	/**
-	 * Finding keys that identify a store record, mapped to the admin form that
-	 * edits it. Such a key is shown as an edit button instead of a column.
+	 * Admin form per finding column a check may name as its edit key
+	 * (Base::getEditKey()); that column is shown as the edit button.
 	 */
 	private const EDIT_ROUTES = [
 		'product_id'      => 'catalog/product.form',
@@ -119,7 +119,7 @@ class Report extends \Opencart\System\Engine\Controller {
 					$message = $show_message ? htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8') : $this->language->get('text_error_hidden');
 				}
 
-				$items = $result ? $this->getItems($category, $result['items']) : [];
+				$items = $result ? $this->getItems($category, $result['items'], $model->getEditKey($code)) : [];
 
 				// Optional per check: an empty string hides the line.
 				$impact_key = $category . '_check_' . $code . '_impact';
@@ -216,14 +216,15 @@ class Report extends \Opencart\System\Engine\Controller {
 	 * (Request::clean); imports and API writes bypass that. double_encode=false
 	 * keeps already-escaped values intact.
 	 *
-	 * Keys listed in EDIT_ROUTES leave the cells and become the row's edit link.
+	 * The check's edit key leaves the cells and becomes the row's edit link.
 	 *
 	 * @param string                           $category
 	 * @param array<int, array<string, mixed>> $items
+	 * @param string                           $edit_key finding column with the record id, empty for none
 	 *
 	 * @return array<int, array{cells: array<string, string>, edit: string}>
 	 */
-	private function getItems(string $category, array $items): array {
+	private function getItems(string $category, array $items, string $edit_key): array {
 		$rows = [];
 
 		foreach ($items as $row) {
@@ -231,7 +232,7 @@ class Report extends \Opencart\System\Engine\Controller {
 			$edit = '';
 
 			foreach ($row as $key => $value) {
-				if (isset(self::EDIT_ROUTES[$key])) {
+				if ($key === $edit_key && isset(self::EDIT_ROUTES[$key])) {
 					$edit = $this->url->link(self::EDIT_ROUTES[$key], 'user_token=' . $this->session->data['user_token'] . '&' . $key . '=' . (int)$value);
 
 					continue;

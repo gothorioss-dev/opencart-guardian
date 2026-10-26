@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                               = 'Product data integrity';
+$_['heading_title']                               = 'Products';
 
 // Checks
 $_['check_product_no_model_title']                = 'Products without model';

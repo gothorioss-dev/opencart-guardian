@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                                     = 'Category and catalog list integrity';
+$_['heading_title']                                     = 'Categories and catalog lists';
 
 // Checks
 $_['check_category_broken_parent_title']                = 'Categories with a missing parent';
@@ -75,7 +75,7 @@ $_['column_group_size']                                 = 'Categories with this 
 $_['column_depth']                                      = 'Level';
 $_['column_store_id']                                   = 'Store';
 $_['column_layout_id']                                  = 'Layout ID';
-$_['column_ref_id']                                     = 'Missing filter ID';
+$_['column_filter_id']                                  = 'Missing filter ID';
 $_['column_group']                                      = 'Filter group';
 $_['column_categories']                                 = 'Categories with the filter';
 $_['column_products']                                   = 'Products (including disabled)';

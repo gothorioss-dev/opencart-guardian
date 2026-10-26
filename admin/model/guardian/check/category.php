@@ -16,6 +16,8 @@ class Category extends Base {
 	 */
 	private const MAX_DEPTH = 5;
 
+	protected string $edit = 'category_id';
+
 	protected array $checks = [
 		'category_broken_parent'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_path_mismatch'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
@@ -26,12 +28,12 @@ class Category extends Base {
 		'category_too_deep'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'category_broken_layout'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_broken_filter'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'option_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'option_value_unused'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'filter_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'manufacturer_no_products'        => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'filter_group_id'],
+		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'attribute_id'],
+		'option_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'option_id'],
+		'option_value_unused'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'option_id'],
+		'filter_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'filter_id'],
+		'manufacturer_no_products'        => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'manufacturer_id']
 	];
 
 	/**
@@ -153,13 +155,12 @@ class Category extends Base {
 	 * Info only: the storefront looks filters up by id and skips missing
 	 * ones, and the admin form hides them, so saving the category drops the
 	 * link. The admin deletes these links with the filter, so they come from
-	 * imports or direct SQL. The id is `ref_id`: `filter_id` would become
-	 * the report's edit link to the missing filter.
+	 * imports or direct SQL.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function categoryBrokenFilter(): CheckResult {
-		return $this->collect('category_broken_filter', $this->categorySelect('`cf`.`filter_id` AS `ref_id`') . " INNER JOIN `" . DB_PREFIX . "category_filter` `cf` ON (`cf`.`category_id` = `c`.`category_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_id` = `cf`.`filter_id`) ORDER BY `c`.`category_id`, `cf`.`filter_id`");
+		return $this->collect('category_broken_filter', $this->categorySelect('`cf`.`filter_id`') . " INNER JOIN `" . DB_PREFIX . "category_filter` `cf` ON (`cf`.`category_id` = `c`.`category_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_id` = `cf`.`filter_id`) ORDER BY `c`.`category_id`, `cf`.`filter_id`");
 	}
 
 	/**

@@ -10,6 +10,8 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check
  */
 class Product extends Base {
+	protected string $edit = 'product_id';
+
 	protected array $checks = [
 		'product_no_model'                => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql'],
 		'product_no_category'             => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],

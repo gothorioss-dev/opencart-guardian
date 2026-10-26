@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']                                     = 'Целостность категорий и справочников';
+$_['heading_title']                                     = 'Категории и справочники';
 
 // Checks
 $_['check_category_broken_parent_title']                = 'Категории с несуществующим родителем';
@@ -75,7 +75,7 @@ $_['column_group_size']                                 = 'Категорий с
 $_['column_depth']                                      = 'Уровень';
 $_['column_store_id']                                   = 'Магазин';
 $_['column_layout_id']                                  = 'ID макета';
-$_['column_ref_id']                                     = 'ID удалённого фильтра';
+$_['column_filter_id']                                  = 'ID удалённого фильтра';
 $_['column_group']                                      = 'Группа фильтров';
 $_['column_categories']                                 = 'Категорий с фильтром';
 $_['column_products']                                   = 'Товаров (включая выключенные)';
