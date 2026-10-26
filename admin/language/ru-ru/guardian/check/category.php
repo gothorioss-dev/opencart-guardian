@@ -15,6 +15,10 @@ $_['check_category_incomplete_description_title']       = 'Категории, �
 $_['check_category_incomplete_description_desc']        = 'У категории нет записи описания для одного из включённых языков.';
 $_['check_category_incomplete_description_impact']      = 'На этом языке витрина её не показывает совсем: её нет в меню и списках категорий, а её страница не открывается.';
 $_['check_category_incomplete_description_hint']        = 'Откройте категорию, заполните вкладку «Общие» для указанного языка и сохраните.';
+$_['check_category_no_store_title']                     = 'Категории без привязки к магазину';
+$_['check_category_no_store_desc']                      = 'Категория не привязана ни к одному магазину.';
+$_['check_category_no_store_impact']                    = 'Она не показывается ни на одной витрине: её нет в меню и списках категорий, а её страница не открывается.';
+$_['check_category_no_store_hint']                      = 'Отметьте хотя бы один магазин на вкладке «Данные» категории.';
 
 // Column
 $_['column_name']                                       = 'Название';

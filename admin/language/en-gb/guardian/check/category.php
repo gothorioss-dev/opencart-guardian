@@ -15,6 +15,10 @@ $_['check_category_incomplete_description_title']       = 'Categories not transl
 $_['check_category_incomplete_description_desc']        = 'The category has no description record for an enabled language.';
 $_['check_category_incomplete_description_impact']      = 'In that language the storefront does not show it at all: it is missing from the menu and category lists, and its page cannot be opened.';
 $_['check_category_incomplete_description_hint']        = 'Open the category, fill in the General tab for the listed language and save.';
+$_['check_category_no_store_title']                     = 'Categories not assigned to a store';
+$_['check_category_no_store_desc']                      = 'The category is not assigned to any store.';
+$_['check_category_no_store_impact']                    = 'It is not shown on any storefront: it is missing from the menu and category lists, and its page cannot be opened.';
+$_['check_category_no_store_hint']                      = 'Tick at least one store on the category Data tab.';
 
 // Column
 $_['column_name']                                       = 'Name';

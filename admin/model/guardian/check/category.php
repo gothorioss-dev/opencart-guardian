@@ -13,7 +13,8 @@ class Category extends Base {
 	protected array $checks = [
 		'category_broken_parent'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_path_mismatch'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
-		'category_incomplete_description' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'category_incomplete_description' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'category_no_store'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
@@ -60,6 +61,15 @@ class Category extends Base {
 	 */
 	protected function categoryIncompleteDescription(): CheckResult {
 		return $this->collect('category_incomplete_description', $this->categorySelect("`l`.`code` AS `language`") . " CROSS JOIN `" . DB_PREFIX . "language` `l` WHERE `l`.`status` = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_description` `cd2` WHERE `cd2`.`category_id` = `c`.`category_id` AND `cd2`.`language_id` = `l`.`language_id`) ORDER BY `c`.`category_id`, `l`.`code`");
+	}
+
+	/**
+	 * Categories not assigned to any store are invisible on every storefront.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function categoryNoStore(): CheckResult {
+		return $this->collect('category_no_store', $this->categorySelect() . " LEFT JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c2s`.`category_id` = `c`.`category_id`) WHERE `c2s`.`category_id` IS NULL ORDER BY `c`.`category_id`");
 	}
 
 	/**
