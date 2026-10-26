@@ -29,7 +29,8 @@ class Category extends Base {
 		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'option_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'option_value_unused'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'filter_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'filter_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'manufacturer_no_products'        => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -214,6 +215,19 @@ class Category extends Base {
 		$language_id = (int)$this->config->get('config_language_id');
 
 		return $this->collect('filter_unused', "SELECT `f`.`filter_id`, `fd`.`name`, `fgd`.`name` AS `group`, (SELECT COUNT(*) FROM `" . DB_PREFIX . "category_filter` `cf` WHERE `cf`.`filter_id` = `f`.`filter_id`) AS `categories` FROM `" . DB_PREFIX . "filter` `f` LEFT JOIN `" . DB_PREFIX . "filter_description` `fd` ON (`fd`.`filter_id` = `f`.`filter_id` AND `fd`.`language_id` = '" . $language_id . "') LEFT JOIN `" . DB_PREFIX . "filter_group_description` `fgd` ON (`fgd`.`filter_group_id` = `f`.`filter_group_id` AND `fgd`.`language_id` = '" . $language_id . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_filter` `pf` INNER JOIN `" . DB_PREFIX . "product` `p` ON (`p`.`product_id` = `pf`.`product_id`) WHERE `pf`.`filter_id` = `f`.`filter_id`) ORDER BY `f`.`filter_id`");
+	}
+
+	/**
+	 * Manufacturers without an enabled product; `products` counts all their
+	 * products, so a zero means the manufacturer can be deleted (the admin
+	 * refuses while any product uses it). Manufacturers have no status, and
+	 * the storefront brand list shows every one assigned to the store, so
+	 * customers open a brand page that lists no products.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function manufacturerNoProducts(): CheckResult {
+		return $this->collect('manufacturer_no_products', "SELECT `m`.`manufacturer_id`, `m`.`name`, (SELECT COUNT(*) FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`manufacturer_id` = `m`.`manufacturer_id`) AS `products` FROM `" . DB_PREFIX . "manufacturer` `m` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`manufacturer_id` = `m`.`manufacturer_id` AND `p`.`status` = '1') ORDER BY `m`.`manufacturer_id`");
 	}
 
 	/**

@@ -59,6 +59,10 @@ $_['check_filter_unused_title']                         = 'Unused filters';
 $_['check_filter_unused_desc']                          = 'The filter is not set on any product.';
 $_['check_filter_unused_impact']                        = 'If the filter is offered in a category, customers see it in the filter module there, and choosing it shows no products; otherwise it only clutters the filter list.';
 $_['check_filter_unused_hint']                          = 'Set the filter on products on their Links tab, or delete it in Catalog > Filters > Filters if it is not needed.';
+$_['check_manufacturer_no_products_title']              = 'Manufacturers without products';
+$_['check_manufacturer_no_products_desc']               = 'The manufacturer has no enabled product.';
+$_['check_manufacturer_no_products_impact']             = 'The storefront brand list still shows it: customers who open it see a page with no products.';
+$_['check_manufacturer_no_products_hint']               = 'Assign or enable products of this manufacturer, or delete it in Catalog > Manufacturers; deleting is possible only when no product uses it at all.';
 
 // Column
 $_['column_name']                                       = 'Name';
@@ -73,6 +77,7 @@ $_['column_store_id']                                   = 'Store';
 $_['column_layout_id']                                  = 'Layout ID';
 $_['column_group']                                      = 'Filter group';
 $_['column_categories']                                 = 'Categories with the filter';
+$_['column_products']                                   = 'Products (including disabled)';
 $_['column_option']                                     = 'Option';
 $_['column_option_value_id']                            = 'Value ID';
 $_['check_category_broken_parent_column_parent_id']     = 'Missing parent ID';
