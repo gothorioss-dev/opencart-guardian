@@ -28,7 +28,8 @@ class Category extends Base {
 		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'option_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'option_value_unused'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'option_value_unused'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'filter_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -146,12 +147,13 @@ class Category extends Base {
 	 * Info only: the storefront looks filters up by id and skips missing
 	 * ones, and the admin form hides them, so saving the category drops the
 	 * link. The admin deletes these links with the filter, so they come from
-	 * imports or direct SQL.
+	 * imports or direct SQL. The id is `ref_id`: `filter_id` would become
+	 * the report's edit link to the missing filter.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function categoryBrokenFilter(): CheckResult {
-		return $this->collect('category_broken_filter', $this->categorySelect('`cf`.`filter_id`') . " INNER JOIN `" . DB_PREFIX . "category_filter` `cf` ON (`cf`.`category_id` = `c`.`category_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_id` = `cf`.`filter_id`) ORDER BY `c`.`category_id`, `cf`.`filter_id`");
+		return $this->collect('category_broken_filter', $this->categorySelect('`cf`.`filter_id` AS `ref_id`') . " INNER JOIN `" . DB_PREFIX . "category_filter` `cf` ON (`cf`.`category_id` = `c`.`category_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "filter` `f` WHERE `f`.`filter_id` = `cf`.`filter_id`) ORDER BY `c`.`category_id`, `cf`.`filter_id`");
 	}
 
 	/**
@@ -197,6 +199,21 @@ class Category extends Base {
 		$language_id = (int)$this->config->get('config_language_id');
 
 		return $this->collect('option_value_unused', "SELECT `ov`.`option_id`, `od`.`name` AS `option`, `ov`.`option_value_id`, `ovd`.`name` FROM `" . DB_PREFIX . "option_value` `ov` LEFT JOIN `" . DB_PREFIX . "option_description` `od` ON (`od`.`option_id` = `ov`.`option_id` AND `od`.`language_id` = '" . $language_id . "') LEFT JOIN `" . DB_PREFIX . "option_value_description` `ovd` ON (`ovd`.`option_value_id` = `ov`.`option_value_id` AND `ovd`.`language_id` = '" . $language_id . "') WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` WHERE `po`.`option_id` = `ov`.`option_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`option_value_id` = `ov`.`option_value_id`) ORDER BY `ov`.`option_id`, `ov`.`option_value_id`");
+	}
+
+	/**
+	 * Filters not set on any existing product; `categories` is the number of
+	 * categories offering the filter. The admin deletes a filter together
+	 * with all its links, so a link left by a deleted product does not count.
+	 * In an offering category the filter module lists the filter, and
+	 * choosing it shows no products.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function filterUnused(): CheckResult {
+		$language_id = (int)$this->config->get('config_language_id');
+
+		return $this->collect('filter_unused', "SELECT `f`.`filter_id`, `fd`.`name`, `fgd`.`name` AS `group`, (SELECT COUNT(*) FROM `" . DB_PREFIX . "category_filter` `cf` WHERE `cf`.`filter_id` = `f`.`filter_id`) AS `categories` FROM `" . DB_PREFIX . "filter` `f` LEFT JOIN `" . DB_PREFIX . "filter_description` `fd` ON (`fd`.`filter_id` = `f`.`filter_id` AND `fd`.`language_id` = '" . $language_id . "') LEFT JOIN `" . DB_PREFIX . "filter_group_description` `fgd` ON (`fgd`.`filter_group_id` = `f`.`filter_group_id` AND `fgd`.`language_id` = '" . $language_id . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_filter` `pf` INNER JOIN `" . DB_PREFIX . "product` `p` ON (`p`.`product_id` = `pf`.`product_id`) WHERE `pf`.`filter_id` = `f`.`filter_id`) ORDER BY `f`.`filter_id`");
 	}
 
 	/**

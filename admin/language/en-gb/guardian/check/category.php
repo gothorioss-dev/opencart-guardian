@@ -55,6 +55,10 @@ $_['check_option_value_unused_title']                   = 'Unused option values'
 $_['check_option_value_unused_desc']                    = 'The option is used on products, but this value of it is not offered on any product.';
 $_['check_option_value_unused_impact']                  = 'Customers will not notice: a product shows only the values added to it; the value only clutters the option and the value choice in the product form.';
 $_['check_option_value_unused_hint']                    = 'Add the value to products on their Option tab, or remove it from the option in Catalog > Options if it is not needed.';
+$_['check_filter_unused_title']                         = 'Unused filters';
+$_['check_filter_unused_desc']                          = 'The filter is not set on any product.';
+$_['check_filter_unused_impact']                        = 'If the filter is offered in a category, customers see it in the filter module there, and choosing it shows no products; otherwise it only clutters the filter list.';
+$_['check_filter_unused_hint']                          = 'Set the filter on products on their Links tab, or delete it in Catalog > Filters > Filters if it is not needed.';
 
 // Column
 $_['column_name']                                       = 'Name';
@@ -67,8 +71,10 @@ $_['column_group_size']                                 = 'Categories with this 
 $_['column_depth']                                      = 'Level';
 $_['column_store_id']                                   = 'Store';
 $_['column_layout_id']                                  = 'Layout ID';
-$_['column_filter_id']                                  = 'Missing filter ID';
+$_['column_group']                                      = 'Filter group';
+$_['column_categories']                                 = 'Categories with the filter';
 $_['column_option']                                     = 'Option';
 $_['column_option_value_id']                            = 'Value ID';
 $_['check_category_broken_parent_column_parent_id']     = 'Missing parent ID';
 $_['check_option_value_unused_column_name']             = 'Value';
+$_['check_category_broken_filter_column_ref_id']        = 'Missing filter ID';

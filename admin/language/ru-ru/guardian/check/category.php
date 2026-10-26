@@ -55,6 +55,10 @@ $_['check_option_value_unused_title']                   = 'Неиспользу�
 $_['check_option_value_unused_desc']                    = 'Опция используется в товарах, но это её значение не предлагается ни в одном товаре.';
 $_['check_option_value_unused_impact']                  = 'Покупатель ничего не заметит: товар показывает только добавленные к нему значения; значение лишь засоряет опцию и выбор значений в форме товара.';
 $_['check_option_value_unused_hint']                    = 'Добавьте значение товарам на их вкладке «Опции» или удалите его из опции в разделе «Каталог → Опции», если оно не нужно.';
+$_['check_filter_unused_title']                         = 'Неиспользуемые фильтры';
+$_['check_filter_unused_desc']                          = 'Фильтр не задан ни у одного товара.';
+$_['check_filter_unused_impact']                        = 'Если фильтр предлагается в категории, покупатель видит его там в модуле фильтров, а при выборе получает пустой список товаров; иначе он лишь засоряет список фильтров.';
+$_['check_filter_unused_hint']                          = 'Задайте фильтр товарам на их вкладке «Связи» или удалите его в разделе «Каталог → Фильтры → Фильтры», если он не нужен.';
 
 // Column
 $_['column_name']                                       = 'Название';
@@ -67,8 +71,10 @@ $_['column_group_size']                                 = 'Категорий с
 $_['column_depth']                                      = 'Уровень';
 $_['column_store_id']                                   = 'Магазин';
 $_['column_layout_id']                                  = 'ID макета';
-$_['column_filter_id']                                  = 'ID удалённого фильтра';
+$_['column_group']                                      = 'Группа фильтров';
+$_['column_categories']                                 = 'Категорий с фильтром';
 $_['column_option']                                     = 'Опция';
 $_['column_option_value_id']                            = 'ID значения';
 $_['check_category_broken_parent_column_parent_id']     = 'ID удалённого родителя';
 $_['check_option_value_unused_column_name']             = 'Значение';
+$_['check_category_broken_filter_column_ref_id']        = 'ID удалённого фильтра';
