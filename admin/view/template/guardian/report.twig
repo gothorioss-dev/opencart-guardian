@@ -17,8 +17,14 @@
   </div>
   <div class="card-body">
     {% if categories %}
+      <ul class="nav nav-tabs">
+        {% for category in categories %}
+          <li class="nav-item"><a href="#tab-{{ category.code }}" data-bs-toggle="tab" class="nav-link{% if loop.first %} active{% endif %}">{{ category.name }}</a></li>
+        {% endfor %}
+      </ul>
+      <div class="tab-content">
       {% for category in categories %}
-        <h5 class="{% if not loop.first %}mt-4{% endif %}">{{ category.name }}</h5>
+        <div id="tab-{{ category.code }}" class="tab-pane{% if loop.first %} active{% endif %}">
         <div class="table-responsive">
           <table class="table table-bordered">
             <thead>
@@ -92,7 +98,9 @@
             </tbody>
           </table>
         </div>
+        </div>
       {% endfor %}
+      </div>
     {% else %}
       <p class="text-secondary mb-0">{{ text_no_categories }}</p>
     {% endif %}
