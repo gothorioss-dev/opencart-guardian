@@ -16,6 +16,7 @@ $_['text_status_found']      = 'Найдено';
 $_['text_status_error']      = 'Ошибка';
 $_['text_status_pending']    = 'Не запускалась';
 $_['text_hint']              = 'Как исправить:';
+$_['text_impact']            = 'Чем грозит:';
 $_['text_sample']            = 'Показаны первые %d из %d записей.';
 $_['text_error_hidden']      = 'Проверка не выполнилась; подробности — в журнале ошибок.';
 
@@ -27,7 +28,7 @@ $_['column_count']           = 'Кол-во';
 
 // Button
 $_['button_run']             = 'Запустить проверки';
-$_['button_details']         = 'Подробнее';
+$_['button_items']           = 'Показать записи (%d)';
 $_['button_edit']            = 'Редактировать';
 
 // Error

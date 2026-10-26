@@ -32,11 +32,13 @@ class Product extends Base {
 		'product_duplicate_identifier'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'product_related_broken'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'product_related_one_way'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'product_broken_layout'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
+		'product_broken_layout'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
+		'product_discount_invalid_type'   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql']
 	];
 
 	/**
-	 * Products with an empty model (required field; breaks search and feeds).
+	 * Products with an empty model. The admin requires one (trimmed), so these
+	 * come from imports or direct SQL; such a product cannot be saved again.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
@@ -63,7 +65,8 @@ class Product extends Base {
 	}
 
 	/**
-	 * Shippable products with zero weight break weight-based shipping rates.
+	 * Shippable products with zero weight: weight-based shipping undercharges
+	 * them (the bundled weight method takes the first rate band).
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
@@ -177,9 +180,10 @@ class Product extends Base {
 	}
 
 	/**
-	 * Products missing a description row for an enabled language; the
-	 * storefront then shows them with no name in that language. One finding
-	 * row per missing language.
+	 * Products missing a description row for an enabled language. The
+	 * storefront product page, listings and cart all filter on
+	 * pd.language_id, so in that language the product is not shown at all
+	 * and cannot be bought. One finding row per missing language.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
@@ -188,30 +192,33 @@ class Product extends Base {
 	}
 
 	/**
-	 * Enabled products that cost zero or less for a single item in at least
-	 * one customer group; `customer_groups` lists those groups. Mirrors the
-	 * cart (system/library/cart/cart.php): of the group's product_discount
-	 * rows active by date with quantity <= 1, special or not, the first by
-	 * quantity DESC, priority ASC, price ASC sets the price; without such a
-	 * row the base price applies. Products with a required select, radio or
-	 * checkbox option whose every value adds a positive price are skipped:
-	 * the cart cannot take them without a surcharge. Variants take options
-	 * from their master, as the cart does. A group is skipped when the product
-	 * has an enabled subscription plan for it: the cart then takes the plan's
-	 * price, looked up by the product's own id.
+	 * Enabled products that cost zero or less for a single item, one finding
+	 * row per affected customer group with the reason: the price source
+	 * (`kind`: base price, discount or special) and, for a discount row, its
+	 * type and value. Mirrors the cart (system/library/cart/cart.php): of the
+	 * group's product_discount rows active by date with quantity <= 1,
+	 * special or not, the first by quantity DESC, priority ASC, price ASC
+	 * sets the price; without such a row the base price applies. Discount
+	 * rows have no status of their own, so the dates are all that makes one
+	 * active. Products with a required select, radio or checkbox option whose
+	 * every value adds a positive price are skipped: the cart cannot take
+	 * them without a surcharge. Variants take options from their master, as
+	 * the cart does. A group is skipped when the product has an enabled
+	 * subscription plan for it: the cart then takes the plan's price, looked
+	 * up by the product's own id.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productZeroPrice(): CheckResult {
-		$final_price = $this->discountFinalPrice();
+		$winner = "(SELECT `w`.`product_discount_id` FROM `" . DB_PREFIX . "product_discount` `w` WHERE `w`.`product_id` = `p`.`product_id` AND `w`.`customer_group_id` = `cg`.`customer_group_id` AND `w`.`quantity` <= '1' AND (`w`.`date_start` = '0000-00-00' OR `w`.`date_start` < NOW()) AND (`w`.`date_end` = '0000-00-00' OR `w`.`date_end` > NOW()) ORDER BY `w`.`quantity` DESC, `w`.`priority` ASC, `w`.`price` ASC LIMIT 1)";
 
-		$cart_price = "COALESCE((SELECT " . $final_price . " FROM `" . DB_PREFIX . "product_discount` `dc` WHERE `dc`.`product_id` = `p`.`product_id` AND `dc`.`customer_group_id` = `cg`.`customer_group_id` AND `dc`.`quantity` <= '1' AND (`dc`.`date_start` = '0000-00-00' OR `dc`.`date_start` < NOW()) AND (`dc`.`date_end` = '0000-00-00' OR `dc`.`date_end` > NOW()) ORDER BY `dc`.`quantity` DESC, `dc`.`priority` ASC, `dc`.`price` ASC LIMIT 1), `p`.`price`)";
+		$cart_price = "IF(`dc`.`product_discount_id` IS NULL, `p`.`price`, " . $this->discountFinalPrice() . ")";
 
 		$option_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` INNER JOIN `" . DB_PREFIX . "option` `o` ON (`o`.`option_id` = `po`.`option_id`) WHERE `po`.`product_id` = IF(`p`.`master_id` != '0', `p`.`master_id`, `p`.`product_id`) AND `po`.`required` = '1' AND `o`.`type` IN ('select', 'radio', 'checkbox') AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`product_option_id` = `po`.`product_option_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`product_option_id` = `po`.`product_option_id` AND NOT (`pov`.`price_prefix` = '+' AND `pov`.`price` > '0')))";
 
 		$subscription_priced = "EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_subscription` `psb` INNER JOIN `" . DB_PREFIX . "subscription_plan` `sp` ON (`sp`.`subscription_plan_id` = `psb`.`subscription_plan_id`) WHERE `psb`.`product_id` = `p`.`product_id` AND `psb`.`customer_group_id` = `cg`.`customer_group_id` AND `sp`.`status` = '1')";
 
-		return $this->collect('product_zero_price', $this->productSelect("`p`.`price`, GROUP_CONCAT(`cg`.`customer_group_id` ORDER BY `cg`.`customer_group_id` SEPARATOR ', ') AS `customer_groups`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " GROUP BY `p`.`product_id`, `pd`.`name`, `p`.`status`, `p`.`price` ORDER BY `p`.`product_id`");
+		return $this->collect('product_zero_price', $this->productSelect("`cg`.`customer_group_id`, `p`.`price`, " . $cart_price . " AS `final_price`, IF(`dc`.`product_discount_id` IS NULL, 'base', " . $this->discountKind() . ") AS `kind`, `dc`.`type`, `dc`.`price` AS `value`") . " CROSS JOIN `" . DB_PREFIX . "customer_group` `cg` LEFT JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id` AND `dc`.`customer_group_id` = `cg`.`customer_group_id` AND `dc`.`product_discount_id` = " . $winner . ") WHERE `p`.`status` = '1' AND " . $cart_price . " <= '0' AND NOT " . $option_priced . " AND NOT " . $subscription_priced . " ORDER BY `p`.`product_id`, `cg`.`customer_group_id`");
 	}
 
 	/**
@@ -223,7 +230,7 @@ class Product extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function productDiscountDatesInverted(): CheckResult {
-		return $this->collect('product_discount_dates_inverted', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`date_start`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_start` != '0000-00-00' AND `dc`.`date_end` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+		return $this->collect('product_discount_dates_inverted', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`date_start`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_start` != '0000-00-00' AND `dc`.`date_end` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**
@@ -237,7 +244,7 @@ class Product extends Base {
 	protected function productDiscountNotLower(): CheckResult {
 		$final_price = $this->discountFinalPrice();
 
-		return $this->collect('product_discount_not_lower', $this->productSelect("IF(`dc`.`special` = '1', 'special', 'discount') AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `p`.`price`, ROUND(" . $final_price . ", 4) AS `final_price`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `p`.`price` > '0' AND " . $final_price . " >= `p`.`price` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+		return $this->collect('product_discount_not_lower', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `p`.`price`, ROUND(" . $final_price . ", 4) AS `final_price`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `p`.`price` > '0' AND " . $final_price . " >= `p`.`price` ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
 	}
 
 	/**
@@ -334,6 +341,22 @@ class Product extends Base {
 	}
 
 	/**
+	 * Discount and special rows whose type is not F, P or S (NULL and empty
+	 * included). The admin form offers only these three, but the column is a
+	 * nullable char(1) the core never validates, so such rows come from
+	 * imports or direct SQL. The storefront compares in SQL under the
+	 * column's _ci collation (p/s act as P/S, anything else as a fixed
+	 * price); the cart (system/library/cart/cart.php) compares in PHP,
+	 * case-sensitively, and leaves the regular price for any such value.
+	 * Hence BINARY. One finding row per discount row.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function productDiscountInvalidType(): CheckResult {
+		return $this->collect('product_discount_invalid_type', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`type` IS NULL OR BINARY `dc`.`type` NOT IN ('F', 'P', 'S') ORDER BY `p`.`product_id`, `dc`.`product_discount_id`");
+	}
+
+	/**
 	 * Common finding columns for product checks: id, admin-language name, status.
 	 *
 	 * @param string $columns extra select list appended after the common columns
@@ -366,5 +389,15 @@ class Product extends Base {
 	 */
 	private function discountFinalPrice(): string {
 		return "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
+	}
+
+	/**
+	 * Kind of a product_discount row `dc`: "special" or "discount", the codes
+	 * translated by the category's value_kind_* keys.
+	 *
+	 * @return string SQL expression
+	 */
+	private function discountKind(): string {
+		return "IF(`dc`.`special` = '1', 'special', 'discount')";
 	}
 }

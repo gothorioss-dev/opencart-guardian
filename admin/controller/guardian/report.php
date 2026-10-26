@@ -1,5 +1,7 @@
 <?php
 namespace Opencart\Admin\Controller\Extension\GtrGuardian\Guardian;
+
+use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
 /**
  * Class Report
  *
@@ -27,12 +29,17 @@ class Report extends \Opencart\System\Engine\Controller {
 	private const DATE_COLUMNS = ['date_available', 'date_start', 'date_end'];
 
 	/**
+	 * Report order: checks with findings or a failed run first, then the
+	 * rest; within each group by severity.
+	 */
+	private const SEVERITY_ORDER = [CheckResult::SEVERITY_CRITICAL => 0, CheckResult::SEVERITY_WARNING => 1, CheckResult::SEVERITY_INFO => 2];
+
+	/**
 	 * Finding columns holding a record id (or a comma-separated list of ids)
 	 * shown by name; a deleted record keeps its id.
 	 */
 	private const NAME_COLUMNS = [
 		'customer_group_id' => 'customer_group',
-		'customer_groups'   => 'customer_group',
 		'store_id'          => 'store'
 	];
 
@@ -106,10 +113,19 @@ class Report extends \Opencart\System\Engine\Controller {
 
 				$items = $result ? $this->getItems($category, $result['items']) : [];
 
+				// Optional per check: an empty string hides the line.
+				$impact_key = $category . '_check_' . $code . '_impact';
+				$impact = $this->language->get($impact_key);
+
+				if ($impact === $impact_key) {
+					$impact = '';
+				}
+
 				$checks[] = [
 					'code'     => $code,
 					'title'    => $this->language->get($category . '_check_' . $code . '_title'),
 					'desc'     => $this->language->get($category . '_check_' . $code . '_desc'),
+					'impact'   => $impact,
 					'hint'     => $this->language->get($category . '_check_' . $code . '_hint'),
 					'severity' => $meta['severity'],
 					'status'   => $result ? $result['status'] : 'pending',
@@ -119,6 +135,11 @@ class Report extends \Opencart\System\Engine\Controller {
 					'message'  => $message
 				];
 			}
+
+			// usort is stable, so equal checks keep their registry order.
+			$rank = fn(array $check): array => [!in_array($check['status'], [CheckResult::STATUS_FOUND, CheckResult::STATUS_ERROR]), self::SEVERITY_ORDER[$check['severity']] ?? count(self::SEVERITY_ORDER)];
+
+			usort($checks, fn(array $a, array $b): int => $rank($a) <=> $rank($b));
 
 			$data['categories'][] = [
 				'code'   => $category,
@@ -203,7 +224,8 @@ class Report extends \Opencart\System\Engine\Controller {
 					continue;
 				}
 
-				$cells[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars($this->formatValue($category, (string)$key, (string)$value), ENT_QUOTES, 'UTF-8', false);
+				// SQL NULL (nothing joined) shows as a dash; an empty string stays empty.
+				$cells[htmlspecialchars((string)$key, ENT_QUOTES, 'UTF-8', false)] = htmlspecialchars($value === null ? '—' : $this->formatValue($category, (string)$key, (string)$value), ENT_QUOTES, 'UTF-8', false);
 			}
 
 			$rows[] = ['cells' => $cells, 'edit' => $edit];
