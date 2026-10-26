@@ -149,10 +149,15 @@ class Report extends \Opencart\System\Engine\Controller {
 
 			usort($checks, fn(array $a, array $b): int => $rank($a) <=> $rank($b));
 
+			// Counted per check, as the run header does; sorting put the most severe first
+			$found = array_values(array_filter($checks, fn(array $check): bool => $check['status'] === CheckResult::STATUS_FOUND));
+
 			$data['categories'][] = [
-				'code'   => $category,
-				'name'   => $this->language->get($category . '_heading_title'),
-				'checks' => $checks
+				'code'     => $category,
+				'name'     => $this->language->get($category . '_heading_title'),
+				'found'    => count($found),
+				'severity' => $found ? $found[0]['severity'] : '',
+				'checks'   => $checks
 			];
 		}
 
