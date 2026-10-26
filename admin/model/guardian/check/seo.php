@@ -13,10 +13,11 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Seo extends Base {
 	protected array $checks = [
-		'seo_duplicate_keyword' => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_empty_keyword'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_invalid_keyword'   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_url'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id']
+		'seo_duplicate_keyword'     => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_empty_keyword'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_invalid_keyword'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_url'            => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_store_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id']
 	];
 
 	/**
@@ -86,6 +87,18 @@ class Seo extends Base {
 		}
 
 		return $this->collect('seo_orphan_url', $this->seoUrlSelect() . " WHERE " . implode(" OR ", $implode) . " ORDER BY `su`.`store_id`, `su`.`key`, `su`.`value`, `su`.`seo_url_id`");
+	}
+
+	/**
+	 * SEO URLs of a deleted store or language. Deleting either in the admin
+	 * removes its SEO URLs, so these come from imports or direct SQL. The
+	 * default store (0) has no store row. A row of a deleted language still
+	 * takes its keyword in its store, as the admin checks keywords per store.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoOrphanStoreLanguage(): CheckResult {
+		return $this->collect('seo_orphan_store_language', $this->seoUrlSelect('`su`.`language_id`') . " WHERE (`su`.`store_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `s` WHERE `s`.`store_id` = `su`.`store_id`)) OR `l`.`language_id` IS NULL ORDER BY `su`.`store_id`, `su`.`language_id`, `su`.`seo_url_id`");
 	}
 
 	/**

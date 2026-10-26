@@ -19,6 +19,10 @@ $_['check_seo_orphan_url_title']                = 'SEO URLs of deleted pages';
 $_['check_seo_orphan_url_desc']                 = 'The SEO URL points to a product, category, manufacturer, information page or article that no longer exists.';
 $_['check_seo_orphan_url_impact']               = 'Its address opens a "not found" page, and the keyword stays taken: the admin will not let you give it to another page of the store.';
 $_['check_seo_orphan_url_hint']                 = 'Delete the record in Design > SEO URL, or point it at an existing page.';
+$_['check_seo_orphan_store_language_title']     = 'SEO URLs of a deleted store or language';
+$_['check_seo_orphan_store_language_desc']      = 'The SEO URL belongs to a store or language that no longer exists.';
+$_['check_seo_orphan_store_language_impact']    = 'Customers will not notice; the record only clutters Design > SEO URL, and in its store the keyword stays taken for other pages.';
+$_['check_seo_orphan_store_language_hint']      = 'Delete the record in Design > SEO URL.';
 
 // Column
 $_['column_store_id']                           = 'Store';
@@ -27,3 +31,4 @@ $_['column_keyword']                            = 'Keyword';
 $_['column_key']                                = 'Key';
 $_['column_value']                              = 'Value';
 $_['column_targets']                            = 'Pages with this keyword';
+$_['column_language_id']                        = 'Language ID';
