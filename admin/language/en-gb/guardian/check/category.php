@@ -51,6 +51,10 @@ $_['check_option_unused_title']                         = 'Unused options';
 $_['check_option_unused_desc']                          = 'The option is not added to any product.';
 $_['check_option_unused_impact']                        = 'Customers will not notice: options are shown only on the products that have them; it only clutters the option list and the option choice in the product form.';
 $_['check_option_unused_hint']                          = 'Add the option to products on their Option tab, or delete it in Catalog > Options if it is not needed.';
+$_['check_option_value_unused_title']                   = 'Unused option values';
+$_['check_option_value_unused_desc']                    = 'The option is used on products, but this value of it is not offered on any product.';
+$_['check_option_value_unused_impact']                  = 'Customers will not notice: a product shows only the values added to it; the value only clutters the option and the value choice in the product form.';
+$_['check_option_value_unused_hint']                    = 'Add the value to products on their Option tab, or remove it from the option in Catalog > Options if it is not needed.';
 
 // Column
 $_['column_name']                                       = 'Name';
@@ -64,4 +68,7 @@ $_['column_depth']                                      = 'Level';
 $_['column_store_id']                                   = 'Store';
 $_['column_layout_id']                                  = 'Layout ID';
 $_['column_filter_id']                                  = 'Missing filter ID';
+$_['column_option']                                     = 'Option';
+$_['column_option_value_id']                            = 'Value ID';
 $_['check_category_broken_parent_column_parent_id']     = 'Missing parent ID';
+$_['check_option_value_unused_column_name']             = 'Value';

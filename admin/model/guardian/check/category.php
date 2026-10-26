@@ -27,7 +27,8 @@ class Category extends Base {
 		'category_broken_filter'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'option_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'option_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'option_value_unused'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -183,6 +184,19 @@ class Category extends Base {
 	 */
 	protected function optionUnused(): CheckResult {
 		return $this->collect('option_unused', "SELECT `o`.`option_id`, `od`.`name` FROM `" . DB_PREFIX . "option` `o` LEFT JOIN `" . DB_PREFIX . "option_description` `od` ON (`od`.`option_id` = `o`.`option_id` AND `od`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` WHERE `po`.`option_id` = `o`.`option_id`) ORDER BY `o`.`option_id`");
+	}
+
+	/**
+	 * Option values not offered on any product, within options that are in
+	 * use; a wholly unused option is option_unused. Any product link counts,
+	 * as in the admin guard against removing a value from an option.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function optionValueUnused(): CheckResult {
+		$language_id = (int)$this->config->get('config_language_id');
+
+		return $this->collect('option_value_unused', "SELECT `ov`.`option_id`, `od`.`name` AS `option`, `ov`.`option_value_id`, `ovd`.`name` FROM `" . DB_PREFIX . "option_value` `ov` LEFT JOIN `" . DB_PREFIX . "option_description` `od` ON (`od`.`option_id` = `ov`.`option_id` AND `od`.`language_id` = '" . $language_id . "') LEFT JOIN `" . DB_PREFIX . "option_value_description` `ovd` ON (`ovd`.`option_value_id` = `ov`.`option_value_id` AND `ovd`.`language_id` = '" . $language_id . "') WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` WHERE `po`.`option_id` = `ov`.`option_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option_value` `pov` WHERE `pov`.`option_value_id` = `ov`.`option_value_id`) ORDER BY `ov`.`option_id`, `ov`.`option_value_id`");
 	}
 
 	/**
