@@ -26,7 +26,8 @@ class Category extends Base {
 		'category_broken_layout'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql'],
 		'category_broken_filter'          => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'filter_group_empty'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'attribute_unused'                => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'option_unused'                   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -172,6 +173,16 @@ class Category extends Base {
 	 */
 	protected function attributeUnused(): CheckResult {
 		return $this->collect('attribute_unused', "SELECT `a`.`attribute_id`, `ad`.`name` FROM `" . DB_PREFIX . "attribute` `a` LEFT JOIN `" . DB_PREFIX . "attribute_description` `ad` ON (`ad`.`attribute_id` = `a`.`attribute_id` AND `ad`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_attribute` `pa` WHERE `pa`.`attribute_id` = `a`.`attribute_id`) ORDER BY `a`.`attribute_id`");
+	}
+
+	/**
+	 * Options not added to any product. Any product link counts, as in the
+	 * admin delete guard; see attributeUnused().
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function optionUnused(): CheckResult {
+		return $this->collect('option_unused', "SELECT `o`.`option_id`, `od`.`name` FROM `" . DB_PREFIX . "option` `o` LEFT JOIN `" . DB_PREFIX . "option_description` `od` ON (`od`.`option_id` = `o`.`option_id` AND `od`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_option` `po` WHERE `po`.`option_id` = `o`.`option_id`) ORDER BY `o`.`option_id`");
 	}
 
 	/**

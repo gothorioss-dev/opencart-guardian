@@ -47,6 +47,10 @@ $_['check_attribute_unused_title']                      = 'Unused attributes';
 $_['check_attribute_unused_desc']                       = 'The attribute is not set on any product.';
 $_['check_attribute_unused_impact']                     = 'Customers will not notice: attributes are shown only on the products that have them; it only clutters the attribute list and the attribute choice in the product form.';
 $_['check_attribute_unused_hint']                       = 'Set the attribute on products on their Attribute tab, or delete it in Catalog > Attributes > Attributes if it is not needed.';
+$_['check_option_unused_title']                         = 'Unused options';
+$_['check_option_unused_desc']                          = 'The option is not added to any product.';
+$_['check_option_unused_impact']                        = 'Customers will not notice: options are shown only on the products that have them; it only clutters the option list and the option choice in the product form.';
+$_['check_option_unused_hint']                          = 'Add the option to products on their Option tab, or delete it in Catalog > Options if it is not needed.';
 
 // Column
 $_['column_name']                                       = 'Name';
