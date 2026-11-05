@@ -18,7 +18,8 @@ class Seo extends Base {
 		'seo_invalid_keyword'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_orphan_url'            => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_orphan_store_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_missing_url'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id']
+		'seo_missing_url'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_urls_disabled'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -104,20 +105,42 @@ class Seo extends Base {
 
 	/**
 	 * Enabled products without an SEO URL in a store they are available in,
-	 * one finding row per store; only stores with SEO URLs on. The storefront
-	 * reads the store's own config_seo_url over the default store's, and only
-	 * the default store's form has the field. A URL in any language is enough
-	 * here: gaps between languages are a separate check. Links of deleted
-	 * stores belong to GARBAGE.
+	 * one finding row per store; only stores with SEO URLs on. A URL in any
+	 * language is enough here: gaps between languages are a separate check.
+	 * Links of deleted stores belong to GARBAGE.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function seoMissingUrl(): CheckResult {
-		$setting = "SELECT `value` FROM `" . DB_PREFIX . "setting` `s` WHERE `s`.`key` = 'config_seo_url' AND `s`.`store_id` = ";
-
 		// CONCAT keeps the `query` index on the varchar `value`, and unlike
 		// CAST ... AS CHAR takes the column's collation instead of failing.
-		return $this->collect('seo_missing_url', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id`) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`)) AND COALESCE((" . $setting . "`p2s`.`store_id`), (" . $setting . "'0')) = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'product_id' AND `su`.`value` = CONCAT(`p`.`product_id`) AND `su`.`store_id` = `p2s`.`store_id`) ORDER BY `p2s`.`store_id`, `p`.`product_id`");
+		return $this->collect('seo_missing_url', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id`) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`)) AND " . $this->seoUrlSetting("`p2s`.`store_id`") . " = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'product_id' AND `su`.`value` = CONCAT(`p`.`product_id`) AND `su`.`store_id` = `p2s`.`store_id`) ORDER BY `p2s`.`store_id`, `p`.`product_id`");
+	}
+
+	/**
+	 * Stores with SEO URLs off, one finding row per store: the storefront
+	 * ignores their keywords and the missing URL check skips them. May be
+	 * intended, hence only a note.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoUrlsDisabled(): CheckResult {
+		return $this->collect('seo_urls_disabled', "SELECT `st`.`store_id` FROM (SELECT 0 AS `store_id` UNION SELECT `store_id` FROM `" . DB_PREFIX . "store`) `st` WHERE " . $this->seoUrlSetting("`st`.`store_id`") . " != '1' ORDER BY `st`.`store_id`");
+	}
+
+	/**
+	 * A store's effective config_seo_url, as the storefront reads it: the
+	 * store's own value over the default store's. Only the default store's
+	 * form has the field, so an own value comes from imports or direct SQL.
+	 *
+	 * @param string $store_id SQL expression of the store id
+	 *
+	 * @return string SQL expression, '0' when the setting is absent
+	 */
+	private function seoUrlSetting(string $store_id): string {
+		$setting = "SELECT `value` FROM `" . DB_PREFIX . "setting` `s` WHERE `s`.`key` = 'config_seo_url' AND `s`.`store_id` = ";
+
+		return "COALESCE((" . $setting . $store_id . "), (" . $setting . "'0'), '0')";
 	}
 
 	/**
