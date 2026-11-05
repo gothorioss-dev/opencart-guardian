@@ -19,7 +19,8 @@ class Seo extends Base {
 		'seo_orphan_url'            => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_orphan_store_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_missing_url'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_urls_disabled'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'seo_urls_disabled'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'seo_missing_url_category'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id']
 	];
 
 	/**
@@ -114,7 +115,7 @@ class Seo extends Base {
 	protected function seoMissingUrl(): CheckResult {
 		// CONCAT keeps the `query` index on the varchar `value`, and unlike
 		// CAST ... AS CHAR takes the column's collation instead of failing.
-		return $this->collect('seo_missing_url', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id`) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`)) AND " . $this->seoUrlSetting("`p2s`.`store_id`") . " = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'product_id' AND `su`.`value` = CONCAT(`p`.`product_id`) AND `su`.`store_id` = `p2s`.`store_id`) ORDER BY `p2s`.`store_id`, `p`.`product_id`");
+		return $this->collect('seo_missing_url', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id`) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND " . $this->seoUrlStore("`p2s`.`store_id`") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'product_id' AND `su`.`value` = CONCAT(`p`.`product_id`) AND `su`.`store_id` = `p2s`.`store_id`) ORDER BY `p2s`.`store_id`, `p`.`product_id`");
 	}
 
 	/**
@@ -126,6 +127,29 @@ class Seo extends Base {
 	 */
 	protected function seoUrlsDisabled(): CheckResult {
 		return $this->collect('seo_urls_disabled', "SELECT `st`.`store_id` FROM (SELECT 0 AS `store_id` UNION SELECT `store_id` FROM `" . DB_PREFIX . "store`) `st` WHERE " . $this->seoUrlSetting("`st`.`store_id`") . " != '1' ORDER BY `st`.`store_id`");
+	}
+
+	/**
+	 * Enabled categories without an SEO URL in a store they are available in,
+	 * as the missing URL check does for products. A category's URL is keyed by
+	 * its path, so its own id is the last one, as in the orphan URL check.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoMissingUrlCategory(): CheckResult {
+		return $this->collect('seo_missing_url_category', "SELECT `c`.`category_id`, `cd`.`name`, `c2s`.`store_id` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c2s`.`category_id` = `c`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' AND " . $this->seoUrlStore("`c2s`.`store_id`") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'path' AND SUBSTRING_INDEX(`su`.`value`, '_', -1) = `c`.`category_id` AND `su`.`store_id` = `c2s`.`store_id`) ORDER BY `c2s`.`store_id`, `c`.`category_id`");
+	}
+
+	/**
+	 * SQL condition: an existing store (the default store has no row) with
+	 * SEO URLs on.
+	 *
+	 * @param string $store_id SQL expression of the store id
+	 *
+	 * @return string
+	 */
+	private function seoUrlStore(string $store_id): string {
+		return "(" . $store_id . " = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = " . $store_id . ")) AND " . $this->seoUrlSetting($store_id) . " = '1'";
 	}
 
 	/**

@@ -31,6 +31,10 @@ $_['check_seo_urls_disabled_title']             = 'Stores with SEO URLs turned o
 $_['check_seo_urls_disabled_desc']              = 'SEO URLs are turned off in this store, so its products are not checked for missing SEO URLs.';
 $_['check_seo_urls_disabled_impact']            = 'All store pages open at technical addresses with parameters, and the keywords you entered are not used.';
 $_['check_seo_urls_disabled_hint']              = 'If this is not intended, turn on Use SEO URLs in Settings, Server tab. The web server must support URL rewriting: on Apache, the mod-rewrite module and a .htaccess file.';
+$_['check_seo_missing_url_category_title']      = 'Categories without an SEO URL';
+$_['check_seo_missing_url_category_desc']       = 'The enabled category is available in a store with SEO URLs turned on, but has no SEO URL there in any language.';
+$_['check_seo_missing_url_category_impact']     = 'Customers and search engines see this category at a technical address with parameters instead of a readable one; the page itself still opens.';
+$_['check_seo_missing_url_category_hint']       = 'Enter a keyword on the SEO tab of the category for this store.';
 
 // Column
 $_['column_store_id']                           = 'Store';
