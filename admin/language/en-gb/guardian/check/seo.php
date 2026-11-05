@@ -23,6 +23,10 @@ $_['check_seo_orphan_store_language_title']     = 'SEO URLs of a deleted store o
 $_['check_seo_orphan_store_language_desc']      = 'The SEO URL belongs to a store or language that no longer exists.';
 $_['check_seo_orphan_store_language_impact']    = 'Customers will not notice; the record only clutters Design > SEO URL, and in its store the keyword stays taken for other pages.';
 $_['check_seo_orphan_store_language_hint']      = 'Delete the record in Design > SEO URL.';
+$_['check_seo_missing_url_title']               = 'Products without an SEO URL';
+$_['check_seo_missing_url_desc']                = 'The enabled product is available in a store with SEO URLs turned on, but has no SEO URL there in any language.';
+$_['check_seo_missing_url_impact']              = 'Customers and search engines see this product at a technical address with parameters instead of a readable one; the page itself still opens.';
+$_['check_seo_missing_url_hint']                = 'Enter a keyword on the SEO tab of the product for this store.';
 
 // Column
 $_['column_store_id']                           = 'Store';
@@ -32,3 +36,4 @@ $_['column_key']                                = 'Key';
 $_['column_value']                              = 'Value';
 $_['column_targets']                            = 'Pages with this keyword';
 $_['column_language_id']                        = 'Language ID';
+$_['column_name']                               = 'Name';

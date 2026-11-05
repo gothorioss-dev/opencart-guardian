@@ -17,7 +17,8 @@ class Seo extends Base {
 		'seo_empty_keyword'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_invalid_keyword'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_orphan_url'            => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_store_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id']
+		'seo_orphan_store_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_missing_url'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id']
 	];
 
 	/**
@@ -99,6 +100,24 @@ class Seo extends Base {
 	 */
 	protected function seoOrphanStoreLanguage(): CheckResult {
 		return $this->collect('seo_orphan_store_language', $this->seoUrlSelect('`su`.`language_id`') . " WHERE (`su`.`store_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `s` WHERE `s`.`store_id` = `su`.`store_id`)) OR `l`.`language_id` IS NULL ORDER BY `su`.`store_id`, `su`.`language_id`, `su`.`seo_url_id`");
+	}
+
+	/**
+	 * Enabled products without an SEO URL in a store they are available in,
+	 * one finding row per store; only stores with SEO URLs on. The storefront
+	 * reads the store's own config_seo_url over the default store's, and only
+	 * the default store's form has the field. A URL in any language is enough
+	 * here: gaps between languages are a separate check. Links of deleted
+	 * stores belong to GARBAGE.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoMissingUrl(): CheckResult {
+		$setting = "SELECT `value` FROM `" . DB_PREFIX . "setting` `s` WHERE `s`.`key` = 'config_seo_url' AND `s`.`store_id` = ";
+
+		// CONCAT keeps the `query` index on the varchar `value`, and unlike
+		// CAST ... AS CHAR takes the column's collation instead of failing.
+		return $this->collect('seo_missing_url', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id`) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`)) AND COALESCE((" . $setting . "`p2s`.`store_id`), (" . $setting . "'0')) = '1' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'product_id' AND `su`.`value` = CONCAT(`p`.`product_id`) AND `su`.`store_id` = `p2s`.`store_id`) ORDER BY `p2s`.`store_id`, `p`.`product_id`");
 	}
 
 	/**
