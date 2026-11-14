@@ -75,6 +75,10 @@ $_['check_seo_empty_meta_title_information_title']               = 'Information 
 $_['check_seo_empty_meta_title_information_desc']                = 'The enabled information page has an empty Meta Tag Title in the listed language; such pages come from an import or a direct database change.';
 $_['check_seo_empty_meta_title_information_impact']              = 'In the listed language the information page has no title in the browser tab and gives search engines no page title: the store does not put the page\'s Information Title there instead; the page also cannot be saved in the admin until the field is filled.';
 $_['check_seo_empty_meta_title_information_hint']                = 'Open the information page and fill in the Meta Tag Title field on the General tab for the listed language.';
+$_['check_seo_empty_meta_description_title']                     = 'Products with an empty meta description';
+$_['check_seo_empty_meta_description_desc']                      = 'The enabled product has an empty Meta Tag Description in the listed language; the admin saves a product with this field left empty.';
+$_['check_seo_empty_meta_description_impact']                    = 'In the listed language the product page has no description for search engines, so they pick the text shown under the page title in search results themselves; the page itself works as usual.';
+$_['check_seo_empty_meta_description_hint']                      = 'Open the product and fill in the Meta Tag Description field on the General tab for the listed language with a short summary of the product.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
