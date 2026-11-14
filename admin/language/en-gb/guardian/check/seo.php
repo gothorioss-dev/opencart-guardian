@@ -79,6 +79,10 @@ $_['check_seo_empty_meta_description_title']                     = 'Products wit
 $_['check_seo_empty_meta_description_desc']                      = 'The enabled product has an empty Meta Tag Description in the listed language; the admin saves a product with this field left empty.';
 $_['check_seo_empty_meta_description_impact']                    = 'In the listed language the product page has no description for search engines, so they pick the text shown under the page title in search results themselves; the page itself works as usual.';
 $_['check_seo_empty_meta_description_hint']                      = 'Open the product and fill in the Meta Tag Description field on the General tab for the listed language with a short summary of the product.';
+$_['check_seo_empty_meta_description_category_title']            = 'Categories with an empty meta description';
+$_['check_seo_empty_meta_description_category_desc']             = 'The enabled category has an empty Meta Tag Description in the listed language; the admin saves a category with this field left empty.';
+$_['check_seo_empty_meta_description_category_impact']           = 'In the listed language the category page has no description for search engines, so they pick the text shown under the page title in search results themselves; the page itself works as usual.';
+$_['check_seo_empty_meta_description_category_hint']             = 'Open the category and fill in the Meta Tag Description field on the General tab for the listed language with a short summary of the category.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
