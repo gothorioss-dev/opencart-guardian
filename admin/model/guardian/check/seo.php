@@ -22,7 +22,8 @@ class Seo extends Base {
 		'seo_urls_disabled'            => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'seo_missing_url_category'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_missing_url_information'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
-		'seo_missing_url_manufacturer' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id']
+		'seo_missing_url_manufacturer' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
+		'seo_incomplete_language'      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id']
 	];
 
 	/**
@@ -161,6 +162,23 @@ class Seo extends Base {
 	 */
 	protected function seoMissingUrlManufacturer(): CheckResult {
 		return $this->collect('seo_missing_url_manufacturer', "SELECT `m`.`manufacturer_id`, `m`.`name`, `m2s`.`store_id` FROM `" . DB_PREFIX . "manufacturer` `m` INNER JOIN `" . DB_PREFIX . "manufacturer_to_store` `m2s` ON (`m2s`.`manufacturer_id` = `m`.`manufacturer_id`) WHERE " . $this->seoUrlStore("`m2s`.`store_id`") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'manufacturer_id' AND `su`.`value` = CONCAT(`m`.`manufacturer_id`) AND `su`.`store_id` = `m2s`.`store_id`) ORDER BY `m2s`.`store_id`, `m`.`manufacturer_id`");
+	}
+
+	/**
+	 * Enabled products with an SEO URL in a store but not in every enabled
+	 * language, one finding row per store with the missing language names.
+	 * The storefront rewrites a link only by a URL of the current language
+	 * (catalog/model/design/seo_url.php) and offers enabled languages only.
+	 * Products with no URL at all belong to the missing URL check; a row of a
+	 * disabled or deleted language counts as a URL there but fills no
+	 * language here, so such products list every enabled language.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoIncompleteLanguage(): CheckResult {
+		$seo_url = "SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'product_id' AND `su`.`value` = CONCAT(`p`.`product_id`) AND `su`.`store_id` = `p2s`.`store_id`";
+
+		return $this->collect('seo_incomplete_language', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id`, GROUP_CONCAT(`l`.`name` ORDER BY `l`.`sort_order`, `l`.`name` SEPARATOR ', ') AS `language` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND " . $this->seoUrlStore("`p2s`.`store_id`") . " AND EXISTS (" . $seo_url . ") AND NOT EXISTS (" . $seo_url . " AND `su`.`language_id` = `l`.`language_id`) GROUP BY `p`.`product_id`, `pd`.`name`, `p2s`.`store_id` ORDER BY `p2s`.`store_id`, `p`.`product_id`");
 	}
 
 	/**
