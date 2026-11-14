@@ -27,7 +27,8 @@ class Seo extends Base {
 		'seo_incomplete_language_category'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_incomplete_language_information'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_incomplete_language_manufacturer' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
-		'seo_reserved_keyword'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id']
+		'seo_reserved_keyword'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_empty_meta_title'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id']
 	];
 
 	/**
@@ -258,6 +259,24 @@ class Seo extends Base {
 		}
 
 		return $this->collect('seo_reserved_keyword', $this->seoUrlSelect() . " WHERE `su`.`keyword` IN (" . implode(", ", $implode) . ") AND " . $this->seoUrlStore("`su`.`store_id`") . " AND (`su`.`key` = 'language' OR NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `sl` WHERE `sl`.`key` = 'language' AND `sl`.`value` = `l`.`code` AND `sl`.`store_id` = `su`.`store_id` AND `sl`.`language_id` = `su`.`language_id`)) ORDER BY `su`.`store_id`, `su`.`keyword`, `su`.`seo_url_id`");
+	}
+
+	/**
+	 * Enabled products with an empty meta title in an enabled language, one
+	 * finding row per language. The product page sets it as the page title
+	 * as is (catalog/controller/product/product.php), with no fallback to the
+	 * product name and whatever the SEO URL setting, so the page has an empty
+	 * <title>. The admin form requires 1-255 characters, so these come from
+	 * imports or direct SQL. Only products linked to an existing store have a
+	 * page: no link at all is product_no_store, a link only to a deleted store
+	 * belongs to GARBAGE. Products available later are still reported, as
+	 * they get a page then. A missing description row is
+	 * product_incomplete_description; MySQL TRIM strips spaces only.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoEmptyMetaTitle(): CheckResult {
+		return $this->collect('seo_empty_meta_title', "SELECT `p`.`product_id`, `pd`.`name`, `l`.`name` AS `language` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND TRIM(`pd2`.`meta_title`) = '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_store` `p2s` WHERE `p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) ORDER BY `p`.`product_id`, `l`.`sort_order`, `l`.`name`");
 	}
 
 	/**
