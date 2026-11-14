@@ -35,6 +35,10 @@ $_['check_seo_missing_url_category_title']      = 'Categories without an SEO URL
 $_['check_seo_missing_url_category_desc']       = 'The enabled category is available in a store with SEO URLs turned on, but has no SEO URL there in any language.';
 $_['check_seo_missing_url_category_impact']     = 'Customers and search engines see this category at a technical address with parameters instead of a readable one; the page itself still opens.';
 $_['check_seo_missing_url_category_hint']       = 'Enter a keyword on the SEO tab of the category for this store.';
+$_['check_seo_missing_url_information_title']   = 'Information pages without an SEO URL';
+$_['check_seo_missing_url_information_desc']    = 'The enabled information page is available in a store with SEO URLs turned on, but has no SEO URL there in any language.';
+$_['check_seo_missing_url_information_impact']  = 'Customers and search engines see this page at a technical address with parameters instead of a readable one; the page itself still opens.';
+$_['check_seo_missing_url_information_hint']    = 'Enter a keyword on the SEO tab of the information page for this store.';
 
 // Column
 $_['column_store_id']                           = 'Store';

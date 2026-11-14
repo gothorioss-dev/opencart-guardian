@@ -13,14 +13,15 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Seo extends Base {
 	protected array $checks = [
-		'seo_duplicate_keyword'     => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_empty_keyword'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_invalid_keyword'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_url'            => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_store_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_missing_url'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_urls_disabled'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'seo_missing_url_category'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id']
+		'seo_duplicate_keyword'       => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_empty_keyword'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_invalid_keyword'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_url'              => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_store_language'   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_missing_url'             => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_urls_disabled'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'seo_missing_url_category'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_missing_url_information' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id']
 	];
 
 	/**
@@ -138,6 +139,16 @@ class Seo extends Base {
 	 */
 	protected function seoMissingUrlCategory(): CheckResult {
 		return $this->collect('seo_missing_url_category', "SELECT `c`.`category_id`, `cd`.`name`, `c2s`.`store_id` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c2s`.`category_id` = `c`.`category_id`) LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' AND " . $this->seoUrlStore("`c2s`.`store_id`") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'path' AND SUBSTRING_INDEX(`su`.`value`, '_', -1) = `c`.`category_id` AND `su`.`store_id` = `c2s`.`store_id`) ORDER BY `c2s`.`store_id`, `c`.`category_id`");
+	}
+
+	/**
+	 * Enabled information pages without an SEO URL in a store they are
+	 * available in, as the missing URL check does for products.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoMissingUrlInformation(): CheckResult {
+		return $this->collect('seo_missing_url_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `i2s`.`store_id` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_to_store` `i2s` ON (`i2s`.`information_id` = `i`.`information_id`) LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' AND " . $this->seoUrlStore("`i2s`.`store_id`") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'information_id' AND `su`.`value` = CONCAT(`i`.`information_id`) AND `su`.`store_id` = `i2s`.`store_id`) ORDER BY `i2s`.`store_id`, `i`.`information_id`");
 	}
 
 	/**
