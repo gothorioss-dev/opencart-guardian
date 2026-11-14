@@ -12,6 +12,13 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  * @package Opencart\Admin\Model\Extension\GtrGuardian\Guardian\Check
  */
 class Seo extends Base {
+	/**
+	 * Inclusive acceptable length range, in characters, for
+	 * seo_meta_description_length; to be moved to settings in M7.
+	 */
+	private const META_DESCRIPTION_MIN = 50;
+	private const META_DESCRIPTION_MAX = 160;
+
 	protected array $checks = [
 		'seo_duplicate_keyword'                  => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_empty_keyword'                      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
@@ -33,7 +40,8 @@ class Seo extends Base {
 		'seo_empty_meta_title_information'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_empty_meta_description'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id'],
 		'seo_empty_meta_description_category'    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id'],
-		'seo_empty_meta_description_information' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id']
+		'seo_empty_meta_description_information' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id'],
+		'seo_meta_description_length'            => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id']
 	];
 
 	/**
@@ -359,6 +367,29 @@ class Seo extends Base {
 	 */
 	protected function seoEmptyMetaDescriptionInformation(): CheckResult {
 		return $this->collect('seo_empty_meta_description_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `l`.`name` AS `language` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_description` `id2` ON (`id2`.`information_id` = `i`.`information_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `id2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' AND TRIM(`id2`.`meta_description`) = '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "information_to_store` `i2s` WHERE `i2s`.`information_id` = `i`.`information_id` AND (`i2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s`.`store_id`))) ORDER BY `i`.`information_id`, `l`.`sort_order`, `l`.`name`");
+	}
+
+	/**
+	 * Enabled products whose non-empty meta description in an enabled
+	 * language is shorter than META_DESCRIPTION_MIN or longer than
+	 * META_DESCRIPTION_MAX characters, one finding row per language. The
+	 * header outputs the stored text raw (Twig autoescape is off), so the
+	 * owner in the admin field and search engines read it with entities
+	 * decoded; the length therefore reverses the four entities that
+	 * Request::clean() stores for admin input (&amp; last, as a browser
+	 * would), while other entities, e.g. from imports, count as stored. The
+	 * admin form does not validate the length, so this is info. TRIM only
+	 * matters for imported values, admin-saved ones are already trimmed by
+	 * Request::clean(). Empty values are seoEmptyMetaDescription(); a
+	 * tab-only value is reported here, as MySQL TRIM strips spaces only.
+	 * Store link and language filters as in seoEmptyMetaDescription().
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoMetaDescriptionLength(): CheckResult {
+		$length = "CHAR_LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(`pd2`.`meta_description`), '&quot;', '\"'), '&lt;', '<'), '&gt;', '>'), '&amp;', '&'))";
+
+		return $this->collect('seo_meta_description_length', "SELECT `p`.`product_id`, `pd`.`name`, `l`.`name` AS `language`, " . $length . " AS `length` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND TRIM(`pd2`.`meta_description`) != '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_store` `p2s` WHERE `p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) HAVING `length` < '" . (int)self::META_DESCRIPTION_MIN . "' OR `length` > '" . (int)self::META_DESCRIPTION_MAX . "' ORDER BY `p`.`product_id`, `l`.`sort_order`, `l`.`name`");
 	}
 
 	/**

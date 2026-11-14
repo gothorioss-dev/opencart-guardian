@@ -87,6 +87,10 @@ $_['check_seo_empty_meta_description_information_title']         = 'Information 
 $_['check_seo_empty_meta_description_information_desc']          = 'The enabled information page has an empty Meta Tag Description in the listed language; the admin saves an information page with this field left empty.';
 $_['check_seo_empty_meta_description_information_impact']        = 'In the listed language the information page has no description for search engines, so they pick the text shown under the page title in search results themselves; the page itself works as usual.';
 $_['check_seo_empty_meta_description_information_hint']          = 'Open the information page and fill in the Meta Tag Description field on the General tab for the listed language with a short summary of the page.';
+$_['check_seo_meta_description_length_title']                    = 'Products with a meta description that is too short or too long';
+$_['check_seo_meta_description_length_desc']                     = 'The enabled product\'s Meta Tag Description in the listed language is shorter than 50 or longer than 160 characters; the admin does not check the length of this field.';
+$_['check_seo_meta_description_length_impact']                   = 'Search engines usually cut off a longer description in search results and often replace a too short one with text picked from the page; the page itself works as usual.';
+$_['check_seo_meta_description_length_hint']                     = 'Open the product and shorten or lengthen the Meta Tag Description field on the General tab for the listed language; the Characters column shows its current length.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
@@ -101,3 +105,4 @@ $_['check_seo_incomplete_language_column_language']              = 'Languages wi
 $_['check_seo_incomplete_language_category_column_language']     = 'Languages without an SEO URL';
 $_['check_seo_incomplete_language_information_column_language']  = 'Languages without an SEO URL';
 $_['check_seo_incomplete_language_manufacturer_column_language'] = 'Languages without an SEO URL';
+$_['column_length']                                              = 'Characters';

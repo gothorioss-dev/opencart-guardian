@@ -87,6 +87,10 @@ $_['check_seo_empty_meta_description_information_title']         = 'Информ
 $_['check_seo_empty_meta_description_information_desc']          = 'У включённой информационной страницы на указанном языке пустое поле «Мета-тег Description»; админка сохраняет информационную страницу и с незаполненным полем.';
 $_['check_seo_empty_meta_description_information_impact']        = 'На указанном языке у информационной страницы нет описания для поисковых систем, и текст под заголовком страницы в результатах поиска они подбирают сами; сама страница работает как обычно.';
 $_['check_seo_empty_meta_description_information_hint']          = 'Откройте информационную страницу и заполните поле «Мета-тег Description» на вкладке «Общие» для указанного языка коротким описанием страницы.';
+$_['check_seo_meta_description_length_title']                    = 'Товары со слишком коротким или длинным мета-описанием';
+$_['check_seo_meta_description_length_desc']                     = 'У включённого товара на указанном языке поле «Мета-тег Description» короче 50 или длиннее 160 символов; админка не проверяет длину этого поля.';
+$_['check_seo_meta_description_length_impact']                   = 'Поисковые системы обычно обрезают более длинное описание в результатах поиска, а слишком короткое часто заменяют текстом, подобранным со страницы; сама страница работает как обычно.';
+$_['check_seo_meta_description_length_hint']                     = 'Откройте товар и сократите или дополните поле «Мета-тег Description» на вкладке «Общие» для указанного языка; текущая длина указана в колонке «Символов».';
 
 // Column
 $_['column_store_id']                                            = 'Магазин';
@@ -101,3 +105,4 @@ $_['check_seo_incomplete_language_column_language']              = 'Языки �
 $_['check_seo_incomplete_language_category_column_language']     = 'Языки без ЧПУ-ссылки';
 $_['check_seo_incomplete_language_information_column_language']  = 'Языки без ЧПУ-ссылки';
 $_['check_seo_incomplete_language_manufacturer_column_language'] = 'Языки без ЧПУ-ссылки';
+$_['column_length']                                              = 'Символов';

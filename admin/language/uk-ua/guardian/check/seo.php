@@ -87,6 +87,10 @@ $_['check_seo_empty_meta_description_information_title']         = 'Інформ
 $_['check_seo_empty_meta_description_information_desc']          = 'В увімкненої інформаційної сторінки вказаною мовою порожнє поле «Мета-тег Description»; адмінка зберігає інформаційну сторінку і з незаповненим полем.';
 $_['check_seo_empty_meta_description_information_impact']        = 'Вказаною мовою інформаційна сторінка не має опису для пошукових систем, і текст під заголовком сторінки в результатах пошуку вони підбирають самі; сама сторінка працює як зазвичай.';
 $_['check_seo_empty_meta_description_information_hint']          = 'Відкрийте інформаційну сторінку і заповніть поле «Мета-тег Description» на вкладці «Загальні» для вказаної мови коротким описом сторінки.';
+$_['check_seo_meta_description_length_title']                    = 'Товари із занадто коротким або довгим мета-описом';
+$_['check_seo_meta_description_length_desc']                     = 'В увімкненого товару вказаною мовою поле «Мета-тег Description» коротше за 50 або довше за 160 символів; адмінка не перевіряє довжину цього поля.';
+$_['check_seo_meta_description_length_impact']                   = 'Пошукові системи зазвичай обрізають довший опис у результатах пошуку, а занадто короткий часто замінюють текстом, дібраним зі сторінки; сама сторінка працює як зазвичай.';
+$_['check_seo_meta_description_length_hint']                     = 'Відкрийте товар і скоротіть або доповніть поле «Мета-тег Description» на вкладці «Загальні» для вказаної мови; поточна довжина вказана в колонці «Символів».';
 
 // Column
 $_['column_store_id']                                            = 'Магазин';
@@ -101,3 +105,4 @@ $_['check_seo_incomplete_language_column_language']              = 'Мови б�
 $_['check_seo_incomplete_language_category_column_language']     = 'Мови без ЧПУ-посилання';
 $_['check_seo_incomplete_language_information_column_language']  = 'Мови без ЧПУ-посилання';
 $_['check_seo_incomplete_language_manufacturer_column_language'] = 'Мови без ЧПУ-посилання';
+$_['column_length']                                              = 'Символів';
