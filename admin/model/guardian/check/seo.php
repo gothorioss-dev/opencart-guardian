@@ -14,7 +14,7 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
 class Seo extends Base {
 	/**
 	 * Inclusive acceptable length range, in characters, for
-	 * seo_meta_description_length; to be moved to settings in M7.
+	 * the seo_meta_description_length* checks; to be moved to settings in M7.
 	 */
 	private const META_DESCRIPTION_MIN = 50;
 	private const META_DESCRIPTION_MAX = 160;
@@ -41,7 +41,8 @@ class Seo extends Base {
 		'seo_empty_meta_description'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id'],
 		'seo_empty_meta_description_category'    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_empty_meta_description_information' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id'],
-		'seo_meta_description_length'            => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id']
+		'seo_meta_description_length'            => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_meta_description_length_category'   => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id']
 	];
 
 	/**
@@ -387,9 +388,23 @@ class Seo extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function seoMetaDescriptionLength(): CheckResult {
-		$length = "CHAR_LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(`pd2`.`meta_description`), '&quot;', '\"'), '&lt;', '<'), '&gt;', '>'), '&amp;', '&'))";
+		return $this->collect('seo_meta_description_length', "SELECT `p`.`product_id`, `pd`.`name`, `l`.`name` AS `language`, " . $this->metaDescriptionLength('`pd2`.`meta_description`') . " AS `length` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND TRIM(`pd2`.`meta_description`) != '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_store` `p2s` WHERE `p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) HAVING `length` < '" . (int)self::META_DESCRIPTION_MIN . "' OR `length` > '" . (int)self::META_DESCRIPTION_MAX . "' ORDER BY `p`.`product_id`, `l`.`sort_order`, `l`.`name`");
+	}
 
-		return $this->collect('seo_meta_description_length', "SELECT `p`.`product_id`, `pd`.`name`, `l`.`name` AS `language`, " . $length . " AS `length` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND TRIM(`pd2`.`meta_description`) != '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_store` `p2s` WHERE `p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) HAVING `length` < '" . (int)self::META_DESCRIPTION_MIN . "' OR `length` > '" . (int)self::META_DESCRIPTION_MAX . "' ORDER BY `p`.`product_id`, `l`.`sort_order`, `l`.`name`");
+	/**
+	 * Enabled categories whose non-empty meta description in an enabled
+	 * language is shorter than META_DESCRIPTION_MIN or longer than
+	 * META_DESCRIPTION_MAX characters, one finding row per language. The
+	 * category page passes it to the document as is
+	 * (catalog/controller/product/category.php) and the admin form does not
+	 * validate its length, so this is info. Length, TRIM and empty rules as
+	 * in seoMetaDescriptionLength(); store link and language filters as in
+	 * seoEmptyMetaDescriptionCategory().
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoMetaDescriptionLengthCategory(): CheckResult {
+		return $this->collect('seo_meta_description_length_category', "SELECT `c`.`category_id`, `cd`.`name`, `l`.`name` AS `language`, " . $this->metaDescriptionLength('`cd2`.`meta_description`') . " AS `length` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' AND TRIM(`cd2`.`meta_description`) != '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_to_store` `c2s` WHERE `c2s`.`category_id` = `c`.`category_id` AND (`c2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s`.`store_id`))) HAVING `length` < '" . (int)self::META_DESCRIPTION_MIN . "' OR `length` > '" . (int)self::META_DESCRIPTION_MAX . "' ORDER BY `c`.`category_id`, `l`.`sort_order`, `l`.`name`");
 	}
 
 	/**
@@ -428,5 +443,17 @@ class Seo extends Base {
 	 */
 	private function seoUrlSelect(string $columns = ''): string {
 		return "SELECT `su`.`seo_url_id`, `su`.`store_id`, `l`.`code` AS `language`, `su`.`keyword`, `su`.`key`, `su`.`value`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "seo_url` `su` LEFT JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `su`.`language_id`)";
+	}
+
+	/**
+	 * SQL expression: the character length of a trimmed meta description as
+	 * the owner and search engines see it; see seoMetaDescriptionLength().
+	 *
+	 * @param string $column SQL expression of the column
+	 *
+	 * @return string SQL expression
+	 */
+	private function metaDescriptionLength(string $column): string {
+		return "CHAR_LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(" . $column . "), '&quot;', '\"'), '&lt;', '<'), '&gt;', '>'), '&amp;', '&'))";
 	}
 }
