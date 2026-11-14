@@ -71,6 +71,10 @@ $_['check_seo_empty_meta_title_category_title']                  = 'Categories w
 $_['check_seo_empty_meta_title_category_desc']                   = 'The enabled category has an empty Meta Tag Title in the listed language; such categories come from an import or a direct database change.';
 $_['check_seo_empty_meta_title_category_impact']                 = 'In the listed language the category page has no title in the browser tab and gives search engines no page title: the store does not put the category name there instead; the category also cannot be saved in the admin until the field is filled.';
 $_['check_seo_empty_meta_title_category_hint']                   = 'Open the category and fill in the Meta Tag Title field on the General tab for the listed language.';
+$_['check_seo_empty_meta_title_information_title']               = 'Information pages with an empty meta title';
+$_['check_seo_empty_meta_title_information_desc']                = 'The enabled information page has an empty Meta Tag Title in the listed language; such pages come from an import or a direct database change.';
+$_['check_seo_empty_meta_title_information_impact']              = 'In the listed language the information page has no title in the browser tab and gives search engines no page title: the store does not put the page\'s Information Title there instead; the page also cannot be saved in the admin until the field is filled.';
+$_['check_seo_empty_meta_title_information_hint']                = 'Open the information page and fill in the Meta Tag Title field on the General tab for the listed language.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
