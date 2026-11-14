@@ -28,7 +28,8 @@ class Seo extends Base {
 		'seo_incomplete_language_information'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_incomplete_language_manufacturer' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
 		'seo_reserved_keyword'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_empty_meta_title'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id']
+		'seo_empty_meta_title'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_empty_meta_title_category'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id']
 	];
 
 	/**
@@ -277,6 +278,20 @@ class Seo extends Base {
 	 */
 	protected function seoEmptyMetaTitle(): CheckResult {
 		return $this->collect('seo_empty_meta_title', "SELECT `p`.`product_id`, `pd`.`name`, `l`.`name` AS `language` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND TRIM(`pd2`.`meta_title`) = '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_store` `p2s` WHERE `p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) ORDER BY `p`.`product_id`, `l`.`sort_order`, `l`.`name`");
+	}
+
+	/**
+	 * Enabled categories with an empty meta title in an enabled language, one
+	 * finding row per language. The category page sets it as the page title
+	 * as is (catalog/controller/product/category.php), with no fallback to the
+	 * category name and whatever the SEO URL setting; the admin form requires
+	 * 1-255 characters. Store link and TRIM rules as in seoEmptyMetaTitle();
+	 * a missing description row is category_incomplete_description.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoEmptyMetaTitleCategory(): CheckResult {
+		return $this->collect('seo_empty_meta_title_category', "SELECT `c`.`category_id`, `cd`.`name`, `l`.`name` AS `language` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' AND TRIM(`cd2`.`meta_title`) = '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_to_store` `c2s` WHERE `c2s`.`category_id` = `c`.`category_id` AND (`c2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s`.`store_id`))) ORDER BY `c`.`category_id`, `l`.`sort_order`, `l`.`name`");
 	}
 
 	/**
