@@ -95,6 +95,10 @@ $_['check_seo_meta_description_length_category_title']           = 'Categories w
 $_['check_seo_meta_description_length_category_desc']            = 'The enabled category\'s Meta Tag Description in the listed language is shorter than 50 or longer than 160 characters; the admin does not check the length of this field.';
 $_['check_seo_meta_description_length_category_impact']          = 'Search engines usually cut off a longer description in search results and often replace a too short one with text picked from the page; the page itself works as usual.';
 $_['check_seo_meta_description_length_category_hint']            = 'Open the category and shorten or lengthen the Meta Tag Description field on the General tab for the listed language; the Characters column shows its current length.';
+$_['check_seo_meta_description_length_information_title']        = 'Information pages with a meta description that is too short or too long';
+$_['check_seo_meta_description_length_information_desc']         = 'The enabled information page\'s Meta Tag Description in the listed language is shorter than 50 or longer than 160 characters; the admin does not check the length of this field.';
+$_['check_seo_meta_description_length_information_impact']       = 'Search engines usually cut off a longer description in search results and often replace a too short one with text picked from the page; the page itself works as usual.';
+$_['check_seo_meta_description_length_information_hint']         = 'Open the information page and shorten or lengthen the Meta Tag Description field on the General tab for the listed language; the Characters column shows its current length.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
