@@ -13,26 +13,27 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Seo extends Base {
 	protected array $checks = [
-		'seo_duplicate_keyword'                => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_empty_keyword'                    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_invalid_keyword'                  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_url'                       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_store_language'            => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_missing_url'                      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_urls_disabled'                    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'seo_missing_url_category'             => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
-		'seo_missing_url_information'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
-		'seo_missing_url_manufacturer'         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
-		'seo_incomplete_language'              => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_incomplete_language_category'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
-		'seo_incomplete_language_information'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
-		'seo_incomplete_language_manufacturer' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
-		'seo_reserved_keyword'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_empty_meta_title'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_empty_meta_title_category'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
-		'seo_empty_meta_title_information'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
-		'seo_empty_meta_description'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_empty_meta_description_category'  => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id']
+		'seo_duplicate_keyword'                  => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_empty_keyword'                      => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_invalid_keyword'                    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_url'                         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_store_language'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_missing_url'                        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_urls_disabled'                      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'seo_missing_url_category'               => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_missing_url_information'            => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
+		'seo_missing_url_manufacturer'           => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
+		'seo_incomplete_language'                => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_incomplete_language_category'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_incomplete_language_information'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
+		'seo_incomplete_language_manufacturer'   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
+		'seo_reserved_keyword'                   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_empty_meta_title'                   => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_empty_meta_title_category'          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_empty_meta_title_information'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
+		'seo_empty_meta_description'             => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id'],
+		'seo_empty_meta_description_category'    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_empty_meta_description_information' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id']
 	];
 
 	/**
@@ -343,6 +344,21 @@ class Seo extends Base {
 	 */
 	protected function seoEmptyMetaDescriptionCategory(): CheckResult {
 		return $this->collect('seo_empty_meta_description_category', "SELECT `c`.`category_id`, `cd`.`name`, `l`.`name` AS `language` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' AND TRIM(`cd2`.`meta_description`) = '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_to_store` `c2s` WHERE `c2s`.`category_id` = `c`.`category_id` AND (`c2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s`.`store_id`))) ORDER BY `c`.`category_id`, `l`.`sort_order`, `l`.`name`");
+	}
+
+	/**
+	 * Enabled information pages with an empty meta description in an enabled
+	 * language, one finding row per language. The information page passes it
+	 * to the document as is (catalog/controller/information/information.php),
+	 * with no fallback to the page description and whatever the SEO URL
+	 * setting, and the header omits the description meta tag when it is
+	 * empty. The admin form does not require the field, so this is info, not
+	 * a defect. Store link and TRIM rules as in seoEmptyMetaDescription().
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoEmptyMetaDescriptionInformation(): CheckResult {
+		return $this->collect('seo_empty_meta_description_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `l`.`name` AS `language` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_description` `id2` ON (`id2`.`information_id` = `i`.`information_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `id2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' AND TRIM(`id2`.`meta_description`) = '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "information_to_store` `i2s` WHERE `i2s`.`information_id` = `i`.`information_id` AND (`i2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s`.`store_id`))) ORDER BY `i`.`information_id`, `l`.`sort_order`, `l`.`name`");
 	}
 
 	/**
