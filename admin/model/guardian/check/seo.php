@@ -26,7 +26,8 @@ class Seo extends Base {
 		'seo_incomplete_language'              => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
 		'seo_incomplete_language_category'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_incomplete_language_information'  => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
-		'seo_incomplete_language_manufacturer' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id']
+		'seo_incomplete_language_manufacturer' => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'manufacturer_id'],
+		'seo_reserved_keyword'                 => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id']
 	];
 
 	/**
@@ -221,6 +222,42 @@ class Seo extends Base {
 		$seo_url = "SELECT 1 FROM `" . DB_PREFIX . "seo_url` `su` WHERE `su`.`key` = 'manufacturer_id' AND `su`.`value` = CONCAT(`m`.`manufacturer_id`) AND `su`.`store_id` = `m2s`.`store_id`";
 
 		return $this->collect('seo_incomplete_language_manufacturer', "SELECT `m`.`manufacturer_id`, `m`.`name`, `m2s`.`store_id`, GROUP_CONCAT(`l`.`name` ORDER BY `l`.`sort_order`, `l`.`name` SEPARATOR ', ') AS `language` FROM `" . DB_PREFIX . "manufacturer` `m` INNER JOIN `" . DB_PREFIX . "manufacturer_to_store` `m2s` ON (`m2s`.`manufacturer_id` = `m`.`manufacturer_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`status` = '1') WHERE " . $this->seoUrlStore("`m2s`.`store_id`") . " AND EXISTS (" . $seo_url . ") AND NOT EXISTS (" . $seo_url . " AND `su`.`language_id` = `l`.`language_id`) GROUP BY `m`.`manufacturer_id`, `m`.`name`, `m2s`.`store_id` ORDER BY `m2s`.`store_id`, `m`.`manufacturer_id`");
+	}
+
+	/**
+	 * Keywords equal to the name of a folder in the store root, in stores with
+	 * SEO URLs on. The web server serves an existing file or folder before the
+	 * request reaches the SEO route (.htaccess.txt: !-f, !-d), so the address
+	 * opens the folder instead of the page. The folders are scanned, not
+	 * listed: the admin folder is often renamed and hosts add their own.
+	 * The whole keyword is compared because the whole request path is tested;
+	 * paths of real sub-folders (catalog/view) are not modelled. Only rows that
+	 * can start an address count: a language keyword, or any keyword where the
+	 * store has no keyword for that language, as storefront links carry the
+	 * language first; so core's own `catalog` route keyword stays behind the
+	 * language prefix. A route keyword in front (/product/...) is not
+	 * modelled, so in a store without language keywords such a row is
+	 * reported although it works. Compared case-insensitively, as core
+	 * compares keywords; on a case-sensitive host `Admin` really works. Root
+	 * files all have a dot, which the invalid keyword check already reports.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoReservedKeyword(): CheckResult {
+		$folders = array_map('basename', glob(DIR_OPENCART . '*', GLOB_ONLYDIR) ?: []);
+
+		// IN () is invalid SQL, and without folders nothing can clash.
+		if (!$folders) {
+			return CheckResult::ok('seo_reserved_keyword', $this->checks['seo_reserved_keyword']['severity']);
+		}
+
+		$implode = [];
+
+		foreach ($folders as $folder) {
+			$implode[] = "'" . $this->db->escape($folder) . "'";
+		}
+
+		return $this->collect('seo_reserved_keyword', $this->seoUrlSelect() . " WHERE `su`.`keyword` IN (" . implode(", ", $implode) . ") AND " . $this->seoUrlStore("`su`.`store_id`") . " AND (`su`.`key` = 'language' OR NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "seo_url` `sl` WHERE `sl`.`key` = 'language' AND `sl`.`value` = `l`.`code` AND `sl`.`store_id` = `su`.`store_id` AND `sl`.`language_id` = `su`.`language_id`)) ORDER BY `su`.`store_id`, `su`.`keyword`, `su`.`seo_url_id`");
 	}
 
 	/**

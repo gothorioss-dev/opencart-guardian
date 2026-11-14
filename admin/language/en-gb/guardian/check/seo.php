@@ -59,6 +59,10 @@ $_['check_seo_incomplete_language_manufacturer_title']           = 'Manufacturer
 $_['check_seo_incomplete_language_manufacturer_desc']            = 'The manufacturer has an SEO URL in a store with SEO URLs turned on, but not in every enabled language.';
 $_['check_seo_incomplete_language_manufacturer_impact']          = 'In the listed languages, customers and search engines see this manufacturer\'s page at a technical address with parameters instead of a readable one; the page itself still opens.';
 $_['check_seo_incomplete_language_manufacturer_hint']            = 'Enter a keyword for the listed languages on the SEO tab of the manufacturer for this store.';
+$_['check_seo_reserved_keyword_title']                           = 'SEO URLs that match a site folder name';
+$_['check_seo_reserved_keyword_desc']                            = 'The keyword is the name of a folder in the store\'s root directory (for example admin or image), and in this store and language it starts the address: it is the keyword of the language itself, or the store has no such language keyword, so addresses do not begin with a language code like en-gb.';
+$_['check_seo_reserved_keyword_impact']                          = 'The web server opens the folder instead of the page (for example the admin login or an access error), so customers and search engines do not reach the page; for a language keyword this hits every page of that language without its own SEO URL, such as the home page, cart and checkout.';
+$_['check_seo_reserved_keyword_hint']                            = 'Change the keyword in Design > SEO URL or on the SEO tab of the page so that it does not match a folder name; a language keyword changes the start of every address in that language.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
