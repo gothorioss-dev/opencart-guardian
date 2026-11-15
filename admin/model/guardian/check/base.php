@@ -79,4 +79,31 @@ abstract class Base extends \Opencart\System\Engine\Model {
 
 		return CheckResult::found($code, $this->checks[$code]['severity'], $count, $items);
 	}
+
+	/**
+	 * SQL condition: a stored (HTML-escaped) description is empty. An editor's
+	 * empty markup (&lt;p&gt;&lt;br&gt;&lt;/p&gt;, &amp;nbsp;) counts as empty;
+	 * media tags are kept, so an image-only description is not empty.
+	 * REGEXP_REPLACE needs MySQL 8.0+ / MariaDB 10.0.5+; (?s) lets a tag span lines.
+	 *
+	 * @param string $column SQL expression of the description column
+	 *
+	 * @return string SQL condition
+	 */
+	protected function descriptionEmpty(string $column): string {
+		return "REGEXP_REPLACE(REGEXP_REPLACE(" . $column . ", '(?s)&lt;(?!(img|iframe|video|embed|object)[[:space:]&/]).*?&gt;', ''), '&amp;nbsp;|[[:space:]]', '') = ''";
+	}
+
+	/**
+	 * Variant family of every product whose master exists: the product's own
+	 * id for a master, the master's id for a variant, the master's master for
+	 * a variant of a variant. Products with a missing master are left out.
+	 *
+	 * @param string $columns extra select list over `p2` (product) and `m2` (its master)
+	 *
+	 * @return string SELECT product_id, family ... with an open WHERE that callers may extend with AND
+	 */
+	protected function variantFamilies(string $columns = ''): string {
+		return "SELECT `p2`.`product_id`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE (`p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL)";
+	}
 }
