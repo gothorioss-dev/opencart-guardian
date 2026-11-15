@@ -111,6 +111,10 @@ $_['check_seo_duplicate_meta_title_information_title']             = 'Informatio
 $_['check_seo_duplicate_meta_title_information_desc']              = 'Several enabled information pages have the same Meta Tag Title in one store in the listed language; the admin does not check this field for uniqueness.';
 $_['check_seo_duplicate_meta_title_information_impact']            = 'Their pages show the same title in the browser tab and in search results, so customers can hardly tell the tabs apart, and search engines may treat the pages as duplicates.';
 $_['check_seo_duplicate_meta_title_information_hint']              = 'Give each information page its own Meta Tag Title on the General tab for the listed language; the Pages with this meta title column shows how many pages share it.';
+$_['check_seo_thin_description_title']                             = 'Products with a very short description';
+$_['check_seo_thin_description_desc']                              = 'The enabled product\'s Description in the listed language has fewer than 50 characters of text, not counting formatting and images.';
+$_['check_seo_thin_description_impact']                            = 'The product page shows almost no text about the product, and search engines get little content to find the page by.';
+$_['check_seo_thin_description_hint']                              = 'Open the product and add text to the Description field on the General tab for the listed language; the Characters column shows the current text length.';
 
 // Column
 $_['column_store_id']                                              = 'Store';

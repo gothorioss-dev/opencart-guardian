@@ -19,6 +19,12 @@ class Seo extends Base {
 	private const META_DESCRIPTION_MIN = 50;
 	private const META_DESCRIPTION_MAX = 160;
 
+	/**
+	 * Minimum length, in characters, of a non-empty description for
+	 * the seo_thin_description* checks; to be moved to settings in M7.
+	 */
+	private const THIN_DESCRIPTION_MIN = 50;
+
 	protected array $checks = [
 		'seo_duplicate_keyword'                   => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_empty_keyword'                       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
@@ -46,7 +52,8 @@ class Seo extends Base {
 		'seo_meta_description_length_information' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_duplicate_meta_title'                => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
 		'seo_duplicate_meta_title_category'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
-		'seo_duplicate_meta_title_information'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id']
+		'seo_duplicate_meta_title_information'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
+		'seo_thin_description'                    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id']
 	];
 
 	/**
@@ -485,6 +492,25 @@ class Seo extends Base {
 	}
 
 	/**
+	 * Enabled products whose non-empty Description in an enabled language has
+	 * fewer than THIN_DESCRIPTION_MIN characters of text, one finding row per
+	 * language. The product page prints the description after
+	 * html_entity_decode (catalog/controller/product/product.php); the admin
+	 * form does not require it (admin/controller/catalog/product.php), so
+	 * this is info. Length is that of descriptionText(): tags do not count and
+	 * an entity counts as one character; a tag replaced by a space may add a
+	 * character inside a word. Descriptions without any text or image are
+	 * product_empty_content, a missing row is product_incomplete_description;
+	 * an image-only description is reported here with length 0. Store link and
+	 * language filters as in seoMetaDescriptionLength().
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoThinDescription(): CheckResult {
+		return $this->collect('seo_thin_description', "SELECT `p`.`product_id`, `pd`.`name`, `l`.`name` AS `language`, CHAR_LENGTH(" . $this->descriptionText('`pd2`.`description`') . ") AS `length` FROM `" . DB_PREFIX . "product` `p` INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' AND NOT (" . $this->descriptionEmpty('`pd2`.`description`') . ") AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product_to_store` `p2s` WHERE `p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) HAVING `length` < '" . (int)self::THIN_DESCRIPTION_MIN . "' ORDER BY `p`.`product_id`, `l`.`sort_order`, `l`.`name`");
+	}
+
+	/**
 	 * SQL condition: an existing store (the default store has no row) with
 	 * SEO URLs on.
 	 *
@@ -532,5 +558,19 @@ class Seo extends Base {
 	 */
 	private function metaDescriptionLength(string $column): string {
 		return "CHAR_LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(TRIM(" . $column . "), '&quot;', '\"'), '&lt;', '<'), '&gt;', '>'), '&amp;', '&'))";
+	}
+
+	/**
+	 * SQL expression: the visible text of a stored (HTML-escaped) description,
+	 * as the storefront shows it after html_entity_decode: tags removed,
+	 * non-breaking spaces as spaces, any other entity as one character,
+	 * whitespace runs collapsed and trimmed. Needs MySQL 8.0+ / MariaDB 10.0.5+.
+	 *
+	 * @param string $column SQL expression of the column
+	 *
+	 * @return string SQL expression
+	 */
+	private function descriptionText(string $column): string {
+		return "TRIM(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(" . $column . ", '(?s)&lt;.*?&gt;', ' '), '&amp;(nbsp|#160);', ' '), '&amp;#?[[:alnum:]]+;|&(quot|lt|gt|amp|#039);', 'x'), '[[:space:]]+', ' '))";
 	}
 }
