@@ -127,6 +127,10 @@ $_['check_seo_duplicate_description_title']                        = 'Products w
 $_['check_seo_duplicate_description_desc']                         = 'Several enabled products (not counting variants of one product) have the same Description text in one store in the listed language, ignoring formatting and letter case.';
 $_['check_seo_duplicate_description_impact']                       = 'Customers see the same text on different product pages, and search engines may treat the pages as duplicates and show only one of them.';
 $_['check_seo_duplicate_description_hint']                         = 'Write a separate Description for each product on the General tab for the listed language; the Products with this description column shows how many products share it.';
+$_['check_seo_duplicate_description_category_title']               = 'Categories with the same description';
+$_['check_seo_duplicate_description_category_desc']                = 'Several enabled categories have the same Description text in one store in the listed language, ignoring formatting and letter case.';
+$_['check_seo_duplicate_description_category_impact']              = 'Customers see the same text on different category pages, and search engines may treat the pages as duplicates and show only one of them.';
+$_['check_seo_duplicate_description_category_hint']                = 'Write a separate Description for each category on the General tab for the listed language; the Categories with this description column shows how many categories share it.';
 
 // Column
 $_['column_store_id']                                              = 'Store';
@@ -147,3 +151,4 @@ $_['check_seo_duplicate_meta_title_column_duplicates']             = 'Products w
 $_['check_seo_duplicate_meta_title_category_column_duplicates']    = 'Categories with this meta title';
 $_['check_seo_duplicate_meta_title_information_column_duplicates'] = 'Pages with this meta title';
 $_['check_seo_duplicate_description_column_duplicates']            = 'Products with this description';
+$_['check_seo_duplicate_description_category_column_duplicates']   = 'Categories with this description';

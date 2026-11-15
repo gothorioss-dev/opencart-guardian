@@ -127,6 +127,10 @@ $_['check_seo_duplicate_description_title']                        = 'Товар
 $_['check_seo_duplicate_description_desc']                         = 'У нескольких включённых товаров (варианты одного товара не в счёт) в одном магазине на указанном языке одинаковый текст в поле «Описание» без учёта оформления и регистра букв.';
 $_['check_seo_duplicate_description_impact']                       = 'Покупатели видят один и тот же текст на разных страницах товаров, а поисковые системы могут посчитать страницы дублями и показывать только одну из них.';
 $_['check_seo_duplicate_description_hint']                         = 'Напишите каждому товару своё «Описание» на вкладке «Общие» для указанного языка; у скольких товаров такой же текст, показывает колонка «Товаров с этим описанием».';
+$_['check_seo_duplicate_description_category_title']               = 'Категории с одинаковым описанием';
+$_['check_seo_duplicate_description_category_desc']                = 'У нескольких включённых категорий в одном магазине на указанном языке одинаковый текст в поле «Описание» без учёта оформления и регистра букв.';
+$_['check_seo_duplicate_description_category_impact']              = 'Покупатели видят один и тот же текст на разных страницах категорий, а поисковые системы могут посчитать страницы дублями и показывать только одну из них.';
+$_['check_seo_duplicate_description_category_hint']                = 'Напишите каждой категории своё «Описание» на вкладке «Общие» для указанного языка; у скольких категорий такой же текст, показывает колонка «Категорий с этим описанием».';
 
 // Column
 $_['column_store_id']                                              = 'Магазин';
@@ -147,3 +151,4 @@ $_['check_seo_duplicate_meta_title_column_duplicates']             = 'Товар
 $_['check_seo_duplicate_meta_title_category_column_duplicates']    = 'Категорий с этим заголовком';
 $_['check_seo_duplicate_meta_title_information_column_duplicates'] = 'Страниц с этим заголовком';
 $_['check_seo_duplicate_description_column_duplicates']            = 'Товаров с этим описанием';
+$_['check_seo_duplicate_description_category_column_duplicates']   = 'Категорий с этим описанием';

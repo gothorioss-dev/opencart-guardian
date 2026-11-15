@@ -127,6 +127,10 @@ $_['check_seo_duplicate_description_title']                        = 'Товар
 $_['check_seo_duplicate_description_desc']                         = 'Кілька увімкнених товарів (варіанти одного товару не враховуються) в одному магазині вказаною мовою мають однаковий текст у полі «Опис» без урахування оформлення та регістру літер.';
 $_['check_seo_duplicate_description_impact']                       = 'Покупці бачать той самий текст на різних сторінках товарів, а пошукові системи можуть вважати сторінки дублями й показувати лише одну з них.';
 $_['check_seo_duplicate_description_hint']                         = 'Напишіть кожному товару власний «Опис» на вкладці «Загальні» для вказаної мови; у скількох товарів такий самий текст, показує колонка «Товарів із цим описом».';
+$_['check_seo_duplicate_description_category_title']               = 'Категорії з однаковим описом';
+$_['check_seo_duplicate_description_category_desc']                = 'Кілька увімкнених категорій в одному магазині вказаною мовою мають однаковий текст у полі «Опис» без урахування оформлення та регістру літер.';
+$_['check_seo_duplicate_description_category_impact']              = 'Покупці бачать той самий текст на різних сторінках категорій, а пошукові системи можуть вважати сторінки дублями й показувати лише одну з них.';
+$_['check_seo_duplicate_description_category_hint']                = 'Напишіть кожній категорії власний «Опис» на вкладці «Загальні» для вказаної мови; у скількох категорій такий самий текст, показує колонка «Категорій із цим описом».';
 
 // Column
 $_['column_store_id']                                              = 'Магазин';
@@ -147,3 +151,4 @@ $_['check_seo_duplicate_meta_title_column_duplicates']             = 'Товар
 $_['check_seo_duplicate_meta_title_category_column_duplicates']    = 'Категорій із цим заголовком';
 $_['check_seo_duplicate_meta_title_information_column_duplicates'] = 'Сторінок із цим заголовком';
 $_['check_seo_duplicate_description_column_duplicates']            = 'Товарів із цим описом';
+$_['check_seo_duplicate_description_category_column_duplicates']   = 'Категорій із цим описом';
