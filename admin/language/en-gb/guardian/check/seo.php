@@ -115,6 +115,10 @@ $_['check_seo_thin_description_title']                             = 'Products w
 $_['check_seo_thin_description_desc']                              = 'The enabled product\'s Description in the listed language has fewer than 50 characters of text, not counting formatting and images.';
 $_['check_seo_thin_description_impact']                            = 'The product page shows almost no text about the product, and search engines get little content to find the page by.';
 $_['check_seo_thin_description_hint']                              = 'Open the product and add text to the Description field on the General tab for the listed language; the Characters column shows the current text length.';
+$_['check_seo_thin_description_category_title']                    = 'Categories with a very short description';
+$_['check_seo_thin_description_category_desc']                     = 'The enabled category\'s Description in the listed language has fewer than 50 characters of text, not counting formatting and images; descriptions left completely empty are not reported.';
+$_['check_seo_thin_description_category_impact']                   = 'The category page shows almost no text above the product list, and search engines get little content to find the page by.';
+$_['check_seo_thin_description_category_hint']                     = 'Open the category and add text to the Description field on the General tab for the listed language, or clear it if the page needs no text; the Characters column shows the current text length.';
 
 // Column
 $_['column_store_id']                                              = 'Store';
