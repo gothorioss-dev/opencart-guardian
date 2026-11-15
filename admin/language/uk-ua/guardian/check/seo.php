@@ -123,6 +123,10 @@ $_['check_seo_thin_description_information_title']                 = 'Інфор
 $_['check_seo_thin_description_information_desc']                  = 'В увімкненої інформаційної сторінки вказаною мовою в полі «Опис» менше 50 символів тексту без урахування оформлення та зображень; повністю порожні описи не враховуються.';
 $_['check_seo_thin_description_information_impact']                = 'Сторінка майже не містить тексту, а пошукові системи отримують мало вмісту, за яким можуть її знайти.';
 $_['check_seo_thin_description_information_hint']                  = 'Відкрийте інформаційну сторінку і доповніть текстом поле «Опис» на вкладці «Загальні» для вказаної мови; поточна довжина тексту вказана в колонці «Символів».';
+$_['check_seo_duplicate_description_title']                        = 'Товари з однаковим описом';
+$_['check_seo_duplicate_description_desc']                         = 'Кілька увімкнених товарів (варіанти одного товару не враховуються) в одному магазині вказаною мовою мають однаковий текст у полі «Опис» без урахування оформлення та регістру літер.';
+$_['check_seo_duplicate_description_impact']                       = 'Покупці бачать той самий текст на різних сторінках товарів, а пошукові системи можуть вважати сторінки дублями й показувати лише одну з них.';
+$_['check_seo_duplicate_description_hint']                         = 'Напишіть кожному товару власний «Опис» на вкладці «Загальні» для вказаної мови; у скількох товарів такий самий текст, показує колонка «Товарів із цим описом».';
 
 // Column
 $_['column_store_id']                                              = 'Магазин';
@@ -142,3 +146,4 @@ $_['column_meta_title']                                            = 'Мета-�
 $_['check_seo_duplicate_meta_title_column_duplicates']             = 'Товарів із цим заголовком';
 $_['check_seo_duplicate_meta_title_category_column_duplicates']    = 'Категорій із цим заголовком';
 $_['check_seo_duplicate_meta_title_information_column_duplicates'] = 'Сторінок із цим заголовком';
+$_['check_seo_duplicate_description_column_duplicates']            = 'Товарів із цим описом';

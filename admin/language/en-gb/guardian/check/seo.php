@@ -123,6 +123,10 @@ $_['check_seo_thin_description_information_title']                 = 'Informatio
 $_['check_seo_thin_description_information_desc']                  = 'The enabled information page\'s Description in the listed language has fewer than 50 characters of text, not counting formatting and images; descriptions left completely empty are not reported.';
 $_['check_seo_thin_description_information_impact']                = 'The page shows almost no text, and search engines get little content to find it by.';
 $_['check_seo_thin_description_information_hint']                  = 'Open the information page and add text to the Description field on the General tab for the listed language; the Characters column shows the current text length.';
+$_['check_seo_duplicate_description_title']                        = 'Products with the same description';
+$_['check_seo_duplicate_description_desc']                         = 'Several enabled products (not counting variants of one product) have the same Description text in one store in the listed language, ignoring formatting and letter case.';
+$_['check_seo_duplicate_description_impact']                       = 'Customers see the same text on different product pages, and search engines may treat the pages as duplicates and show only one of them.';
+$_['check_seo_duplicate_description_hint']                         = 'Write a separate Description for each product on the General tab for the listed language; the Products with this description column shows how many products share it.';
 
 // Column
 $_['column_store_id']                                              = 'Store';
@@ -142,3 +146,4 @@ $_['column_meta_title']                                            = 'Meta title
 $_['check_seo_duplicate_meta_title_column_duplicates']             = 'Products with this meta title';
 $_['check_seo_duplicate_meta_title_category_column_duplicates']    = 'Categories with this meta title';
 $_['check_seo_duplicate_meta_title_information_column_duplicates'] = 'Pages with this meta title';
+$_['check_seo_duplicate_description_column_duplicates']            = 'Products with this description';
