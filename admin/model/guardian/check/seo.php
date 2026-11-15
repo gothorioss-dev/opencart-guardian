@@ -45,7 +45,8 @@ class Seo extends Base {
 		'seo_meta_description_length_category'    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_meta_description_length_information' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_duplicate_meta_title'                => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_duplicate_meta_title_category'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id']
+		'seo_duplicate_meta_title_category'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_duplicate_meta_title_information'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id']
 	];
 
 	/**
@@ -464,6 +465,23 @@ class Seo extends Base {
 	 */
 	protected function seoDuplicateMetaTitleCategory(): CheckResult {
 		return $this->collect('seo_duplicate_meta_title_category', "SELECT `c`.`category_id`, `cd`.`name`, `c2s`.`store_id`, `l`.`name` AS `language`, TRIM(`cd2`.`meta_title`) AS `meta_title`, `g`.`duplicates` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c2s`.`category_id` = `c`.`category_id` AND (`c2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `c2s3`.`store_id`, `cd3`.`language_id`, TRIM(`cd3`.`meta_title`) AS `meta_key`, COUNT(DISTINCT `c3`.`category_id`) AS `duplicates` FROM `" . DB_PREFIX . "category` `c3` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s3` ON (`c2s3`.`category_id` = `c3`.`category_id` AND (`c2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "category_description` `cd3` ON (`cd3`.`category_id` = `c3`.`category_id`) WHERE `c3`.`status` = '1' AND TRIM(`cd3`.`meta_title`) != '' GROUP BY `c2s3`.`store_id`, `cd3`.`language_id`, TRIM(`cd3`.`meta_title`) HAVING COUNT(DISTINCT `c3`.`category_id`) > 1) `g` ON (`g`.`store_id` = `c2s`.`store_id` AND `g`.`language_id` = `cd2`.`language_id` AND `g`.`meta_key` = TRIM(`cd2`.`meta_title`)) LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' ORDER BY `c2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`meta_key`, `c`.`category_id`");
+	}
+
+	/**
+	 * Enabled information pages that share the same meta title with another page
+	 * in one store in the same language, one finding row per page, store
+	 * and language. The information page sets it as the page title as is
+	 * (catalog/controller/information/information.php) and the admin form validates
+	 * only its length (admin/controller/catalog/information.php), not uniqueness.
+	 * Values are compared trimmed and by the column collation, so case and
+	 * accents are ignored. A page counts in every existing store it is
+	 * linked to; empty titles are seo_empty_meta_title_information.
+	 * The group value alias is not `meta_title`, a real column name.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoDuplicateMetaTitleInformation(): CheckResult {
+		return $this->collect('seo_duplicate_meta_title_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `i2s`.`store_id`, `l`.`name` AS `language`, TRIM(`id2`.`meta_title`) AS `meta_title`, `g`.`duplicates` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_to_store` `i2s` ON (`i2s`.`information_id` = `i`.`information_id` AND (`i2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "information_description` `id2` ON (`id2`.`information_id` = `i`.`information_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `id2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `i2s3`.`store_id`, `id3`.`language_id`, TRIM(`id3`.`meta_title`) AS `meta_key`, COUNT(DISTINCT `i3`.`information_id`) AS `duplicates` FROM `" . DB_PREFIX . "information` `i3` INNER JOIN `" . DB_PREFIX . "information_to_store` `i2s3` ON (`i2s3`.`information_id` = `i3`.`information_id` AND (`i2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "information_description` `id3` ON (`id3`.`information_id` = `i3`.`information_id`) WHERE `i3`.`status` = '1' AND TRIM(`id3`.`meta_title`) != '' GROUP BY `i2s3`.`store_id`, `id3`.`language_id`, TRIM(`id3`.`meta_title`) HAVING COUNT(DISTINCT `i3`.`information_id`) > 1) `g` ON (`g`.`store_id` = `i2s`.`store_id` AND `g`.`language_id` = `id2`.`language_id` AND `g`.`meta_key` = TRIM(`id2`.`meta_title`)) LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' ORDER BY `i2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`meta_key`, `i`.`information_id`");
 	}
 
 	/**
