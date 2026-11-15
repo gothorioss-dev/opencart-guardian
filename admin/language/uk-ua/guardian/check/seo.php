@@ -99,6 +99,10 @@ $_['check_seo_meta_description_length_information_title']        = 'Інформ
 $_['check_seo_meta_description_length_information_desc']         = 'В увімкненої інформаційної сторінки вказаною мовою поле «Мета-тег Description» коротше за 50 або довше за 160 символів; адмінка не перевіряє довжину цього поля.';
 $_['check_seo_meta_description_length_information_impact']       = 'Пошукові системи зазвичай обрізають довший опис у результатах пошуку, а занадто короткий часто замінюють текстом, дібраним зі сторінки; сама сторінка працює як зазвичай.';
 $_['check_seo_meta_description_length_information_hint']         = 'Відкрийте інформаційну сторінку і скоротіть або доповніть поле «Мета-тег Description» на вкладці «Загальні» для вказаної мови; поточна довжина вказана в колонці «Символів».';
+$_['check_seo_duplicate_meta_title_title']                       = 'Товари з однаковим мета-заголовком';
+$_['check_seo_duplicate_meta_title_desc']                        = 'Кілька увімкнених товарів (варіанти одного товару не враховуються) в одному магазині вказаною мовою мають однакове поле «Мета-тег Title»; адмінка не перевіряє його на унікальність.';
+$_['check_seo_duplicate_meta_title_impact']                      = 'Їхні сторінки показують той самий заголовок у вкладці браузера та в результатах пошуку: покупцеві важко розрізнити їхні вкладки, а пошукові системи можуть вважати сторінки дублями.';
+$_['check_seo_duplicate_meta_title_hint']                        = 'Задайте кожному товару власний «Мета-тег Title» на вкладці «Загальні» для вказаної мови; у скількох товарів такий самий заголовок, показує колонка «Товарів із цим заголовком».';
 
 // Column
 $_['column_store_id']                                            = 'Магазин';
@@ -114,3 +118,5 @@ $_['check_seo_incomplete_language_category_column_language']     = 'Мови б�
 $_['check_seo_incomplete_language_information_column_language']  = 'Мови без ЧПУ-посилання';
 $_['check_seo_incomplete_language_manufacturer_column_language'] = 'Мови без ЧПУ-посилання';
 $_['column_length']                                              = 'Символів';
+$_['column_meta_title']                                          = 'Мета-заголовок';
+$_['check_seo_duplicate_meta_title_column_duplicates']           = 'Товарів із цим заголовком';

@@ -99,6 +99,10 @@ $_['check_seo_meta_description_length_information_title']        = 'Information 
 $_['check_seo_meta_description_length_information_desc']         = 'The enabled information page\'s Meta Tag Description in the listed language is shorter than 50 or longer than 160 characters; the admin does not check the length of this field.';
 $_['check_seo_meta_description_length_information_impact']       = 'Search engines usually cut off a longer description in search results and often replace a too short one with text picked from the page; the page itself works as usual.';
 $_['check_seo_meta_description_length_information_hint']         = 'Open the information page and shorten or lengthen the Meta Tag Description field on the General tab for the listed language; the Characters column shows its current length.';
+$_['check_seo_duplicate_meta_title_title']                       = 'Products with the same meta title';
+$_['check_seo_duplicate_meta_title_desc']                        = 'Several enabled products (not counting variants of one product) have the same Meta Tag Title in one store in the listed language; the admin does not check this field for uniqueness.';
+$_['check_seo_duplicate_meta_title_impact']                      = 'Their pages show the same title in the browser tab and in search results, so customers can hardly tell the tabs apart, and search engines may treat the pages as duplicates.';
+$_['check_seo_duplicate_meta_title_hint']                        = 'Give each product its own Meta Tag Title on the General tab for the listed language; the Products with this meta title column shows how many products share it.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
@@ -114,3 +118,5 @@ $_['check_seo_incomplete_language_category_column_language']     = 'Languages wi
 $_['check_seo_incomplete_language_information_column_language']  = 'Languages without an SEO URL';
 $_['check_seo_incomplete_language_manufacturer_column_language'] = 'Languages without an SEO URL';
 $_['column_length']                                              = 'Characters';
+$_['column_meta_title']                                          = 'Meta title';
+$_['check_seo_duplicate_meta_title_column_duplicates']           = 'Products with this meta title';
