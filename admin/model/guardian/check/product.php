@@ -174,9 +174,7 @@ class Product extends Base {
 	 */
 	protected function productEmptyContent(): CheckResult {
 		$empty_name = "TRIM(`pd2`.`name`) = ''";
-		// REGEXP_REPLACE needs MySQL 8.0+ / MariaDB 10.0.5+; (?s) lets a tag span
-		// lines; media tags are kept, an image-only description is not empty
-		$empty_description = "REGEXP_REPLACE(REGEXP_REPLACE(`pd2`.`description`, '(?s)&lt;(?!(img|iframe|video|embed|object)[[:space:]&/]).*?&gt;', ''), '&amp;nbsp;|[[:space:]]', '') = ''";
+		$empty_description = $this->descriptionEmpty('`pd2`.`description`');
 
 		return $this->collect('product_empty_content', $this->productSelect("`l`.`code` AS `language`, CONCAT_WS(', ', IF(" . $empty_name . ", 'name', NULL), IF(" . $empty_description . ", 'description', NULL)) AS `field`") . " INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') WHERE " . $empty_name . " OR " . $empty_description . " ORDER BY `p`.`product_id`, `l`.`code`");
 	}
@@ -367,19 +365,6 @@ class Product extends Base {
 	 */
 	private function productSelect(string $columns = ''): string {
 		return "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "')";
-	}
-
-	/**
-	 * Variant family of every product whose master exists: the product's own
-	 * id for a master, the master's id for a variant, the master's master for
-	 * a variant of a variant. Products with a missing master are left out.
-	 *
-	 * @param string $columns extra select list over `p2` (product) and `m2` (its master)
-	 *
-	 * @return string SELECT product_id, family ... with an open WHERE that callers may extend with AND
-	 */
-	private function variantFamilies(string $columns = ''): string {
-		return "SELECT `p2`.`product_id`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE (`p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL)";
 	}
 
 	/**
