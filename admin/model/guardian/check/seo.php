@@ -51,8 +51,8 @@ class Seo extends Base {
 		'seo_meta_description_length_category'    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_meta_description_length_information' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_duplicate_meta_title'                => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_duplicate_meta_title_category'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
-		'seo_duplicate_meta_title_information'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
+		'seo_duplicate_meta_title_category'       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_duplicate_meta_title_information'    => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_thin_description'                    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id'],
 		'seo_thin_description_category'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_thin_description_information'        => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id'],
@@ -447,8 +447,8 @@ class Seo extends Base {
 	 * only its length (admin/controller/catalog/product.php), not uniqueness.
 	 * A group counts only if it spans more than one variant family: variants
 	 * inherit the master's fields unless overridden and stay in its family
-	 * either way (admin/model/catalog/product.php), so their
-	 * equal titles are not a finding; variants with a missing master are
+	 * either way (admin/model/catalog/product.php), so their equal titles are
+	 * not a finding; variants with a missing master are
 	 * product_broken_variant. Values are compared trimmed and by the column
 	 * collation, so case and accents are ignored. A product counts in every
 	 * existing store it is linked to; empty titles are seo_empty_meta_title.
@@ -458,65 +458,6 @@ class Seo extends Base {
 	 */
 	protected function seoDuplicateMetaTitle(): CheckResult {
 		return $this->collect('seo_duplicate_meta_title', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id`, `l`.`name` AS `language`, TRIM(`pd2`.`meta_title`) AS `meta_title`, `g`.`duplicates` FROM `" . DB_PREFIX . "product` `p` INNER JOIN (" . $this->variantFamilies() . ") `f2` ON (`f2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `p2s3`.`store_id`, `pd3`.`language_id`, TRIM(`pd3`.`meta_title`) AS `meta_key`, COUNT(DISTINCT `p3`.`product_id`) AS `duplicates` FROM `" . DB_PREFIX . "product` `p3` INNER JOIN (" . $this->variantFamilies() . ") `f` ON (`f`.`product_id` = `p3`.`product_id`) INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s3` ON (`p2s3`.`product_id` = `p3`.`product_id` AND (`p2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "product_description` `pd3` ON (`pd3`.`product_id` = `p3`.`product_id`) WHERE `p3`.`status` = '1' AND TRIM(`pd3`.`meta_title`) != '' GROUP BY `p2s3`.`store_id`, `pd3`.`language_id`, TRIM(`pd3`.`meta_title`) HAVING COUNT(DISTINCT `f`.`family`) > 1) `g` ON (`g`.`store_id` = `p2s`.`store_id` AND `g`.`language_id` = `pd2`.`language_id` AND `g`.`meta_key` = TRIM(`pd2`.`meta_title`)) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' ORDER BY `p2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`meta_key`, `p`.`product_id`");
-	}
-
-	/**
-	 * Enabled products that share the same description text with another
-	 * product in one store in the same language, one finding row per product,
-	 * store and language. The product page prints the description as is
-	 * (catalog/controller/product/product.php) and the admin form does not
-	 * check it for uniqueness (admin/controller/catalog/product.php). The text
-	 * is that of descriptionText() (tags and formatting ignored) compared by
-	 * its MD5 of the lower-cased text, since GROUP BY on a long TEXT column
-	 * compares only max_sort_length bytes; unlike seoDuplicateMetaTitle() the
-	 * comparison is not accent-insensitive. Empty and image-only descriptions
-	 * never form a group. A group counts only if it spans more than one
-	 * variant family, as in seoDuplicateMetaTitle(); a product counts in every
-	 * existing store it is linked to. Caveats: a tag replaced by a space may
-	 * add a character inside a word; different entities fold to one character,
-	 * so two texts differing only in an entity may rarely be reported as equal;
-	 * the regular expressions run per row twice, which may be slow on large
-	 * catalogs (see M5b). The group value alias is `text_key`, not a column name.
-	 *
-	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
-	 */
-	protected function seoDuplicateDescription(): CheckResult {
-		return $this->collect('seo_duplicate_description', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id`, `l`.`name` AS `language`, `g`.`duplicates` FROM `" . DB_PREFIX . "product` `p` INNER JOIN (" . $this->variantFamilies() . ") `f2` ON (`f2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `p2s3`.`store_id`, `pd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`pd3`.`description`') . ")) AS `text_key`, COUNT(DISTINCT `p3`.`product_id`) AS `duplicates` FROM `" . DB_PREFIX . "product` `p3` INNER JOIN (" . $this->variantFamilies() . ") `f` ON (`f`.`product_id` = `p3`.`product_id`) INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s3` ON (`p2s3`.`product_id` = `p3`.`product_id` AND (`p2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "product_description` `pd3` ON (`pd3`.`product_id` = `p3`.`product_id`) WHERE `p3`.`status` = '1' AND " . $this->descriptionText('`pd3`.`description`') . " != '' GROUP BY `p2s3`.`store_id`, `pd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`pd3`.`description`') . ")) HAVING COUNT(DISTINCT `f`.`family`) > 1) `g` ON (`g`.`store_id` = `p2s`.`store_id` AND `g`.`language_id` = `pd2`.`language_id` AND `g`.`text_key` = MD5(LOWER(" . $this->descriptionText('`pd2`.`description`') . "))) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' ORDER BY `p2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`text_key`, `p`.`product_id`");
-	}
-
-	/**
-	 * Enabled categories that share the same description text with another
-	 * category in one store in the same language, one finding row per
-	 * category, store and language. The category page prints the description
-	 * as is (catalog/controller/product/category.php) and the admin form does
-	 * not check it for uniqueness (admin/controller/catalog/category.php).
-	 * Text, MD5 comparison, empty and image-only exclusion and the caveats as
-	 * in seoDuplicateDescription(); no variant families here. A category
-	 * counts in every existing store it is linked to. The group value alias is
-	 * `text_key`, not a column name.
-	 *
-	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
-	 */
-	protected function seoDuplicateDescriptionCategory(): CheckResult {
-		return $this->collect('seo_duplicate_description_category', "SELECT `c`.`category_id`, `cd`.`name`, `c2s`.`store_id`, `l`.`name` AS `language`, `g`.`duplicates` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c2s`.`category_id` = `c`.`category_id` AND (`c2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `c2s3`.`store_id`, `cd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`cd3`.`description`') . ")) AS `text_key`, COUNT(DISTINCT `c3`.`category_id`) AS `duplicates` FROM `" . DB_PREFIX . "category` `c3` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s3` ON (`c2s3`.`category_id` = `c3`.`category_id` AND (`c2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "category_description` `cd3` ON (`cd3`.`category_id` = `c3`.`category_id`) WHERE `c3`.`status` = '1' AND " . $this->descriptionText('`cd3`.`description`') . " != '' GROUP BY `c2s3`.`store_id`, `cd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`cd3`.`description`') . ")) HAVING COUNT(DISTINCT `c3`.`category_id`) > 1) `g` ON (`g`.`store_id` = `c2s`.`store_id` AND `g`.`language_id` = `cd2`.`language_id` AND `g`.`text_key` = MD5(LOWER(" . $this->descriptionText('`cd2`.`description`') . "))) LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' ORDER BY `c2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`text_key`, `c`.`category_id`");
-	}
-
-	/**
-	 * Enabled information pages that share the same description text with
-	 * another page in one store in the same language, one finding row per
-	 * page, store and language. The information page prints the description
-	 * as is (catalog/controller/information/information.php) and the admin
-	 * form does not check it for uniqueness
-	 * (admin/controller/catalog/information.php). Text, MD5 comparison, empty
-	 * and image-only exclusion and the caveats as in seoDuplicateDescription();
-	 * no variant families here. A page counts in every existing store it is
-	 * linked to. The group value alias is `text_key`, not a column name (the
-	 * table also has `title`).
-	 *
-	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
-	 */
-	protected function seoDuplicateDescriptionInformation(): CheckResult {
-		return $this->collect('seo_duplicate_description_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `i2s`.`store_id`, `l`.`name` AS `language`, `g`.`duplicates` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_to_store` `i2s` ON (`i2s`.`information_id` = `i`.`information_id` AND (`i2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "information_description` `id2` ON (`id2`.`information_id` = `i`.`information_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `id2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `i2s3`.`store_id`, `id3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`id3`.`description`') . ")) AS `text_key`, COUNT(DISTINCT `i3`.`information_id`) AS `duplicates` FROM `" . DB_PREFIX . "information` `i3` INNER JOIN `" . DB_PREFIX . "information_to_store` `i2s3` ON (`i2s3`.`information_id` = `i3`.`information_id` AND (`i2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "information_description` `id3` ON (`id3`.`information_id` = `i3`.`information_id`) WHERE `i3`.`status` = '1' AND " . $this->descriptionText('`id3`.`description`') . " != '' GROUP BY `i2s3`.`store_id`, `id3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`id3`.`description`') . ")) HAVING COUNT(DISTINCT `i3`.`information_id`) > 1) `g` ON (`g`.`store_id` = `i2s`.`store_id` AND `g`.`language_id` = `id2`.`language_id` AND `g`.`text_key` = MD5(LOWER(" . $this->descriptionText('`id2`.`description`') . "))) LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' ORDER BY `i2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`text_key`, `i`.`information_id`");
 	}
 
 	/**
@@ -608,6 +549,66 @@ class Seo extends Base {
 	 */
 	protected function seoThinDescriptionInformation(): CheckResult {
 		return $this->collect('seo_thin_description_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `l`.`name` AS `language`, CHAR_LENGTH(" . $this->descriptionText('`id2`.`description`') . ") AS `length` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_description` `id2` ON (`id2`.`information_id` = `i`.`information_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `id2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' AND NOT (" . $this->descriptionEmpty('`id2`.`description`') . ") AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "information_to_store` `i2s` WHERE `i2s`.`information_id` = `i`.`information_id` AND (`i2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s`.`store_id`))) HAVING `length` < '" . (int)self::THIN_DESCRIPTION_MIN . "' ORDER BY `i`.`information_id`, `l`.`sort_order`, `l`.`name`");
+	}
+
+	/**
+	 * Enabled products that share the same description text with another
+	 * product in one store in the same language, one finding row per product,
+	 * store and language. The product page prints the description after
+	 * html_entity_decode (catalog/controller/product/product.php) and the admin
+	 * form does not check it for uniqueness (admin/controller/catalog/product.php). The text
+	 * is that of descriptionText() (tags and formatting ignored) compared by
+	 * its MD5 of the lower-cased text, since GROUP BY on a long TEXT column
+	 * compares only max_sort_length bytes; unlike seoDuplicateMetaTitle() the
+	 * comparison is not accent-insensitive. Empty and image-only descriptions
+	 * never form a group. A group counts only if it spans more than one
+	 * variant family, as in seoDuplicateMetaTitle(); a product counts in every
+	 * existing store it is linked to. Caveats: a tag replaced by a space may
+	 * add a character inside a word; different entities fold to one character,
+	 * so two texts differing only in an entity may rarely be reported as equal;
+	 * the regular expressions run per row twice, which may be slow on large
+	 * catalogs (see M5b). The group value alias is `text_key`, not a column name.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoDuplicateDescription(): CheckResult {
+		return $this->collect('seo_duplicate_description', "SELECT `p`.`product_id`, `pd`.`name`, `p2s`.`store_id`, `l`.`name` AS `language`, `g`.`duplicates` FROM `" . DB_PREFIX . "product` `p` INNER JOIN (" . $this->variantFamilies() . ") `f2` ON (`f2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s` ON (`p2s`.`product_id` = `p`.`product_id` AND (`p2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "product_description` `pd2` ON (`pd2`.`product_id` = `p`.`product_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `pd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `p2s3`.`store_id`, `pd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`pd3`.`description`') . ")) AS `text_key`, COUNT(DISTINCT `p3`.`product_id`) AS `duplicates` FROM `" . DB_PREFIX . "product` `p3` INNER JOIN (" . $this->variantFamilies() . ") `f` ON (`f`.`product_id` = `p3`.`product_id`) INNER JOIN `" . DB_PREFIX . "product_to_store` `p2s3` ON (`p2s3`.`product_id` = `p3`.`product_id` AND (`p2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `p2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "product_description` `pd3` ON (`pd3`.`product_id` = `p3`.`product_id`) WHERE `p3`.`status` = '1' AND " . $this->descriptionText('`pd3`.`description`') . " != '' GROUP BY `p2s3`.`store_id`, `pd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`pd3`.`description`') . ")) HAVING COUNT(DISTINCT `f`.`family`) > 1) `g` ON (`g`.`store_id` = `p2s`.`store_id` AND `g`.`language_id` = `pd2`.`language_id` AND `g`.`text_key` = MD5(LOWER(" . $this->descriptionText('`pd2`.`description`') . "))) LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `p`.`status` = '1' ORDER BY `p2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`text_key`, `p`.`product_id`");
+	}
+
+	/**
+	 * Enabled categories that share the same description text with another
+	 * category in one store in the same language, one finding row per
+	 * category, store and language. The category page prints the description
+	 * after html_entity_decode (catalog/controller/product/category.php) and the
+	 * admin form does not check it for uniqueness
+	 * (admin/controller/catalog/category.php).
+	 * Text, MD5 comparison, empty and image-only exclusion and the caveats as
+	 * in seoDuplicateDescription(); no variant families here. A category
+	 * counts in every existing store it is linked to. The group value alias is
+	 * `text_key`, not a column name.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoDuplicateDescriptionCategory(): CheckResult {
+		return $this->collect('seo_duplicate_description_category', "SELECT `c`.`category_id`, `cd`.`name`, `c2s`.`store_id`, `l`.`name` AS `language`, `g`.`duplicates` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s` ON (`c2s`.`category_id` = `c`.`category_id` AND (`c2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `c2s3`.`store_id`, `cd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`cd3`.`description`') . ")) AS `text_key`, COUNT(DISTINCT `c3`.`category_id`) AS `duplicates` FROM `" . DB_PREFIX . "category` `c3` INNER JOIN `" . DB_PREFIX . "category_to_store` `c2s3` ON (`c2s3`.`category_id` = `c3`.`category_id` AND (`c2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "category_description` `cd3` ON (`cd3`.`category_id` = `c3`.`category_id`) WHERE `c3`.`status` = '1' AND " . $this->descriptionText('`cd3`.`description`') . " != '' GROUP BY `c2s3`.`store_id`, `cd3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`cd3`.`description`') . ")) HAVING COUNT(DISTINCT `c3`.`category_id`) > 1) `g` ON (`g`.`store_id` = `c2s`.`store_id` AND `g`.`language_id` = `cd2`.`language_id` AND `g`.`text_key` = MD5(LOWER(" . $this->descriptionText('`cd2`.`description`') . "))) LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' ORDER BY `c2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`text_key`, `c`.`category_id`");
+	}
+
+	/**
+	 * Enabled information pages that share the same description text with
+	 * another page in one store in the same language, one finding row per
+	 * page, store and language. The information page prints the description
+	 * after html_entity_decode (catalog/controller/information/information.php)
+	 * and the admin form does not check it for uniqueness
+	 * (admin/controller/catalog/information.php). Text, MD5 comparison, empty
+	 * and image-only exclusion and the caveats as in seoDuplicateDescription();
+	 * no variant families here. A page counts in every existing store it is
+	 * linked to. The group value alias is `text_key`, not a column name (the
+	 * table also has `title`).
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoDuplicateDescriptionInformation(): CheckResult {
+		return $this->collect('seo_duplicate_description_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `i2s`.`store_id`, `l`.`name` AS `language`, `g`.`duplicates` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_to_store` `i2s` ON (`i2s`.`information_id` = `i`.`information_id` AND (`i2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s`.`store_id`))) INNER JOIN `" . DB_PREFIX . "information_description` `id2` ON (`id2`.`information_id` = `i`.`information_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `id2`.`language_id` AND `l`.`status` = '1') INNER JOIN (SELECT `i2s3`.`store_id`, `id3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`id3`.`description`') . ")) AS `text_key`, COUNT(DISTINCT `i3`.`information_id`) AS `duplicates` FROM `" . DB_PREFIX . "information` `i3` INNER JOIN `" . DB_PREFIX . "information_to_store` `i2s3` ON (`i2s3`.`information_id` = `i3`.`information_id` AND (`i2s3`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s3`.`store_id`))) INNER JOIN `" . DB_PREFIX . "information_description` `id3` ON (`id3`.`information_id` = `i3`.`information_id`) WHERE `i3`.`status` = '1' AND " . $this->descriptionText('`id3`.`description`') . " != '' GROUP BY `i2s3`.`store_id`, `id3`.`language_id`, MD5(LOWER(" . $this->descriptionText('`id3`.`description`') . ")) HAVING COUNT(DISTINCT `i3`.`information_id`) > 1) `g` ON (`g`.`store_id` = `i2s`.`store_id` AND `g`.`language_id` = `id2`.`language_id` AND `g`.`text_key` = MD5(LOWER(" . $this->descriptionText('`id2`.`description`') . "))) LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' ORDER BY `i2s`.`store_id`, `l`.`sort_order`, `l`.`name`, `g`.`text_key`, `i`.`information_id`");
 	}
 
 	/**
