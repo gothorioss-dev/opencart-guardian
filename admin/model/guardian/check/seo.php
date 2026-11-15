@@ -54,7 +54,8 @@ class Seo extends Base {
 		'seo_duplicate_meta_title_category'        => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
 		'seo_duplicate_meta_title_information'     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'information_id'],
 		'seo_thin_description'                    => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id'],
-		'seo_thin_description_category'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id']
+		'seo_thin_description_category'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'category_id'],
+		'seo_thin_description_information'        => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'information_id']
 	];
 
 	/**
@@ -527,6 +528,24 @@ class Seo extends Base {
 	 */
 	protected function seoThinDescriptionCategory(): CheckResult {
 		return $this->collect('seo_thin_description_category', "SELECT `c`.`category_id`, `cd`.`name`, `l`.`name` AS `language`, CHAR_LENGTH(" . $this->descriptionText('`cd2`.`description`') . ") AS `length` FROM `" . DB_PREFIX . "category` `c` INNER JOIN `" . DB_PREFIX . "category_description` `cd2` ON (`cd2`.`category_id` = `c`.`category_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `cd2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "category_description` `cd` ON (`cd`.`category_id` = `c`.`category_id` AND `cd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `c`.`status` = '1' AND NOT (" . $this->descriptionEmpty('`cd2`.`description`') . ") AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "category_to_store` `c2s` WHERE `c2s`.`category_id` = `c`.`category_id` AND (`c2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `c2s`.`store_id`))) HAVING `length` < '" . (int)self::THIN_DESCRIPTION_MIN . "' ORDER BY `c`.`category_id`, `l`.`sort_order`, `l`.`name`");
+	}
+
+	/**
+	 * Enabled information pages whose non-empty Description in an enabled
+	 * language has fewer than THIN_DESCRIPTION_MIN characters of text, one
+	 * finding row per language. The information page prints the description
+	 * (catalog/controller/information/information.php) and the admin form does
+	 * not require it (admin/controller/catalog/information.php), so this is info.
+	 * Length rules as in seoThinDescription(). Unlike products, completely
+	 * empty descriptions are not reported anywhere, as the field is optional
+	 * and many stores leave it empty; an image-only description is reported
+	 * here with length 0. Store link and language filters as in
+	 * seoMetaDescriptionLengthInformation().
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function seoThinDescriptionInformation(): CheckResult {
+		return $this->collect('seo_thin_description_information', "SELECT `i`.`information_id`, `id`.`title` AS `name`, `l`.`name` AS `language`, CHAR_LENGTH(" . $this->descriptionText('`id2`.`description`') . ") AS `length` FROM `" . DB_PREFIX . "information` `i` INNER JOIN `" . DB_PREFIX . "information_description` `id2` ON (`id2`.`information_id` = `i`.`information_id`) INNER JOIN `" . DB_PREFIX . "language` `l` ON (`l`.`language_id` = `id2`.`language_id` AND `l`.`status` = '1') LEFT JOIN `" . DB_PREFIX . "information_description` `id` ON (`id`.`information_id` = `i`.`information_id` AND `id`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') WHERE `i`.`status` = '1' AND NOT (" . $this->descriptionEmpty('`id2`.`description`') . ") AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "information_to_store` `i2s` WHERE `i2s`.`information_id` = `i`.`information_id` AND (`i2s`.`store_id` = '0' OR EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `st` WHERE `st`.`store_id` = `i2s`.`store_id`))) HAVING `length` < '" . (int)self::THIN_DESCRIPTION_MIN . "' ORDER BY `i`.`information_id`, `l`.`sort_order`, `l`.`name`");
 	}
 
 	/**
