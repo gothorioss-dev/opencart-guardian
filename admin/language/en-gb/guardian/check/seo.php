@@ -103,6 +103,10 @@ $_['check_seo_duplicate_meta_title_title']                       = 'Products wit
 $_['check_seo_duplicate_meta_title_desc']                        = 'Several enabled products (not counting variants of one product) have the same Meta Tag Title in one store in the listed language; the admin does not check this field for uniqueness.';
 $_['check_seo_duplicate_meta_title_impact']                      = 'Their pages show the same title in the browser tab and in search results, so customers can hardly tell the tabs apart, and search engines may treat the pages as duplicates.';
 $_['check_seo_duplicate_meta_title_hint']                        = 'Give each product its own Meta Tag Title on the General tab for the listed language; the Products with this meta title column shows how many products share it.';
+$_['check_seo_duplicate_meta_title_category_title']              = 'Categories with the same meta title';
+$_['check_seo_duplicate_meta_title_category_desc']               = 'Several enabled categories have the same Meta Tag Title in one store in the listed language; the admin does not check this field for uniqueness.';
+$_['check_seo_duplicate_meta_title_category_impact']             = 'Their pages show the same title in the browser tab and in search results, so customers can hardly tell the tabs apart, and search engines may treat the pages as duplicates.';
+$_['check_seo_duplicate_meta_title_category_hint']               = 'Give each category its own Meta Tag Title on the General tab for the listed language; the Categories with this meta title column shows how many categories share it.';
 
 // Column
 $_['column_store_id']                                            = 'Store';
@@ -120,3 +124,4 @@ $_['check_seo_incomplete_language_manufacturer_column_language'] = 'Languages wi
 $_['column_length']                                              = 'Characters';
 $_['column_meta_title']                                          = 'Meta title';
 $_['check_seo_duplicate_meta_title_column_duplicates']           = 'Products with this meta title';
+$_['check_seo_duplicate_meta_title_category_column_duplicates']  = 'Categories with this meta title';
