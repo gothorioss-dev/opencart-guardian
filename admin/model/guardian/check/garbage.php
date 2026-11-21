@@ -120,8 +120,9 @@ class Garbage extends Base {
 	 * catalog/model/catalog/product.php, used by the storefront coupon model,
 	 * does not look at the product). Links of a deleted owner belong to
 	 * garbage_orphan_link; layouts that were deleted are not checked here.
-	 * The cleanup deletes the store, product-category and filter links but not
-	 * the coupon links (see garbageLinkDeletedTargetCleanup()).
+	 * The cleanup deletes the store, product-category and filter links, but not
+	 * the coupon links nor a product link to a category a coupon still uses
+	 * (see garbageLinkDeletedTargetCleanup()).
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
@@ -236,7 +237,8 @@ class Garbage extends Base {
 	/**
 	 * Cleanup of garbage_orphan_description: deletes the description rows of
 	 * deleted records, all languages, in every `*_description` table. Same
-	 * FROM/WHERE as the check, so it deletes exactly the rows the check counts.
+	 * FROM/WHERE as the check, so it deletes every description row behind the
+	 * records the check lists.
 	 *
 	 * @return array<int, array{alias: string, from: string, where: string}>
 	 */
@@ -326,8 +328,9 @@ class Garbage extends Base {
 
 	/**
 	 * Cleanup of garbage_orphan_product_data: deletes the rows of deleted
-	 * products in every listed table. The data of a deleted product is read
-	 * nowhere. Same FROM/WHERE as the check.
+	 * products in every listed table. Nothing shows this data; only the admin
+	 * attribute and option delete guards count it, so the cleanup also unblocks
+	 * those deletes. Same FROM/WHERE as the check.
 	 *
 	 * @return array<int, array{alias: string, from: string, where: string}>
 	 */
