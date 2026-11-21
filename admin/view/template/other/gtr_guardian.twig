@@ -24,6 +24,7 @@
             <li class="nav-item"><a href="#tab-general" data-bs-toggle="tab" class="nav-link active">{{ tab_general }}</a></li>
             <li class="nav-item"><a href="#tab-config" data-bs-toggle="tab" class="nav-link">{{ tab_config }}</a></li>
             <li class="nav-item"><a href="#tab-permission" data-bs-toggle="tab" class="nav-link">{{ tab_permission }}</a></li>
+            <li class="nav-item"><a href="#tab-cleanup" data-bs-toggle="tab" class="nav-link">{{ tab_cleanup }}</a></li>
           </ul>
           <div class="tab-content">
             <div id="tab-general" class="tab-pane active">
@@ -142,6 +143,38 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+            <div id="tab-cleanup" class="tab-pane">
+              {% if cleanups %}
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>{{ column_date }}</th>
+                        <th>{{ column_user }}</th>
+                        <th>{{ column_domain }}</th>
+                        <th>{{ column_check }}</th>
+                        <th class="text-end">{{ column_expected }}</th>
+                        <th class="text-end">{{ column_deleted }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for cleanup in cleanups %}
+                        <tr>
+                          <td>{{ cleanup.date_added }}</td>
+                          <td>{{ cleanup.username }}</td>
+                          <td>{{ cleanup.domain }}</td>
+                          <td>{{ cleanup.check }}</td>
+                          <td class="text-end">{{ cleanup.expected }}</td>
+                          <td class="text-end">{{ cleanup.deleted }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="text-secondary">{{ text_no_cleanup }}</p>
+              {% endif %}
             </div>
           </div>
         </form>

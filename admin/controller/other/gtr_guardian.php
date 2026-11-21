@@ -106,6 +106,38 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			];
 		}
 
+		// Cleanup journal: the newest entries, read-only.
+		$this->load->model('extension/gtr_guardian/guardian/cleanup');
+
+		$domain_names = array_column($data['domains'], 'name', 'code');
+
+		$loaded = [];
+
+		$data['cleanups'] = [];
+
+		foreach ($this->model_extension_gtr_guardian_guardian_cleanup->getCleanups(0, 20) as $cleanup) {
+			$category = $cleanup['category'];
+
+			if (!isset($loaded[$category])) {
+				$this->load->language('extension/gtr_guardian/guardian/check/' . $category, $category);
+
+				$loaded[$category] = true;
+			}
+
+			// A missing key comes back as the key itself; show the plain code then.
+			$title_key = $category . '_check_' . $cleanup['code'] . '_title';
+			$title = $this->language->get($title_key);
+
+			$data['cleanups'][] = [
+				'date_added' => date($this->language->get('datetime_format'), strtotime($cleanup['date_added'])),
+				'username'   => $cleanup['username'] ?? '—',
+				'domain'     => $domain_names[$cleanup['domain']] ?? $cleanup['domain'],
+				'check'      => $title === $title_key ? $cleanup['code'] : $title,
+				'expected'   => (int)$cleanup['expected'],
+				'deleted'    => (int)$cleanup['deleted']
+			];
+		}
+
 		$retention = $this->model_extension_gtr_guardian_other_gtr_guardian->getRetention();
 
 		$data['retention'] = [];

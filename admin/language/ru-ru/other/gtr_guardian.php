@@ -32,11 +32,13 @@ $_['text_permission_admin']       = 'Группы с правом изменят
 $_['text_access']                 = 'Доступ';
 $_['text_modify']                 = 'Изменение';
 $_['text_cleanup']                = 'Очистка';
+$_['text_no_cleanup']             = 'Очисток ещё не было.';
 
 // Tab
 $_['tab_general']                 = 'Общие';
 $_['tab_config']                  = 'Конфигурация';
 $_['tab_permission']              = 'Права';
+$_['tab_cleanup']                 = 'Журнал очисток';
 
 // Entry
 $_['entry_status']                = 'Статус';
@@ -53,6 +55,11 @@ $_['column_group']                = 'Группа пользователей';
 $_['column_domain']               = 'Домен';
 $_['column_enabled']              = 'Включён';
 $_['column_action']               = 'Действие';
+$_['column_date']                 = 'Дата';
+$_['column_user']                 = 'Пользователь';
+$_['column_check']                = 'Проверка';
+$_['column_expected']             = 'Ожидалось';
+$_['column_deleted']              = 'Удалено';
 
 // Button
 $_['button_save']                 = 'Сохранить';
