@@ -116,4 +116,15 @@ abstract class Base extends \Opencart\System\Engine\Model {
 	protected function discountKind(): string {
 		return "IF(`dc`.`special` = '1', 'special', 'discount')";
 	}
+
+	/**
+	 * Common finding columns: id, name in the admin language, status.
+	 *
+	 * @param string $columns extra select list over `p` (product)
+	 *
+	 * @return string SELECT ... FROM product `p` with the description joined, no WHERE
+	 */
+	protected function productSelect(string $columns = ''): string {
+		return "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "')";
+	}
 }

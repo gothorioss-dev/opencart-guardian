@@ -44,15 +44,4 @@ class Media extends Base {
 	protected function downloadBrokenLink(): CheckResult {
 		return $this->collect('download_broken_link', $this->productSelect('`p2d`.`download_id`') . " INNER JOIN `" . DB_PREFIX . "product_to_download` `p2d` ON (`p2d`.`product_id` = `p`.`product_id`) WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "download` `d` WHERE `d`.`download_id` = `p2d`.`download_id`) ORDER BY `p`.`product_id`, `p2d`.`download_id`");
 	}
-
-	/**
-	 * Common finding columns: id, name in the admin language, status.
-	 *
-	 * @param string $columns extra select list over `p` (product)
-	 *
-	 * @return string SELECT ... FROM product `p` with the description joined, no WHERE
-	 */
-	private function productSelect(string $columns = ''): string {
-		return "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "')";
-	}
 }
