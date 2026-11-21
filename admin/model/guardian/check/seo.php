@@ -30,7 +30,7 @@ class Seo extends Base {
 		'seo_empty_keyword'                       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_invalid_keyword'                     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_orphan_url'                          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id', 'clean' => true],
-		'seo_orphan_store_language'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_store_language'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id', 'clean' => true],
 		'seo_missing_url'                         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
 		'seo_urls_disabled'                       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'seo_missing_url_category'                => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
@@ -606,6 +606,18 @@ class Seo extends Base {
 	 */
 	protected function seoOrphanUrlCleanup(): array {
 		return [['alias' => 'su', 'from' => "`" . DB_PREFIX . "seo_url` `su`", 'where' => $this->orphanUrlWhere()]];
+	}
+
+	/**
+	 * Cleanup of seo_orphan_store_language: deletes the SEO URLs of a deleted
+	 * store. Rows of a deleted language are not cleaned: the storefront
+	 * resolves keywords without the language, so such a URL still opens its
+	 * page. The cleanup can therefore delete fewer rows than the check lists.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function seoOrphanStoreLanguageCleanup(): array {
+		return [['alias' => 'su', 'from' => "`" . DB_PREFIX . "seo_url` `su`", 'where' => "`su`.`store_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `s` WHERE `s`.`store_id` = `su`.`store_id`)"]];
 	}
 
 	/**
