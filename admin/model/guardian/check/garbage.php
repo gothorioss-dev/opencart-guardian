@@ -12,7 +12,7 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Garbage extends Base {
 	protected array $checks = [
-		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
@@ -36,9 +36,12 @@ class Garbage extends Base {
 	 */
 	protected function garbageOrphanDescription(): CheckResult {
 		$parts = [];
+		$sources = $this->orphanDescriptionParts();
 
 		foreach ($this->descriptionTables() as $type => $name) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, COALESCE(MAX(IF(`d`.`language_id` = '" . (int)$this->config->get('config_language_id') . "', `d`.`" . $name . "`, NULL)), MIN(`d`.`" . $name . "`)) AS `name`, COUNT(*) AS `languages` FROM `" . DB_PREFIX . $type . "_description` `d` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) GROUP BY `d`.`" . $type . "_id`";
+			$part = $sources[$type];
+
+			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, COALESCE(MAX(IF(`d`.`language_id` = '" . (int)$this->config->get('config_language_id') . "', `d`.`" . $name . "`, NULL)), MIN(`d`.`" . $name . "`)) AS `name`, COUNT(*) AS `languages` FROM " . $part['from'] . " WHERE " . $part['where'] . " GROUP BY `d`.`" . $type . "_id`";
 		}
 
 		return $this->collect('garbage_orphan_description', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
@@ -227,6 +230,23 @@ class Garbage extends Base {
 	}
 
 	/**
+	 * Cleanup of garbage_orphan_description: deletes the description rows of
+	 * deleted records, all languages, in every `*_description` table. Same
+	 * FROM/WHERE as the check, so it deletes exactly the rows the check counts.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageOrphanDescriptionCleanup(): array {
+		$parts = [];
+
+		foreach ($this->orphanDescriptionParts() as $part) {
+			$parts[] = ['alias' => 'd', 'from' => $part['from'], 'where' => $part['where']];
+		}
+
+		return $parts;
+	}
+
+	/**
 	 * Tables `<type>_description` with the parent `<type>` and the key
 	 * `<type>_id`.
 	 *
@@ -308,5 +328,24 @@ class Garbage extends Base {
 			'coupon_product'         => ['coupon', 'coupon_id', 'product', 'product_id'],
 			'product_filter'         => ['product', 'product_id', 'filter', 'filter_id']
 		];
+	}
+
+	/**
+	 * FROM and WHERE of the orphan descriptions of each type, shared by the
+	 * check and its cleanup (description table aliased `d`).
+	 *
+	 * @return array<string, array{from: string, where: string}> type => parts
+	 */
+	private function orphanDescriptionParts(): array {
+		$parts = [];
+
+		foreach (array_keys($this->descriptionTables()) as $type) {
+			$parts[$type] = [
+				'from'  => "`" . DB_PREFIX . $type . "_description` `d`",
+				'where' => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`)"
+			];
+		}
+
+		return $parts;
 	}
 }

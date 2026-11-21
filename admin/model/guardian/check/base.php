@@ -19,9 +19,10 @@ abstract class Base extends \Opencart\System\Engine\Model {
 
 	/**
 	 * Registry: check code => ['severity' => CheckResult::SEVERITY_*, 'source' => 'sql'|'fs'|'http'|'log'|'conf'],
-	 * plus an optional 'edit' finding column that overrides $edit for that check.
+	 * plus an optional 'edit' finding column that overrides $edit for that check
+	 * and an optional 'clean' => true for a check with a <method>Cleanup().
 	 *
-	 * @var array<string, array<string, string>>
+	 * @var array<string, array<string, string|bool>>
 	 */
 	protected array $checks = [];
 
@@ -32,7 +33,7 @@ abstract class Base extends \Opencart\System\Engine\Model {
 	protected string $edit = '';
 
 	/**
-	 * @return array<string, array<string, string>>
+	 * @return array<string, array<string, string|bool>>
 	 */
 	public function getChecks(): array {
 		return $this->checks;
@@ -55,13 +56,79 @@ abstract class Base extends \Opencart\System\Engine\Model {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	public function run(string $code): CheckResult {
-		$method = lcfirst(str_replace('_', '', ucwords($code, '_')));
+		$method = $this->method($code);
 
 		if (!isset($this->checks[$code]) || !method_exists($this, $method)) {
 			return CheckResult::error($code, $this->checks[$code]['severity'] ?? CheckResult::SEVERITY_INFO, 'Check method not found: ' . $method);
 		}
 
 		return $this->{$method}();
+	}
+
+	/**
+	 * Whether Guardian may delete a check's findings: the registry marks the
+	 * check with 'clean' and the class has its <method>Cleanup().
+	 *
+	 * @param string $code
+	 *
+	 * @return bool
+	 */
+	public function canClean(string $code): bool {
+		return !empty($this->checks[$code]['clean']) && method_exists($this, $this->method($code) . 'Cleanup');
+	}
+
+	/**
+	 * Rows the cleanup would delete right now (the dry run).
+	 *
+	 * @param string $code
+	 *
+	 * @return int
+	 */
+	public function cleanCount(string $code): int {
+		$total = 0;
+
+		foreach ($this->cleanupParts($code) as $part) {
+			$total += (int)$this->db->query("SELECT COUNT(*) AS `total` FROM " . $part['from'] . " WHERE " . $part['where'])->row['total'];
+		}
+
+		return $total;
+	}
+
+	/**
+	 * Delete a check's findings in one transaction and return the number of
+	 * deleted rows. The core tables are InnoDB; on a table converted to
+	 * MyISAM a failure cannot be rolled back.
+	 *
+	 * @param string $code
+	 *
+	 * @return int deleted rows
+	 */
+	public function clean(string $code): int {
+		$parts = $this->cleanupParts($code);
+
+		$total = 0;
+
+		$this->db->query("START TRANSACTION");
+
+		try {
+			foreach ($parts as $part) {
+				$this->db->query("DELETE `" . $part['alias'] . "` FROM " . $part['from'] . " WHERE " . $part['where']);
+
+				$total += $this->db->countAffected();
+			}
+
+			$this->db->query("COMMIT");
+		} catch (\Throwable $e) {
+			// The rollback itself may fail (lost connection); the original error matters more.
+			try {
+				$this->db->query("ROLLBACK");
+			} catch (\Throwable $ignored) {
+			}
+
+			throw $e;
+		}
+
+		return $total;
 	}
 
 	/**
@@ -126,5 +193,29 @@ abstract class Base extends \Opencart\System\Engine\Model {
 	 */
 	protected function productSelect(string $columns = ''): string {
 		return "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "')";
+	}
+
+	/**
+	 * @param string $code
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	private function cleanupParts(string $code): array {
+		if (!$this->canClean($code)) {
+			throw new \InvalidArgumentException('Check cannot be cleaned: ' . $code);
+		}
+
+		return $this->{$this->method($code) . 'Cleanup'}();
+	}
+
+	/**
+	 * Method name of a check: the camelCase form of its code.
+	 *
+	 * @param string $code
+	 *
+	 * @return string
+	 */
+	private function method(string $code): string {
+		return lcfirst(str_replace('_', '', ucwords($code, '_')));
 	}
 }
