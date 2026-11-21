@@ -31,6 +31,7 @@ $_['column_count']           = 'Count';
 $_['button_run']             = 'Run checks';
 $_['button_items']           = 'Show records (%d)';
 $_['button_edit']            = 'Edit';
+$_['button_clean']           = 'Clean up';
 
 // Error
 $_['error_permission']       = 'Warning: You do not have permission to run checks!';

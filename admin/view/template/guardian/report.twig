@@ -48,6 +48,7 @@
                       <div class="mt-2">
                         {% if check.impact %}<p class="small mb-1"><i class="fa-solid fa-triangle-exclamation"></i> <strong>{{ text_impact }}</strong> {{ check.impact }}</p>{% endif %}
                         <p class="small mb-1"><i class="fa-solid fa-lightbulb"></i> <strong>{{ text_hint }}</strong> {{ check.hint }}</p>
+                        {% if check.clean_url %}<button type="button" data-guardian-clean="{{ check.clean_url }}" class="btn btn-outline-danger btn-sm mb-1"><i class="fa-solid fa-broom"></i> {{ button_clean }}</button>{% endif %}
                       </div>
                       {% if check.items %}
                         <a data-bs-toggle="collapse" href="#{{ row_id }}" class="small">{{ button_items|format(check.count) }}</a>
