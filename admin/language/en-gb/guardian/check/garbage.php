@@ -19,6 +19,10 @@ $_['check_garbage_link_deleted_target_title']                 = 'Links to delete
 $_['check_garbage_link_deleted_target_desc']                  = 'A product, category, page, manufacturer, article, topic or coupon is still linked to a store, category, product or filter that has been deleted.';
 $_['check_garbage_link_deleted_target_impact']                = 'Customers do not see these links. A coupon limited to products or categories that no longer exist may be refused at checkout or apply to other products than intended.';
 $_['check_garbage_link_deleted_target_hint']                  = 'Open the record and save it: deleted stores, categories, products and filters are not shown in the form, so their links are removed on save (products: Links tab; categories: Data tab; coupons: General tab).';
+$_['check_garbage_orphan_product_data_title']                 = 'Data of deleted products';
+$_['check_garbage_orphan_product_data_desc']                  = 'Attributes, options, discounts, images, reviews or other data of a product are still stored, but the product itself has been deleted.';
+$_['check_garbage_orphan_product_data_impact']                = 'Customers will not notice. In the admin, an attribute or option used only by this data still counts as used and cannot be deleted.';
+$_['check_garbage_orphan_product_data_hint']                  = 'The admin cannot show or delete this data. Remove it with a database tool after making a backup, or leave it: it does no harm.';
 
 // Column
 $_['column_type']                                             = 'Record type';
@@ -30,6 +34,8 @@ $_['column_language_id']                                      = 'Deleted languag
 $_['column_links']                                            = 'Links';
 $_['check_garbage_link_deleted_target_column_record_id']      = 'Record ID';
 $_['column_target_id']                                        = 'Deleted target ID';
+$_['check_garbage_orphan_product_data_column_record_id']      = 'Deleted product ID';
+$_['column_records']                                          = 'Records';
 
 // Value
 $_['value_type_product']                                      = 'Product';
@@ -79,3 +85,15 @@ $_['value_type_article_comment']                              = 'Article comment
 $_['value_type_marketing_report']                             = 'Campaign visits';
 $_['value_type_download_report']                              = 'Download report';
 $_['value_type_product_filter']                               = 'Product filters';
+$_['value_type_product_attribute']                            = 'Attributes';
+$_['value_type_product_code']                                 = 'Identifiers';
+$_['value_type_product_discount']                             = 'Discounts and specials';
+$_['value_type_product_image']                                = 'Additional images';
+$_['value_type_product_option']                               = 'Options';
+$_['value_type_product_option_value']                         = 'Option values';
+$_['value_type_product_related']                              = 'Related products';
+$_['value_type_product_report']                               = 'Visit report';
+$_['value_type_product_reward']                               = 'Reward points';
+$_['value_type_product_subscription']                         = 'Subscription plans';
+$_['value_type_product_viewed']                               = 'View statistics';
+$_['value_type_review']                                       = 'Reviews';

@@ -19,6 +19,10 @@ $_['check_garbage_link_deleted_target_title']                 = 'Зв’язки
 $_['check_garbage_link_deleted_target_desc']                  = 'Товар, категорія, сторінка, виробник, стаття, тема або купон досі пов’язані з магазином, категорією, товаром чи фільтром, який видалено.';
 $_['check_garbage_link_deleted_target_impact']                = 'Покупці цих зв’язків не бачать. Купон, обмежений товарами чи категоріями, яких більше немає, може не прийматися під час оформлення замовлення або застосовуватися не до тих товарів.';
 $_['check_garbage_link_deleted_target_hint']                  = 'Відкрийте запис і збережіть його: видалені магазини, категорії, товари та фільтри не показуються у формі, і їхні зв’язки видаляються під час збереження (товари — вкладка «Зв’язки», категорії — «Дані», купони — «Загальні»).';
+$_['check_garbage_orphan_product_data_title']                 = 'Дані видалених товарів';
+$_['check_garbage_orphan_product_data_desc']                  = 'Атрибути, опції, знижки, зображення, відгуки чи інші дані товару досі зберігаються, хоча сам товар видалено.';
+$_['check_garbage_orphan_product_data_impact']                = 'Покупці цього не помітять. В адмінці атрибут чи опція, які використовуються лише цими даними, вважаються зайнятими й не видаляються.';
+$_['check_garbage_orphan_product_data_hint']                  = 'В адмінці ці дані не видно і їх не можна видалити. Видаліть їх інструментом для роботи з базою даних, попередньо зробивши резервну копію, або залиште: шкоди від них немає.';
 
 // Column
 $_['column_type']                                             = 'Тип запису';
@@ -30,6 +34,8 @@ $_['column_language_id']                                      = 'ID видале
 $_['column_links']                                            = 'Зв’язків';
 $_['check_garbage_link_deleted_target_column_record_id']      = 'ID запису';
 $_['column_target_id']                                        = 'ID видаленого об’єкта';
+$_['check_garbage_orphan_product_data_column_record_id']      = 'ID видаленого товару';
+$_['column_records']                                          = 'Записів';
 
 // Value
 $_['value_type_product']                                      = 'Товар';
@@ -79,3 +85,15 @@ $_['value_type_article_comment']                              = 'Комента�
 $_['value_type_marketing_report']                             = 'Переходи кампанії';
 $_['value_type_download_report']                              = 'Звіт про завантаження';
 $_['value_type_product_filter']                               = 'Фільтри товару';
+$_['value_type_product_attribute']                            = 'Атрибути';
+$_['value_type_product_code']                                 = 'Ідентифікатори';
+$_['value_type_product_discount']                             = 'Знижки та акції';
+$_['value_type_product_image']                                = 'Додаткові зображення';
+$_['value_type_product_option']                               = 'Опції';
+$_['value_type_product_option_value']                         = 'Значення опцій';
+$_['value_type_product_related']                              = 'Супутні товари';
+$_['value_type_product_report']                               = 'Звіт про відвідування';
+$_['value_type_product_reward']                               = 'Бонусні бали';
+$_['value_type_product_subscription']                         = 'Плани підписки';
+$_['value_type_product_viewed']                               = 'Статистика переглядів';
+$_['value_type_review']                                       = 'Відгуки';

@@ -15,7 +15,8 @@ class Garbage extends Base {
 		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -118,6 +119,33 @@ class Garbage extends Base {
 		}
 
 		return $this->collect('garbage_link_deleted_target', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `dead` ORDER BY `type`, `record_id`, `target_id`");
+	}
+
+	/**
+	 * Data of a deleted product, one finding row per table and deleted product
+	 * (`records` counts the rows): attributes, identifiers, discounts and
+	 * specials, images, options and option values, related products, visit
+	 * report, reward points, subscription plans, view statistics and reviews.
+	 * The admin product delete removes all of these except the view statistics
+	 * (product_viewed is not in its cascade, so normal deletes leave it); reviews
+	 * are removed only by the import delete. The rest comes from imports or
+	 * direct SQL. The admin guards for deleting an attribute or an option count
+	 * product rows without checking that the product exists
+	 * (getTotalAttributesByAttributeId and getTotalOptionsByOptionId), so such
+	 * leftovers block that deletion.
+	 * Links of a deleted product to stores, categories, downloads and layouts
+	 * belong to garbage_orphan_link; descriptions to garbage_orphan_description.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function garbageOrphanProductData(): CheckResult {
+		$parts = [];
+
+		foreach (['product_attribute', 'product_code', 'product_discount', 'product_filter', 'product_image', 'product_option', 'product_option_value', 'product_related', 'product_report', 'product_reward', 'product_subscription', 'product_viewed', 'review'] as $type) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`product_id` AS `record_id`, COUNT(*) AS `records` FROM `" . DB_PREFIX . $type . "` `t` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`product_id` = `t`.`product_id`) GROUP BY `t`.`product_id`";
+		}
+
+		return $this->collect('garbage_orphan_product_data', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
 	}
 
 	/**

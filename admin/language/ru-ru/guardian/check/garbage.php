@@ -19,6 +19,10 @@ $_['check_garbage_link_deleted_target_title']                 = 'Связи с �
 $_['check_garbage_link_deleted_target_desc']                  = 'Товар, категория, страница, производитель, статья, тема или купон по-прежнему связаны с магазином, категорией, товаром или фильтром, который удалён.';
 $_['check_garbage_link_deleted_target_impact']                = 'Покупатели этих связей не видят. Купон, ограниченный несуществующими товарами или категориями, может не приниматься при оформлении заказа или применяться не к тем товарам.';
 $_['check_garbage_link_deleted_target_hint']                  = 'Откройте запись и сохраните её: удалённые магазины, категории, товары и фильтры не показываются в форме, и их связи удаляются при сохранении (товары — вкладка «Связи», категории — «Данные», купоны — «Общие»).';
+$_['check_garbage_orphan_product_data_title']                 = 'Данные удалённых товаров';
+$_['check_garbage_orphan_product_data_desc']                  = 'Атрибуты, опции, скидки, изображения, отзывы или другие данные товара по-прежнему хранятся, хотя сам товар удалён.';
+$_['check_garbage_orphan_product_data_impact']                = 'Покупатели этого не заметят. В админке атрибут или опция, которые используются только этими данными, считаются занятыми и не удаляются.';
+$_['check_garbage_orphan_product_data_hint']                  = 'В админке эти данные не видны и не удаляются. Удалите их инструментом для работы с базой данных, предварительно сделав резервную копию, или оставьте: вреда от них нет.';
 
 // Column
 $_['column_type']                                             = 'Тип записи';
@@ -30,6 +34,8 @@ $_['column_language_id']                                      = 'ID удалён
 $_['column_links']                                            = 'Связей';
 $_['check_garbage_link_deleted_target_column_record_id']      = 'ID записи';
 $_['column_target_id']                                        = 'ID удалённого объекта';
+$_['check_garbage_orphan_product_data_column_record_id']      = 'ID удалённого товара';
+$_['column_records']                                          = 'Записей';
 
 // Value
 $_['value_type_product']                                      = 'Товар';
@@ -79,3 +85,15 @@ $_['value_type_article_comment']                              = 'Коммент�
 $_['value_type_marketing_report']                             = 'Переходы кампании';
 $_['value_type_download_report']                              = 'Отчёт о скачиваниях';
 $_['value_type_product_filter']                               = 'Фильтры товара';
+$_['value_type_product_attribute']                            = 'Атрибуты';
+$_['value_type_product_code']                                 = 'Идентификаторы';
+$_['value_type_product_discount']                             = 'Скидки и акции';
+$_['value_type_product_image']                                = 'Дополнительные изображения';
+$_['value_type_product_option']                               = 'Опции';
+$_['value_type_product_option_value']                         = 'Значения опций';
+$_['value_type_product_related']                              = 'Сопутствующие товары';
+$_['value_type_product_report']                               = 'Отчёт о посещениях';
+$_['value_type_product_reward']                               = 'Бонусные баллы';
+$_['value_type_product_subscription']                         = 'Планы подписки';
+$_['value_type_product_viewed']                               = 'Статистика просмотров';
+$_['value_type_review']                                       = 'Отзывы';
