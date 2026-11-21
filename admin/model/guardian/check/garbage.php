@@ -148,14 +148,16 @@ class Garbage extends Base {
 	 * leftovers block that deletion.
 	 * Links of a deleted product to stores, categories, downloads and layouts
 	 * belong to garbage_orphan_link; descriptions to garbage_orphan_description.
+	 * The view statistics table exists only while the "Products Viewed" report
+	 * extension is installed, so it is checked only when present.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function garbageOrphanProductData(): CheckResult {
 		$parts = [];
 
-		foreach (['product_attribute', 'product_code', 'product_discount', 'product_filter', 'product_image', 'product_option', 'product_option_value', 'product_related', 'product_report', 'product_reward', 'product_subscription', 'product_viewed', 'review'] as $type) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`product_id` AS `record_id`, COUNT(*) AS `records` FROM `" . DB_PREFIX . $type . "` `t` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`product_id` = `t`.`product_id`) GROUP BY `t`.`product_id`";
+		foreach ($this->orphanProductDataParts() as $type => $part) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`product_id` AS `record_id`, COUNT(*) AS `records` FROM " . $part['from'] . " WHERE " . $part['where'] . " GROUP BY `t`.`product_id`";
 		}
 
 		return $this->collect('garbage_orphan_product_data', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
@@ -482,6 +484,33 @@ class Garbage extends Base {
 				'target_column' => $target_column,
 				'from'          => "`" . DB_PREFIX . $type . "` `t`",
 				'where'         => "EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $owner_column . "` = `t`.`" . $owner_column . "`)" . ($target == 'store' ? " AND `t`.`store_id` != '0'" : "") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $target . "` `g` WHERE `g`.`" . $target_column . "` = `t`.`" . $target_column . "`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * FROM and WHERE of the data of deleted products of each table (aliased
+	 * `t`). product_viewed belongs to the "Products Viewed" report extension
+	 * and is left out when its table does not exist.
+	 *
+	 * @return array<string, array{from: string, where: string}> table => parts
+	 */
+	private function orphanProductDataParts(): array {
+		$tables = ['product_attribute', 'product_code', 'product_discount', 'product_filter', 'product_image', 'product_option', 'product_option_value', 'product_related', 'product_report', 'product_reward', 'product_subscription', 'product_viewed', 'review'];
+
+		// "_" is a LIKE wildcard; escape it after the string escaping so the backslash survives.
+		if (!$this->db->query("SHOW TABLES LIKE '" . str_replace('_', '\\_', $this->db->escape(DB_PREFIX . "product_viewed")) . "'")->num_rows) {
+			$tables = array_diff($tables, ['product_viewed']);
+		}
+
+		$parts = [];
+
+		foreach ($tables as $type) {
+			$parts[$type] = [
+				'from'  => "`" . DB_PREFIX . $type . "` `t`",
+				'where' => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`product_id` = `t`.`product_id`)"
 			];
 		}
 
