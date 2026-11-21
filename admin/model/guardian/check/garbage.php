@@ -89,8 +89,12 @@ class Garbage extends Base {
 	protected function garbageOrphanLink(): CheckResult {
 		$parts = [];
 
-		foreach ($this->linkTables() as $type => [$owner, $column]) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $column . "` AS `record_id`, COUNT(*) AS `links` FROM `" . DB_PREFIX . $type . "` `t` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $column . "` = `t`.`" . $column . "`) GROUP BY `t`.`" . $column . "`";
+		foreach ($this->linkTables() as $table => $link) {
+			[$owner, $column] = $link;
+
+			$type = $link[2] ?? $table;
+
+			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $column . "` AS `record_id`, COUNT(*) AS `links` FROM `" . DB_PREFIX . $table . "` `t` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $column . "` = `t`.`" . $column . "`) GROUP BY `t`.`" . $column . "`";
 		}
 
 		return $this->collect('garbage_orphan_link', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
@@ -109,7 +113,8 @@ class Garbage extends Base {
 	 * SQL (a filter delete does clean product filters). The storefront ignores
 	 * links to missing stores and categories, but a coupon limited to a deleted
 	 * category can apply to the whole cart if an old product link to that
-	 * category remains (the category count in catalog/model/marketing/coupon.php
+	 * category remains (getTotalCategoriesByCategoryId in
+	 * catalog/model/catalog/product.php, used by the storefront coupon model,
 	 * does not look at the product). Links of a deleted owner belong to
 	 * garbage_orphan_link; layouts that were deleted are not checked here.
 	 *
@@ -128,12 +133,11 @@ class Garbage extends Base {
 	/**
 	 * Data of a deleted product, one finding row per table and deleted product
 	 * (`records` counts the rows): attributes, identifiers, discounts and
-	 * specials, images, options and option values, related products, visit
-	 * report, reward points, subscription plans, view statistics and reviews.
-	 * The admin product delete removes all of these except the view statistics
-	 * (product_viewed is not in its cascade, so normal deletes leave it); reviews
-	 * are removed only by the import delete. The rest comes from imports or
-	 * direct SQL. The admin guards for deleting an attribute or an option count
+	 * specials, filters, images, options and option values, related products,
+	 * visit report, reward points, subscription plans, view statistics and
+	 * reviews. The admin product delete removes all of these except the view
+	 * statistics (product_viewed is not in its cascade, so normal deletes leave
+	 * it); the rest comes from imports or direct SQL. The admin guards for deleting an attribute or an option count
 	 * product rows without checking that the product exists
 	 * (getTotalAttributesByAttributeId and getTotalOptionsByOptionId), so such
 	 * leftovers block that deletion.
@@ -172,7 +176,7 @@ class Garbage extends Base {
 	 * campaign report (addReport in catalog/model/marketing/marketing.php),
 	 * shown on the campaign form's Report tab; the legacy `clicks` counter is
 	 * written by nothing in this version, so it is only required to be zero.
-	 * The admin never removes a campaign by itself. Only orders of any status
+	 * The admin never removes a campaign by itself. Orders of any status
 	 * count as use (the admin campaign list counts complete orders only, so
 	 * this is stricter). Findings carry the edit button to the campaign form.
 	 *
@@ -209,8 +213,8 @@ class Garbage extends Base {
 	 * Discount and special rows of existing products whose end date has passed
 	 * (today counts as passed), one finding row per row. A row whose start is
 	 * not before its end is skipped: it can never apply and belongs to
-	 * product_discount_dates_inverted, so rows may also appear in
-	 * product_discount_not_lower. The cart and storefront apply a row only
+	 * product_discount_dates_inverted. Rows may also appear in
+	 * product_discount_not_lower, which ignores dates. The cart and storefront apply a row only
 	 * between its dates, so an expired row only clutters the product's
 	 * Discount tab. Rows of deleted products belong to
 	 * garbage_orphan_product_data. Findings carry the edit button to the
@@ -219,7 +223,7 @@ class Garbage extends Base {
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function garbageExpiredDiscount(): CheckResult {
-		return $this->collect('garbage_expired_discount', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`price`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_end` != '0000-00-00' AND `dc`.`date_end` <= CURDATE() AND NOT (`dc`.`date_start` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end`) ORDER BY `p`.`product_id`, `kind`, `dc`.`date_end`");
+		return $this->collect('garbage_expired_discount', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_end` != '0000-00-00' AND `dc`.`date_end` <= CURDATE() AND NOT (`dc`.`date_start` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end`) ORDER BY `p`.`product_id`, `kind`, `dc`.`date_end`");
 	}
 
 	/**
@@ -240,40 +244,42 @@ class Garbage extends Base {
 
 	/**
 	 * Link tables checked for a deleted owner; the owner column has the same
-	 * name in the link table and in the owner table.
+	 * name in the link table and in the owner table. An optional third element
+	 * is the reported type code, for tables whose name is already a G1 type
+	 * with another meaning.
 	 *
-	 * @return array<string, array{0: string, 1: string}> link table => [owner table, owner column]
+	 * @return array<string, array{0: string, 1: string, 2?: string}> link table => [owner table, owner column, type code]
 	 */
 	private function linkTables(): array {
 		return [
-			'product_to_category' => ['product', 'product_id'],
-			'product_to_store' => ['product', 'product_id'],
-			'product_to_download' => ['product', 'product_id'],
-			'product_to_layout' => ['product', 'product_id'],
-			'category_to_store' => ['category', 'category_id'],
-			'category_to_layout' => ['category', 'category_id'],
-			'category_filter' => ['category', 'category_id'],
-			'category_path' => ['category', 'category_id'],
-			'information_to_store' => ['information', 'information_id'],
-			'information_to_layout' => ['information', 'information_id'],
-			'manufacturer_to_store' => ['manufacturer', 'manufacturer_id'],
-			'manufacturer_to_layout' => ['manufacturer', 'manufacturer_id'],
-			'article_to_store' => ['article', 'article_id'],
-			'article_to_layout' => ['article', 'article_id'],
-			'topic_to_store' => ['topic', 'topic_id'],
-			'topic_to_layout' => ['topic', 'topic_id'],
-			'coupon_product' => ['coupon', 'coupon_id'],
-			'coupon_category' => ['coupon', 'coupon_id'],
-			'coupon_history' => ['coupon', 'coupon_id'],
-			'tax_rate_to_customer_group' => ['tax_rate', 'tax_rate_id'],
-			'zone_to_geo_zone' => ['geo_zone', 'geo_zone_id'],
+			'product_to_category'         => ['product', 'product_id'],
+			'product_to_store'            => ['product', 'product_id'],
+			'product_to_download'         => ['product', 'product_id'],
+			'product_to_layout'           => ['product', 'product_id'],
+			'category_to_store'           => ['category', 'category_id'],
+			'category_to_layout'          => ['category', 'category_id'],
+			'category_filter'             => ['category', 'category_id'],
+			'category_path'               => ['category', 'category_id'],
+			'information_to_store'        => ['information', 'information_id'],
+			'information_to_layout'       => ['information', 'information_id'],
+			'manufacturer_to_store'       => ['manufacturer', 'manufacturer_id'],
+			'manufacturer_to_layout'      => ['manufacturer', 'manufacturer_id'],
+			'article_to_store'            => ['article', 'article_id'],
+			'article_to_layout'           => ['article', 'article_id'],
+			'topic_to_store'              => ['topic', 'topic_id'],
+			'topic_to_layout'             => ['topic', 'topic_id'],
+			'coupon_product'              => ['coupon', 'coupon_id'],
+			'coupon_category'             => ['coupon', 'coupon_id'],
+			'coupon_history'              => ['coupon', 'coupon_id'],
+			'tax_rate_to_customer_group'  => ['tax_rate', 'tax_rate_id'],
+			'zone_to_geo_zone'            => ['geo_zone', 'geo_zone_id'],
 			'custom_field_customer_group' => ['custom_field', 'custom_field_id'],
-			'custom_field_value' => ['custom_field', 'custom_field_id'],
-			'option_value' => ['option', 'option_id'],
-			'banner_image' => ['banner', 'banner_id'],
-			'article_comment' => ['article', 'article_id'],
-			'marketing_report' => ['marketing', 'marketing_id'],
-			'download_report' => ['download', 'download_id']
+			'custom_field_value'          => ['custom_field', 'custom_field_id', 'custom_field_values'],
+			'option_value'                => ['option', 'option_id', 'option_values'],
+			'banner_image'                => ['banner', 'banner_id'],
+			'article_comment'             => ['article', 'article_id'],
+			'marketing_report'            => ['marketing', 'marketing_id'],
+			'download_report'             => ['download', 'download_id']
 		];
 	}
 
