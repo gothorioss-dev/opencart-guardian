@@ -106,4 +106,14 @@ abstract class Base extends \Opencart\System\Engine\Model {
 	protected function variantFamilies(string $columns = ''): string {
 		return "SELECT `p2`.`product_id`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE (`p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL)";
 	}
+
+	/**
+	 * Kind of a product_discount row `dc`: "special" or "discount", the codes
+	 * translated by the category's value_kind_* keys.
+	 *
+	 * @return string SQL expression
+	 */
+	protected function discountKind(): string {
+		return "IF(`dc`.`special` = '1', 'special', 'discount')";
+	}
 }

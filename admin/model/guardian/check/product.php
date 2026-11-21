@@ -377,14 +377,4 @@ class Product extends Base {
 	private function discountFinalPrice(): string {
 		return "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
 	}
-
-	/**
-	 * Kind of a product_discount row `dc`: "special" or "discount", the codes
-	 * translated by the category's value_kind_* keys.
-	 *
-	 * @return string SQL expression
-	 */
-	private function discountKind(): string {
-		return "IF(`dc`.`special` = '1', 'special', 'discount')";
-	}
 }
