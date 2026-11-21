@@ -35,6 +35,10 @@ $_['check_garbage_disabled_summary_title']                    = 'Отключё�
 $_['check_garbage_disabled_summary_desc']                     = 'Отключённые товары, категории, информационные страницы, баннеры, статьи или темы — по строке на каждый вид с их количеством.';
 $_['check_garbage_disabled_summary_impact']                   = 'Покупатели не видят отключённые записи. Давно отключённая запись часто уже не нужна и только загромождает списки в админке.';
 $_['check_garbage_disabled_summary_hint']                     = 'Просмотрите отключённые записи в их разделах админки (например, отфильтруйте «Каталог → Товары» по статусу) и удалите ненужные.';
+$_['check_garbage_expired_discount_title']                    = 'Завершившиеся скидки и акции';
+$_['check_garbage_expired_discount_desc']                     = 'Дата окончания скидки или акции товара прошла.';
+$_['check_garbage_expired_discount_impact']                   = 'Покупатели больше не получают эту цену; строка только загромождает вкладку «Скидки» товара.';
+$_['check_garbage_expired_discount_hint']                     = 'Откройте товар и удалите указанную строку на вкладке «Скидки» или укажите новую дату окончания.';
 
 // Column
 $_['column_type']                                             = 'Тип записи';
@@ -55,6 +59,10 @@ $_['check_garbage_inactive_marketing_column_name']            = 'Названи�
 $_['check_garbage_inactive_marketing_column_code']            = 'Код отслеживания';
 $_['column_date_added']                                       = 'Дата добавления';
 $_['column_total']                                            = 'Отключено';
+$_['column_kind']                                             = 'Вид';
+$_['column_customer_group_id']                                = 'Группа покупателей';
+$_['column_quantity']                                         = 'Количество';
+$_['column_price']                                            = 'Цена';
 
 // Value
 $_['value_type_product']                                      = 'Товар';
@@ -117,3 +125,5 @@ $_['value_type_product_subscription']                         = 'Планы по
 $_['value_type_product_viewed']                               = 'Статистика просмотров';
 $_['value_type_review']                                       = 'Отзывы';
 $_['value_type_banner']                                       = 'Баннер';
+$_['value_kind_special']                                      = 'Акция';
+$_['value_kind_discount']                                     = 'Скидка';

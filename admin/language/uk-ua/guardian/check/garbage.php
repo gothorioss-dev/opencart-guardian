@@ -35,6 +35,10 @@ $_['check_garbage_disabled_summary_title']                    = 'Вимкнен�
 $_['check_garbage_disabled_summary_desc']                     = 'Вимкнені товари, категорії, інформаційні сторінки, банери, статті або теми — по рядку на кожен вид з їхньою кількістю.';
 $_['check_garbage_disabled_summary_impact']                   = 'Покупці не бачать вимкнених записів. Давно вимкнений запис часто вже не потрібен і лише захаращує списки в адмінці.';
 $_['check_garbage_disabled_summary_hint']                     = 'Перегляньте вимкнені записи в їхніх розділах адмінки (наприклад, відфільтруйте «Каталог → Товари» за статусом) і видаліть непотрібні.';
+$_['check_garbage_expired_discount_title']                    = 'Завершені знижки та акції';
+$_['check_garbage_expired_discount_desc']                     = 'Дата закінчення знижки або акції товару минула.';
+$_['check_garbage_expired_discount_impact']                   = 'Покупці більше не отримують цієї ціни; рядок лише захаращує вкладку «Знижки» товару.';
+$_['check_garbage_expired_discount_hint']                     = 'Відкрийте товар і видаліть вказаний рядок на вкладці «Знижки» або вкажіть нову дату закінчення.';
 
 // Column
 $_['column_type']                                             = 'Тип запису';
@@ -55,6 +59,10 @@ $_['check_garbage_inactive_marketing_column_name']            = 'Назва ка
 $_['check_garbage_inactive_marketing_column_code']            = 'Код відстеження';
 $_['column_date_added']                                       = 'Дата додавання';
 $_['column_total']                                            = 'Вимкнено';
+$_['column_kind']                                             = 'Вид';
+$_['column_customer_group_id']                                = 'Група покупців';
+$_['column_quantity']                                         = 'Кількість';
+$_['column_price']                                            = 'Ціна';
 
 // Value
 $_['value_type_product']                                      = 'Товар';
@@ -117,3 +125,5 @@ $_['value_type_product_subscription']                         = 'Плани пі
 $_['value_type_product_viewed']                               = 'Статистика переглядів';
 $_['value_type_review']                                       = 'Відгуки';
 $_['value_type_banner']                                       = 'Банер';
+$_['value_kind_special']                                      = 'Акція';
+$_['value_kind_discount']                                     = 'Знижка';

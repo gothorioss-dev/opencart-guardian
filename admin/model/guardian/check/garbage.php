@@ -19,7 +19,8 @@ class Garbage extends Base {
 		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id'],
 		'garbage_inactive_marketing'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'marketing_id'],
-		'garbage_disabled_summary'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'garbage_disabled_summary'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_expired_discount'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'product_id']
 	];
 
 	/**
@@ -202,6 +203,23 @@ class Garbage extends Base {
 		$rows = $this->db->query("SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `disabled` WHERE `total` > 0 ORDER BY `type`")->rows;
 
 		return CheckResult::found('garbage_disabled_summary', $this->checks['garbage_disabled_summary']['severity'], (int)array_sum(array_column($rows, 'total')), $rows);
+	}
+
+	/**
+	 * Discount and special rows of existing products whose end date has passed
+	 * (today counts as passed), one finding row per row. A row whose start is
+	 * not before its end is skipped: it can never apply and belongs to
+	 * product_discount_dates_inverted, so rows may also appear in
+	 * product_discount_not_lower. The cart and storefront apply a row only
+	 * between its dates, so an expired row only clutters the product's
+	 * Discount tab. Rows of deleted products belong to
+	 * garbage_orphan_product_data. Findings carry the edit button to the
+	 * product form.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function garbageExpiredDiscount(): CheckResult {
+		return $this->collect('garbage_expired_discount', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`price`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_end` != '0000-00-00' AND `dc`.`date_end` <= CURDATE() AND NOT (`dc`.`date_start` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end`) ORDER BY `p`.`product_id`, `kind`, `dc`.`date_end`");
 	}
 
 	/**

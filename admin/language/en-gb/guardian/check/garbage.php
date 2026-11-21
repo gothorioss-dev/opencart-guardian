@@ -35,6 +35,10 @@ $_['check_garbage_disabled_summary_title']                    = 'Disabled record
 $_['check_garbage_disabled_summary_desc']                     = 'Disabled products, categories, information pages, banners, articles or topics, one line per kind with their number.';
 $_['check_garbage_disabled_summary_impact']                   = 'Customers do not see disabled records. A record disabled long ago is often no longer needed and only clutters the admin lists.';
 $_['check_garbage_disabled_summary_hint']                     = 'Review the disabled records in their admin sections (for example, filter Catalog > Products by status) and delete those you no longer need.';
+$_['check_garbage_expired_discount_title']                    = 'Expired discounts and specials';
+$_['check_garbage_expired_discount_desc']                     = 'The end date of a product\'s discount or special has passed.';
+$_['check_garbage_expired_discount_impact']                   = 'Customers no longer get this price; the row only clutters the product\'s Discount tab.';
+$_['check_garbage_expired_discount_hint']                     = 'Open the product and delete the listed row on the Discount tab, or set a new end date.';
 
 // Column
 $_['column_type']                                             = 'Record type';
@@ -55,6 +59,10 @@ $_['check_garbage_inactive_marketing_column_name']            = 'Campaign name';
 $_['check_garbage_inactive_marketing_column_code']            = 'Tracking code';
 $_['column_date_added']                                       = 'Date added';
 $_['column_total']                                            = 'Disabled';
+$_['column_kind']                                             = 'Kind';
+$_['column_customer_group_id']                                = 'Customer group';
+$_['column_quantity']                                         = 'Quantity';
+$_['column_price']                                            = 'Price';
 
 // Value
 $_['value_type_product']                                      = 'Product';
@@ -117,3 +125,5 @@ $_['value_type_product_subscription']                         = 'Subscription pl
 $_['value_type_product_viewed']                               = 'View statistics';
 $_['value_type_review']                                       = 'Reviews';
 $_['value_type_banner']                                       = 'Banner';
+$_['value_kind_special']                                      = 'Special';
+$_['value_kind_discount']                                     = 'Discount';
