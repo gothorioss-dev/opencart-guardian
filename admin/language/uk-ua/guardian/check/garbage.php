@@ -23,6 +23,10 @@ $_['check_garbage_orphan_product_data_title']                 = 'Дані вид
 $_['check_garbage_orphan_product_data_desc']                  = 'Атрибути, опції, знижки, зображення, відгуки чи інші дані товару досі зберігаються, хоча сам товар видалено.';
 $_['check_garbage_orphan_product_data_impact']                = 'Покупці цього не помітять. В адмінці атрибут чи опція, які використовуються лише цими даними, вважаються зайнятими й не видаляються.';
 $_['check_garbage_orphan_product_data_hint']                  = 'В адмінці ці дані не видно і їх не можна видалити. Видаліть їх інструментом для роботи з базою даних, попередньо зробивши резервну копію, або залиште: шкоди від них немає.';
+$_['check_garbage_expired_coupon_title']                      = 'Купони з простроченим терміном';
+$_['check_garbage_expired_coupon_desc']                       = 'Дата закінчення купона минула.';
+$_['check_garbage_expired_coupon_impact']                     = 'Покупці більше не можуть застосувати купон, навіть якщо він увімкнений; він лише захаращує список купонів.';
+$_['check_garbage_expired_coupon_hint']                       = 'У «Маркетинг → Купони» видаліть купон або вкажіть нову дату закінчення.';
 
 // Column
 $_['column_type']                                             = 'Тип запису';
@@ -36,6 +40,9 @@ $_['check_garbage_link_deleted_target_column_record_id']      = 'ID запису
 $_['column_target_id']                                        = 'ID видаленого об’єкта';
 $_['check_garbage_orphan_product_data_column_record_id']      = 'ID видаленого товару';
 $_['column_records']                                          = 'Записів';
+$_['column_code']                                             = 'Код';
+$_['column_status']                                           = 'Статус';
+$_['column_date_end']                                         = 'Дата закінчення';
 
 // Value
 $_['value_type_product']                                      = 'Товар';

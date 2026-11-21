@@ -23,6 +23,10 @@ $_['check_garbage_orphan_product_data_title']                 = 'Data of deleted
 $_['check_garbage_orphan_product_data_desc']                  = 'Attributes, options, discounts, images, reviews or other data of a product are still stored, but the product itself has been deleted.';
 $_['check_garbage_orphan_product_data_impact']                = 'Customers will not notice. In the admin, an attribute or option used only by this data still counts as used and cannot be deleted.';
 $_['check_garbage_orphan_product_data_hint']                  = 'The admin cannot show or delete this data. Remove it with a database tool after making a backup, or leave it: it does no harm.';
+$_['check_garbage_expired_coupon_title']                      = 'Expired coupons';
+$_['check_garbage_expired_coupon_desc']                       = 'The coupon\'s end date has passed.';
+$_['check_garbage_expired_coupon_impact']                     = 'Customers can no longer use the coupon, even if it is enabled; it only clutters the coupon list.';
+$_['check_garbage_expired_coupon_hint']                       = 'In Marketing > Coupons delete the coupon or set a new end date.';
 
 // Column
 $_['column_type']                                             = 'Record type';
@@ -36,6 +40,9 @@ $_['check_garbage_link_deleted_target_column_record_id']      = 'Record ID';
 $_['column_target_id']                                        = 'Deleted target ID';
 $_['check_garbage_orphan_product_data_column_record_id']      = 'Deleted product ID';
 $_['column_records']                                          = 'Records';
+$_['column_code']                                             = 'Code';
+$_['column_status']                                           = 'Status';
+$_['column_date_end']                                         = 'Date end';
 
 // Value
 $_['value_type_product']                                      = 'Product';

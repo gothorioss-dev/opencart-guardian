@@ -16,7 +16,8 @@ class Garbage extends Base {
 		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id']
 	];
 
 	/**
@@ -146,6 +147,20 @@ class Garbage extends Base {
 		}
 
 		return $this->collect('garbage_orphan_product_data', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
+	}
+
+	/**
+	 * Coupons whose end date has passed (today counts as passed), enabled or
+	 * not; a zero end date means no limit and is skipped. The storefront
+	 * refuses a coupon after its end date (catalog/model/marketing/coupon.php),
+	 * and the admin never removes a coupon by itself, so expired ones stay
+	 * until deleted. Findings carry the edit button to the coupon form.
+	 * Expired product discounts are checked by garbage_expired_discount.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function garbageExpiredCoupon(): CheckResult {
+		return $this->collect('garbage_expired_coupon', "SELECT `c`.`coupon_id`, `c`.`name`, `c`.`code`, `c`.`status`, `c`.`date_end` FROM `" . DB_PREFIX . "coupon` `c` WHERE `c`.`date_end` != '0000-00-00' AND `c`.`date_end` <= CURDATE() ORDER BY `c`.`date_end`, `c`.`coupon_id`");
 	}
 
 	/**

@@ -25,7 +25,8 @@ class Report extends \Opencart\System\Engine\Controller {
 		'filter_id'       => 'catalog/filter.form',
 		'manufacturer_id' => 'catalog/manufacturer.form',
 		'information_id'  => 'catalog/information.form',
-		'seo_url_id'      => 'design/seo_url.form'
+		'seo_url_id'      => 'design/seo_url.form',
+		'coupon_id'       => 'marketing/coupon.form'
 	];
 
 	/**
