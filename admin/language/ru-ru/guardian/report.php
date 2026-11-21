@@ -4,6 +4,7 @@ $_['text_success']           = 'Готово: проверки выполнен�
 $_['text_no_run']            = 'Проверки ещё не запускались.';
 $_['text_last_run']          = 'Последний прогон:';
 $_['text_origin_manual']     = 'вручную';
+$_['text_origin_cleanup']    = 'очистка';
 $_['text_checks_total']      = 'Проверок:';
 $_['text_findings']          = 'Найдено (К / В / И):';
 $_['text_errors']            = 'Проверок с ошибкой:';

@@ -128,6 +128,9 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 			$routes[$code] = 'extension/gtr_guardian/guardian/' . $code;
 		}
 
+		// Deleting leftover data needs both access and modify on this route.
+		$routes['cleanup'] = 'extension/gtr_guardian/guardian/cleanup';
+
 		return $routes;
 	}
 

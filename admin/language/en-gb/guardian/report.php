@@ -4,6 +4,7 @@ $_['text_success']           = 'Success: checks have been run!';
 $_['text_no_run']            = 'Checks have not been run yet.';
 $_['text_last_run']          = 'Last run:';
 $_['text_origin_manual']     = 'manual';
+$_['text_origin_cleanup']    = 'cleanup';
 $_['text_checks_total']      = 'Checks:';
 $_['text_findings']          = 'Findings (C / W / I):';
 $_['text_errors']            = 'Failed checks:';

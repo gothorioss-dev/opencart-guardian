@@ -74,12 +74,14 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			];
 		}
 
-		// Matrix columns: the dashboard plus the domains listed above.
+		// Matrix columns: the dashboard, the domains listed above and the cleanup route.
 		$data['permission_routes'] = [['code' => 'dashboard', 'name' => $this->language->get('text_dashboard')]];
 
 		foreach ($data['domains'] as $domain) {
 			$data['permission_routes'][] = ['code' => $domain['code'], 'name' => $domain['name']];
 		}
+
+		$data['permission_routes'][] = ['code' => 'cleanup', 'name' => $this->language->get('text_cleanup')];
 
 		$routes = $this->model_extension_gtr_guardian_other_gtr_guardian->getPermissionRoutes();
 
