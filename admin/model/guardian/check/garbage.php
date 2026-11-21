@@ -14,7 +14,8 @@ class Garbage extends Base {
 	protected array $checks = [
 		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -91,6 +92,35 @@ class Garbage extends Base {
 	}
 
 	/**
+	 * Links of an existing owner to a deleted target, one finding row per link:
+	 * a store (store and layout links of products, categories, pages,
+	 * manufacturers, articles and topics; the default store 0 is not a row of
+	 * the store table), a category (product and coupon categories), a product
+	 * (coupon products) or a filter (product filters). The admin forms list
+	 * existing stores, categories, products and filters only, and every edit*()
+	 * re-writes these links, so saving the record drops them. The store delete
+	 * does not clean the store and layout links of articles and topics, so
+	 * those also come from normal use; the rest comes from imports or direct
+	 * SQL (a filter delete does clean product filters). The storefront ignores
+	 * links to missing stores and categories, but a coupon limited to a deleted
+	 * category can apply to the whole cart if an old product link to that
+	 * category remains (the category count in catalog/model/marketing/coupon.php
+	 * does not look at the product). Links of a deleted owner belong to
+	 * garbage_orphan_link; layouts that were deleted are not checked here.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function garbageLinkDeletedTarget(): CheckResult {
+		$parts = [];
+
+		foreach ($this->targetLinks() as $type => [$owner, $owner_column, $target, $target_column]) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $owner_column . "` AS `record_id`, `t`.`" . $target_column . "` AS `target_id` FROM `" . DB_PREFIX . $type . "` `t` WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $owner_column . "` = `t`.`" . $owner_column . "`)" . ($target == 'store' ? " AND `t`.`store_id` != '0'" : "") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $target . "` `g` WHERE `g`.`" . $target_column . "` = `t`.`" . $target_column . "`)";
+		}
+
+		return $this->collect('garbage_link_deleted_target', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `dead` ORDER BY `type`, `record_id`, `target_id`");
+	}
+
+	/**
 	 * Tables `<type>_description` with the parent `<type>` and the key
 	 * `<type>_id`.
 	 *
@@ -142,6 +172,33 @@ class Garbage extends Base {
 			'article_comment' => ['article', 'article_id'],
 			'marketing_report' => ['marketing', 'marketing_id'],
 			'download_report' => ['download', 'download_id']
+		];
+	}
+
+	/**
+	 * Link tables checked for a deleted target; the owner and the target
+	 * columns have the same name in the link table and in their own tables.
+	 *
+	 * @return array<string, array{0: string, 1: string, 2: string, 3: string}> link table => [owner table, owner column, target table, target column]
+	 */
+	private function targetLinks(): array {
+		return [
+			'product_to_store'       => ['product', 'product_id', 'store', 'store_id'],
+			'product_to_layout'      => ['product', 'product_id', 'store', 'store_id'],
+			'category_to_store'      => ['category', 'category_id', 'store', 'store_id'],
+			'category_to_layout'     => ['category', 'category_id', 'store', 'store_id'],
+			'information_to_store'   => ['information', 'information_id', 'store', 'store_id'],
+			'information_to_layout'  => ['information', 'information_id', 'store', 'store_id'],
+			'manufacturer_to_store'  => ['manufacturer', 'manufacturer_id', 'store', 'store_id'],
+			'manufacturer_to_layout' => ['manufacturer', 'manufacturer_id', 'store', 'store_id'],
+			'article_to_store'       => ['article', 'article_id', 'store', 'store_id'],
+			'article_to_layout'      => ['article', 'article_id', 'store', 'store_id'],
+			'topic_to_store'         => ['topic', 'topic_id', 'store', 'store_id'],
+			'topic_to_layout'        => ['topic', 'topic_id', 'store', 'store_id'],
+			'product_to_category'    => ['product', 'product_id', 'category', 'category_id'],
+			'coupon_category'        => ['coupon', 'coupon_id', 'category', 'category_id'],
+			'coupon_product'         => ['coupon', 'coupon_id', 'product', 'product_id'],
+			'product_filter'         => ['product', 'product_id', 'filter', 'filter_id']
 		];
 	}
 }

@@ -15,6 +15,10 @@ $_['check_garbage_orphan_link_title']                         = 'Links of delete
 $_['check_garbage_orphan_link_desc']                          = 'A deleted product, category, page, coupon or other record is still linked to stores, categories, layouts or other data.';
 $_['check_garbage_orphan_link_impact']                        = 'Customers will not notice: nothing uses these links; they only take up space in the database.';
 $_['check_garbage_orphan_link_hint']                          = 'The admin cannot show or delete these links. Remove them with a database tool after making a backup, or leave them: they do no harm.';
+$_['check_garbage_link_deleted_target_title']                 = 'Links to deleted stores, categories and products';
+$_['check_garbage_link_deleted_target_desc']                  = 'A product, category, page, manufacturer, article, topic or coupon is still linked to a store, category, product or filter that has been deleted.';
+$_['check_garbage_link_deleted_target_impact']                = 'Customers do not see these links. A coupon limited to products or categories that no longer exist may be refused at checkout or apply to other products than intended.';
+$_['check_garbage_link_deleted_target_hint']                  = 'Open the record and save it: deleted stores, categories, products and filters are not shown in the form, so their links are removed on save (products: Links tab; categories: Data tab; coupons: General tab).';
 
 // Column
 $_['column_type']                                             = 'Record type';
@@ -24,6 +28,8 @@ $_['column_languages']                                        = 'Languages';
 $_['check_garbage_description_bad_language_column_record_id'] = 'Record ID';
 $_['column_language_id']                                      = 'Deleted language ID';
 $_['column_links']                                            = 'Links';
+$_['check_garbage_link_deleted_target_column_record_id']      = 'Record ID';
+$_['column_target_id']                                        = 'Deleted target ID';
 
 // Value
 $_['value_type_product']                                      = 'Product';
@@ -72,3 +78,4 @@ $_['value_type_banner_image']                                 = 'Banner images';
 $_['value_type_article_comment']                              = 'Article comments';
 $_['value_type_marketing_report']                             = 'Campaign visits';
 $_['value_type_download_report']                              = 'Download report';
+$_['value_type_product_filter']                               = 'Product filters';
