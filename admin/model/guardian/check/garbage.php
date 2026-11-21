@@ -15,7 +15,7 @@ class Garbage extends Base {
 		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
-		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id'],
 		'garbage_inactive_marketing'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'marketing_id'],
@@ -120,14 +120,16 @@ class Garbage extends Base {
 	 * catalog/model/catalog/product.php, used by the storefront coupon model,
 	 * does not look at the product). Links of a deleted owner belong to
 	 * garbage_orphan_link; layouts that were deleted are not checked here.
+	 * The cleanup deletes the store, product-category and filter links but not
+	 * the coupon links (see garbageLinkDeletedTargetCleanup()).
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function garbageLinkDeletedTarget(): CheckResult {
 		$parts = [];
 
-		foreach ($this->targetLinks() as $type => [$owner, $owner_column, $target, $target_column]) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $owner_column . "` AS `record_id`, `t`.`" . $target_column . "` AS `target_id` FROM `" . DB_PREFIX . $type . "` `t` WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $owner_column . "` = `t`.`" . $owner_column . "`)" . ($target == 'store' ? " AND `t`.`store_id` != '0'" : "") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $target . "` `g` WHERE `g`.`" . $target_column . "` = `t`.`" . $target_column . "`)";
+		foreach ($this->targetParts() as $type => $part) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $part['owner_column'] . "` AS `record_id`, `t`.`" . $part['target_column'] . "` AS `target_id` FROM " . $part['from'] . " WHERE " . $part['where'];
 		}
 
 		return $this->collect('garbage_link_deleted_target', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `dead` ORDER BY `type`, `record_id`, `target_id`");
@@ -288,6 +290,39 @@ class Garbage extends Base {
 	}
 
 	/**
+	 * Cleanup of garbage_link_deleted_target: deletes the links of an existing
+	 * owner to a deleted store, category or filter. Same FROM/WHERE as the
+	 * check, with two differences. The coupon links (coupon_category,
+	 * coupon_product) are never deleted: a coupon left without its
+	 * restrictions would apply to the whole cart. A product link to a deleted
+	 * category is skipped while a coupon still refers to that category: the
+	 * storefront's getTotalCategoriesByCategoryId does not look at the product,
+	 * so removing the link would change which carts the coupon applies to. So
+	 * the cleanup can delete fewer rows than the check lists.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageLinkDeletedTargetCleanup(): array {
+		$parts = [];
+
+		foreach ($this->targetParts() as $type => $part) {
+			if (in_array($type, ['coupon_product', 'coupon_category'])) {
+				continue;
+			}
+
+			$where = $part['where'];
+
+			if ($type == 'product_to_category') {
+				$where .= " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "coupon_category` `cc` WHERE `cc`.`category_id` = `t`.`category_id`)";
+			}
+
+			$parts[] = ['alias' => 't', 'from' => $part['from'], 'where' => $where];
+		}
+
+		return $parts;
+	}
+
+	/**
 	 * Tables `<type>_description` with the parent `<type>` and the key
 	 * `<type>_id`.
 	 *
@@ -426,6 +461,27 @@ class Garbage extends Base {
 				'column' => $column,
 				'from'   => "`" . DB_PREFIX . $table . "` `t`",
 				'where'  => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $column . "` = `t`.`" . $column . "`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Owner and target columns, FROM and WHERE of the links to a deleted
+	 * target, shared by the check and its cleanup (link table aliased `t`).
+	 *
+	 * @return array<string, array{owner_column: string, target_column: string, from: string, where: string}> link table => parts
+	 */
+	private function targetParts(): array {
+		$parts = [];
+
+		foreach ($this->targetLinks() as $type => [$owner, $owner_column, $target, $target_column]) {
+			$parts[$type] = [
+				'owner_column'  => $owner_column,
+				'target_column' => $target_column,
+				'from'          => "`" . DB_PREFIX . $type . "` `t`",
+				'where'         => "EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $owner_column . "` = `t`.`" . $owner_column . "`)" . ($target == 'store' ? " AND `t`.`store_id` != '0'" : "") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $target . "` `g` WHERE `g`.`" . $target_column . "` = `t`.`" . $target_column . "`)"
 			];
 		}
 
