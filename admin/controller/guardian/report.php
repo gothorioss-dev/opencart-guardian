@@ -26,7 +26,8 @@ class Report extends \Opencart\System\Engine\Controller {
 		'manufacturer_id' => 'catalog/manufacturer.form',
 		'information_id'  => 'catalog/information.form',
 		'seo_url_id'      => 'design/seo_url.form',
-		'coupon_id'       => 'marketing/coupon.form'
+		'coupon_id'       => 'marketing/coupon.form',
+		'marketing_id'    => 'marketing/marketing.form'
 	];
 
 	/**
@@ -37,7 +38,7 @@ class Report extends \Opencart\System\Engine\Controller {
 
 	private const PRICE_COLUMNS = ['price', 'final_price'];
 
-	private const DATE_COLUMNS = ['date_available', 'date_start', 'date_end'];
+	private const DATE_COLUMNS = ['date_available', 'date_start', 'date_end', 'date_added'];
 
 	/**
 	 * Report order: checks with findings or a failed run first, then the
@@ -326,7 +327,7 @@ class Report extends \Opencart\System\Engine\Controller {
 		}
 
 		if (in_array($key, self::DATE_COLUMNS)) {
-			if ($value == '0000-00-00') {
+			if (str_starts_with($value, '0000-00-00')) {
 				return '—';
 			}
 

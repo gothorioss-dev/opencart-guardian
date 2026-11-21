@@ -27,6 +27,10 @@ $_['check_garbage_expired_coupon_title']                      = 'Купони з
 $_['check_garbage_expired_coupon_desc']                       = 'Дата закінчення купона минула.';
 $_['check_garbage_expired_coupon_impact']                     = 'Покупці більше не можуть застосувати купон, навіть якщо він увімкнений; він лише захаращує список купонів.';
 $_['check_garbage_expired_coupon_hint']                       = 'У «Маркетинг → Купони» видаліть купон або вкажіть нову дату закінчення.';
+$_['check_garbage_inactive_marketing_title']                  = 'Кампанії без переходів';
+$_['check_garbage_inactive_marketing_desc']                   = 'Кампанію додано понад 90 днів тому, і за її кодом відстеження не зафіксовано жодного переходу та жодного замовлення.';
+$_['check_garbage_inactive_marketing_impact']                 = 'Покупці цього не помітять. Код відстеження, імовірно, не використовується в жодному посиланні, і кампанія лише захаращує список.';
+$_['check_garbage_inactive_marketing_hint']                   = 'Відкрийте кампанію в «Маркетинг → Маркетинг» і перевірте вкладку «Звіт». Видаліть її, якщо вона більше не потрібна, або додайте її код відстеження до посилань.';
 
 // Column
 $_['column_type']                                             = 'Тип запису';
@@ -43,6 +47,9 @@ $_['column_records']                                          = 'Записів'
 $_['column_code']                                             = 'Код';
 $_['column_status']                                           = 'Статус';
 $_['column_date_end']                                         = 'Дата закінчення';
+$_['check_garbage_inactive_marketing_column_name']            = 'Назва кампанії';
+$_['check_garbage_inactive_marketing_column_code']            = 'Код відстеження';
+$_['column_date_added']                                       = 'Дата додавання';
 
 // Value
 $_['value_type_product']                                      = 'Товар';

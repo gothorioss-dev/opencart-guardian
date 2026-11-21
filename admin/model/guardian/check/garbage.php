@@ -17,7 +17,8 @@ class Garbage extends Base {
 		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id']
+		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id'],
+		'garbage_inactive_marketing'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'marketing_id']
 	];
 
 	/**
@@ -161,6 +162,22 @@ class Garbage extends Base {
 	 */
 	protected function garbageExpiredCoupon(): CheckResult {
 		return $this->collect('garbage_expired_coupon', "SELECT `c`.`coupon_id`, `c`.`name`, `c`.`code`, `c`.`status`, `c`.`date_end` FROM `" . DB_PREFIX . "coupon` `c` WHERE `c`.`date_end` != '0000-00-00' AND `c`.`date_end` <= CURDATE() ORDER BY `c`.`date_end`, `c`.`coupon_id`");
+	}
+
+	/**
+	 * Marketing campaigns added more than 90 days ago with no recorded visit
+	 * and no order. The storefront writes a visit of a tracking code to the
+	 * campaign report (addReport in catalog/model/marketing/marketing.php),
+	 * shown on the campaign form's Report tab; the legacy `clicks` counter is
+	 * written by nothing in this version, so it is only required to be zero.
+	 * The admin never removes a campaign by itself. Only orders of any status
+	 * count as use (the admin campaign list counts complete orders only, so
+	 * this is stricter). Findings carry the edit button to the campaign form.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function garbageInactiveMarketing(): CheckResult {
+		return $this->collect('garbage_inactive_marketing', "SELECT `m`.`marketing_id`, `m`.`name`, `m`.`code`, `m`.`date_added` FROM `" . DB_PREFIX . "marketing` `m` WHERE `m`.`clicks` = '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "marketing_report` `mr` WHERE `mr`.`marketing_id` = `m`.`marketing_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "order` `o` WHERE `o`.`marketing_id` = `m`.`marketing_id`) AND `m`.`date_added` < DATE_SUB(NOW(), INTERVAL 90 DAY) ORDER BY `m`.`date_added`, `m`.`marketing_id`");
 	}
 
 	/**

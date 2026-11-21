@@ -27,6 +27,10 @@ $_['check_garbage_expired_coupon_title']                      = 'Expired coupons
 $_['check_garbage_expired_coupon_desc']                       = 'The coupon\'s end date has passed.';
 $_['check_garbage_expired_coupon_impact']                     = 'Customers can no longer use the coupon, even if it is enabled; it only clutters the coupon list.';
 $_['check_garbage_expired_coupon_hint']                       = 'In Marketing > Coupons delete the coupon or set a new end date.';
+$_['check_garbage_inactive_marketing_title']                  = 'Campaigns without visits';
+$_['check_garbage_inactive_marketing_desc']                   = 'The campaign was added more than 90 days ago, and no visit or order has ever been recorded with its tracking code.';
+$_['check_garbage_inactive_marketing_impact']                 = 'Customers will not notice. The tracking code is probably not used in any link, so the campaign only clutters the list.';
+$_['check_garbage_inactive_marketing_hint']                   = 'Open the campaign in Marketing > Marketing and check its Report tab. Delete it if it is no longer needed, or add its tracking code to your links.';
 
 // Column
 $_['column_type']                                             = 'Record type';
@@ -43,6 +47,9 @@ $_['column_records']                                          = 'Records';
 $_['column_code']                                             = 'Code';
 $_['column_status']                                           = 'Status';
 $_['column_date_end']                                         = 'Date end';
+$_['check_garbage_inactive_marketing_column_name']            = 'Campaign name';
+$_['check_garbage_inactive_marketing_column_code']            = 'Tracking code';
+$_['column_date_added']                                       = 'Date added';
 
 // Value
 $_['value_type_product']                                      = 'Product';
