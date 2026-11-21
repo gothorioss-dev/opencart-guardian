@@ -16,7 +16,7 @@ class Garbage extends Base {
 		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
-		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id'],
 		'garbage_inactive_marketing'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'marketing_id'],
 		'garbage_disabled_summary'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
@@ -319,6 +319,23 @@ class Garbage extends Base {
 			}
 
 			$parts[] = ['alias' => 't', 'from' => $part['from'], 'where' => $where];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Cleanup of garbage_orphan_product_data: deletes the rows of deleted
+	 * products in every listed table. The data of a deleted product is read
+	 * nowhere. Same FROM/WHERE as the check.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageOrphanProductDataCleanup(): array {
+		$parts = [];
+
+		foreach ($this->orphanProductDataParts() as $part) {
+			$parts[] = ['alias' => 't', 'from' => $part['from'], 'where' => $part['where']];
 		}
 
 		return $parts;
