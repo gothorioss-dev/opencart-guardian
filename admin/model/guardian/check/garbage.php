@@ -13,7 +13,7 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
 class Garbage extends Base {
 	protected array $checks = [
 		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
-		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
@@ -63,9 +63,12 @@ class Garbage extends Base {
 	 */
 	protected function garbageDescriptionBadLanguage(): CheckResult {
 		$parts = [];
+		$sources = $this->badLanguageParts();
 
 		foreach ($this->descriptionTables() as $type => $name) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, `d`.`" . $name . "` AS `name`, `d`.`language_id` FROM `" . DB_PREFIX . $type . "_description` `d` WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "language` `l` WHERE `l`.`language_id` = `d`.`language_id`)";
+			$part = $sources[$type];
+
+			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, `d`.`" . $name . "` AS `name`, `d`.`language_id` FROM " . $part['from'] . " WHERE " . $part['where'];
 		}
 
 		return $this->collect('garbage_description_bad_language', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `bad` ORDER BY `type`, `record_id`, `language_id`");
@@ -247,6 +250,23 @@ class Garbage extends Base {
 	}
 
 	/**
+	 * Cleanup of garbage_description_bad_language: deletes the description
+	 * rows of a deleted language of an existing record. Same FROM/WHERE as the
+	 * check, so it deletes exactly the rows the check counts.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageDescriptionBadLanguageCleanup(): array {
+		$parts = [];
+
+		foreach ($this->badLanguageParts() as $part) {
+			$parts[] = ['alias' => 'd', 'from' => $part['from'], 'where' => $part['where']];
+		}
+
+		return $parts;
+	}
+
+	/**
 	 * Tables `<type>_description` with the parent `<type>` and the key
 	 * `<type>_id`.
 	 *
@@ -343,6 +363,25 @@ class Garbage extends Base {
 			$parts[$type] = [
 				'from'  => "`" . DB_PREFIX . $type . "_description` `d`",
 				'where' => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * FROM and WHERE of the descriptions in a deleted language of an existing
+	 * record, shared by the check and its cleanup (description table aliased `d`).
+	 *
+	 * @return array<string, array{from: string, where: string}> type => parts
+	 */
+	private function badLanguageParts(): array {
+		$parts = [];
+
+		foreach (array_keys($this->descriptionTables()) as $type) {
+			$parts[$type] = [
+				'from'  => "`" . DB_PREFIX . $type . "_description` `d`",
+				'where' => "EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "language` `l` WHERE `l`.`language_id` = `d`.`language_id`)"
 			];
 		}
 
