@@ -14,7 +14,7 @@ class Garbage extends Base {
 	protected array $checks = [
 		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
-		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id'],
@@ -88,19 +88,16 @@ class Garbage extends Base {
 	 * storefront or in the admin reads them. Links of an existing owner to a
 	 * deleted target belong to garbage_link_deleted_target; children of guarded parents
 	 * (filters of a filter group, attributes of an attribute group, zones of a
-	 * country) are left out.
+	 * country) are left out. The cleanup deletes all of these except the
+	 * coupon history, which the core coupon report still reads.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function garbageOrphanLink(): CheckResult {
 		$parts = [];
 
-		foreach ($this->linkTables() as $table => $link) {
-			[$owner, $column] = $link;
-
-			$type = $link[2] ?? $table;
-
-			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $column . "` AS `record_id`, COUNT(*) AS `links` FROM `" . DB_PREFIX . $table . "` `t` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $column . "` = `t`.`" . $column . "`) GROUP BY `t`.`" . $column . "`";
+		foreach ($this->linkParts() as $part) {
+			$parts[] = "SELECT '" . $part['type'] . "' AS `type`, `t`.`" . $part['column'] . "` AS `record_id`, COUNT(*) AS `links` FROM " . $part['from'] . " WHERE " . $part['where'] . " GROUP BY `t`.`" . $part['column'] . "`";
 		}
 
 		return $this->collect('garbage_orphan_link', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
@@ -267,6 +264,30 @@ class Garbage extends Base {
 	}
 
 	/**
+	 * Cleanup of garbage_orphan_link: deletes the link rows of deleted owners.
+	 * Same FROM/WHERE as the check. The coupon history is reported but kept:
+	 * the core coupon report joins it with a LEFT JOIN and still lists the
+	 * orders. Deleting option_value or custom_field_value rows leaves their
+	 * descriptions behind; they show up in garbage_orphan_description on the
+	 * next run and are cleaned there.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageOrphanLinkCleanup(): array {
+		$parts = [];
+
+		foreach ($this->linkParts() as $table => $part) {
+			if ($table == 'coupon_history') {
+				continue;
+			}
+
+			$parts[] = ['alias' => 't', 'from' => $part['from'], 'where' => $part['where']];
+		}
+
+		return $parts;
+	}
+
+	/**
 	 * Tables `<type>_description` with the parent `<type>` and the key
 	 * `<type>_id`.
 	 *
@@ -382,6 +403,29 @@ class Garbage extends Base {
 			$parts[$type] = [
 				'from'  => "`" . DB_PREFIX . $type . "_description` `d`",
 				'where' => "EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "language` `l` WHERE `l`.`language_id` = `d`.`language_id`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Type, owner column, FROM and WHERE of the links of deleted owners, shared
+	 * by the check and its cleanup (link table aliased `t`).
+	 *
+	 * @return array<string, array{type: string, column: string, from: string, where: string}> link table => parts
+	 */
+	private function linkParts(): array {
+		$parts = [];
+
+		foreach ($this->linkTables() as $table => $link) {
+			[$owner, $column] = $link;
+
+			$parts[$table] = [
+				'type'   => $link[2] ?? $table,
+				'column' => $column,
+				'from'   => "`" . DB_PREFIX . $table . "` `t`",
+				'where'  => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $column . "` = `t`.`" . $column . "`)"
 			];
 		}
 
