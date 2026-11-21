@@ -12,7 +12,8 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Garbage extends Base {
 	protected array $checks = [
-		'garbage_orphan_description' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
+		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -34,6 +35,30 @@ class Garbage extends Base {
 		}
 
 		return $this->collect('garbage_orphan_description', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
+	}
+
+	/**
+	 * Names and descriptions of an existing record that belong to a language
+	 * which has been deleted, one finding row per description row. All 20 core
+	 * `*_description` tables are covered. The admin deletes a language together
+	 * with its texts (deleteLanguage cleans 19 tables, but not
+	 * `subscription_plan_description`, so those rows also come from normal
+	 * admin use); the rest comes from imports or direct SQL. The storefront
+	 * reads texts only in installed languages. Saving the record in the admin
+	 * re-writes its descriptions for installed languages only (editProduct and
+	 * every other edit*()), which drops these rows. Descriptions of deleted
+	 * records belong to garbage_orphan_description.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function garbageDescriptionBadLanguage(): CheckResult {
+		$parts = [];
+
+		foreach ($this->descriptionTables() as $type => $name) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, `d`.`" . $name . "` AS `name`, `d`.`language_id` FROM `" . DB_PREFIX . $type . "_description` `d` WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "language` `l` WHERE `l`.`language_id` = `d`.`language_id`)";
+		}
+
+		return $this->collect('garbage_description_bad_language', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `bad` ORDER BY `type`, `record_id`, `language_id`");
 	}
 
 	/**
