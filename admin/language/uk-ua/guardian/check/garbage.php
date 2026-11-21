@@ -31,6 +31,10 @@ $_['check_garbage_inactive_marketing_title']                  = 'Кампані�
 $_['check_garbage_inactive_marketing_desc']                   = 'Кампанію додано понад 90 днів тому, і за її кодом відстеження не зафіксовано жодного переходу та жодного замовлення.';
 $_['check_garbage_inactive_marketing_impact']                 = 'Покупці цього не помітять. Код відстеження, імовірно, не використовується в жодному посиланні, і кампанія лише захаращує список.';
 $_['check_garbage_inactive_marketing_hint']                   = 'Відкрийте кампанію в «Маркетинг → Маркетинг» і перевірте вкладку «Звіт». Видаліть її, якщо вона більше не потрібна, або додайте її код відстеження до посилань.';
+$_['check_garbage_disabled_summary_title']                    = 'Вимкнені записи';
+$_['check_garbage_disabled_summary_desc']                     = 'Вимкнені товари, категорії, інформаційні сторінки, банери, статті або теми — по рядку на кожен вид з їхньою кількістю.';
+$_['check_garbage_disabled_summary_impact']                   = 'Покупці не бачать вимкнених записів. Давно вимкнений запис часто вже не потрібен і лише захаращує списки в адмінці.';
+$_['check_garbage_disabled_summary_hint']                     = 'Перегляньте вимкнені записи в їхніх розділах адмінки (наприклад, відфільтруйте «Каталог → Товари» за статусом) і видаліть непотрібні.';
 
 // Column
 $_['column_type']                                             = 'Тип запису';
@@ -50,6 +54,7 @@ $_['column_date_end']                                         = 'Дата зак
 $_['check_garbage_inactive_marketing_column_name']            = 'Назва кампанії';
 $_['check_garbage_inactive_marketing_column_code']            = 'Код відстеження';
 $_['column_date_added']                                       = 'Дата додавання';
+$_['column_total']                                            = 'Вимкнено';
 
 // Value
 $_['value_type_product']                                      = 'Товар';
@@ -111,3 +116,4 @@ $_['value_type_product_reward']                               = 'Бонусні 
 $_['value_type_product_subscription']                         = 'Плани підписки';
 $_['value_type_product_viewed']                               = 'Статистика переглядів';
 $_['value_type_review']                                       = 'Відгуки';
+$_['value_type_banner']                                       = 'Банер';

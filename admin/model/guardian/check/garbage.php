@@ -18,7 +18,8 @@ class Garbage extends Base {
 		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id'],
-		'garbage_inactive_marketing'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'marketing_id']
+		'garbage_inactive_marketing'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'marketing_id'],
+		'garbage_disabled_summary'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql']
 	];
 
 	/**
@@ -178,6 +179,29 @@ class Garbage extends Base {
 	 */
 	protected function garbageInactiveMarketing(): CheckResult {
 		return $this->collect('garbage_inactive_marketing', "SELECT `m`.`marketing_id`, `m`.`name`, `m`.`code`, `m`.`date_added` FROM `" . DB_PREFIX . "marketing` `m` WHERE `m`.`clicks` = '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "marketing_report` `mr` WHERE `mr`.`marketing_id` = `m`.`marketing_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "order` `o` WHERE `o`.`marketing_id` = `m`.`marketing_id`) AND `m`.`date_added` < DATE_SUB(NOW(), INTERVAL 90 DAY) ORDER BY `m`.`date_added`, `m`.`marketing_id`");
+	}
+
+	/**
+	 * Disabled products, categories, information pages, banners, articles and
+	 * topics: one finding row per kind with its number (`total`), kinds with
+	 * none are left out. The check count is the sum of the rows, not the row
+	 * count, so it is the number of disabled records; the rows are a summary
+	 * and never reach the sample limit. Disabled records are normal (a hidden
+	 * product, a draft), so this is a reminder to review old ones, not an
+	 * error; it lists no single record.
+	 *
+	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
+	 */
+	protected function garbageDisabledSummary(): CheckResult {
+		$parts = [];
+
+		foreach (['product', 'category', 'information', 'banner', 'article', 'topic'] as $type) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, COUNT(*) AS `total` FROM `" . DB_PREFIX . $type . "` WHERE `status` = '0'";
+		}
+
+		$rows = $this->db->query("SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `disabled` WHERE `total` > 0 ORDER BY `type`")->rows;
+
+		return CheckResult::found('garbage_disabled_summary', $this->checks['garbage_disabled_summary']['severity'], (int)array_sum(array_column($rows, 'total')), $rows);
 	}
 
 	/**

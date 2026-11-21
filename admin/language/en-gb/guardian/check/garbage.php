@@ -31,6 +31,10 @@ $_['check_garbage_inactive_marketing_title']                  = 'Campaigns witho
 $_['check_garbage_inactive_marketing_desc']                   = 'The campaign was added more than 90 days ago, and no visit or order has ever been recorded with its tracking code.';
 $_['check_garbage_inactive_marketing_impact']                 = 'Customers will not notice. The tracking code is probably not used in any link, so the campaign only clutters the list.';
 $_['check_garbage_inactive_marketing_hint']                   = 'Open the campaign in Marketing > Marketing and check its Report tab. Delete it if it is no longer needed, or add its tracking code to your links.';
+$_['check_garbage_disabled_summary_title']                    = 'Disabled records';
+$_['check_garbage_disabled_summary_desc']                     = 'Disabled products, categories, information pages, banners, articles or topics, one line per kind with their number.';
+$_['check_garbage_disabled_summary_impact']                   = 'Customers do not see disabled records. A record disabled long ago is often no longer needed and only clutters the admin lists.';
+$_['check_garbage_disabled_summary_hint']                     = 'Review the disabled records in their admin sections (for example, filter Catalog > Products by status) and delete those you no longer need.';
 
 // Column
 $_['column_type']                                             = 'Record type';
@@ -50,6 +54,7 @@ $_['column_date_end']                                         = 'Date end';
 $_['check_garbage_inactive_marketing_column_name']            = 'Campaign name';
 $_['check_garbage_inactive_marketing_column_code']            = 'Tracking code';
 $_['column_date_added']                                       = 'Date added';
+$_['column_total']                                            = 'Disabled';
 
 // Value
 $_['value_type_product']                                      = 'Product';
@@ -111,3 +116,4 @@ $_['value_type_product_reward']                               = 'Reward points';
 $_['value_type_product_subscription']                         = 'Subscription plans';
 $_['value_type_product_viewed']                               = 'View statistics';
 $_['value_type_review']                                       = 'Reviews';
+$_['value_type_banner']                                       = 'Banner';
