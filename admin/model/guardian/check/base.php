@@ -106,4 +106,25 @@ abstract class Base extends \Opencart\System\Engine\Model {
 	protected function variantFamilies(string $columns = ''): string {
 		return "SELECT `p2`.`product_id`, IF(`p2`.`master_id` = '0', `p2`.`product_id`, IF(`m2`.`master_id` != '0', `m2`.`master_id`, `p2`.`master_id`)) AS `family`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p2` LEFT JOIN `" . DB_PREFIX . "product` `m2` ON (`m2`.`product_id` = `p2`.`master_id`) WHERE (`p2`.`master_id` = '0' OR `m2`.`product_id` IS NOT NULL)";
 	}
+
+	/**
+	 * Kind of a product_discount row `dc`: "special" or "discount", the codes
+	 * translated by the category's value_kind_* keys.
+	 *
+	 * @return string SQL expression
+	 */
+	protected function discountKind(): string {
+		return "IF(`dc`.`special` = '1', 'special', 'discount')";
+	}
+
+	/**
+	 * Common finding columns: id, name in the admin language, status.
+	 *
+	 * @param string $columns extra select list over `p` (product)
+	 *
+	 * @return string SELECT ... FROM product `p` with the description joined, no WHERE
+	 */
+	protected function productSelect(string $columns = ''): string {
+		return "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "')";
+	}
 }

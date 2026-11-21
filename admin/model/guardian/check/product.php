@@ -357,17 +357,6 @@ class Product extends Base {
 	}
 
 	/**
-	 * Common finding columns for product checks: id, admin-language name, status.
-	 *
-	 * @param string $columns extra select list appended after the common columns
-	 *
-	 * @return string SELECT ... FROM product p LEFT JOIN product_description pd, without WHERE
-	 */
-	private function productSelect(string $columns = ''): string {
-		return "SELECT `p`.`product_id`, `pd`.`name`, `p`.`status`" . ($columns ? ", " . $columns : "") . " FROM `" . DB_PREFIX . "product` `p` LEFT JOIN `" . DB_PREFIX . "product_description` `pd` ON (`pd`.`product_id` = `p`.`product_id` AND `pd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "')";
-	}
-
-	/**
 	 * Price of one item under a product_discount row `dc` of product `p`, as
 	 * the cart computes it: type P is a percentage off, S an amount off, F a
 	 * fixed price.
@@ -376,15 +365,5 @@ class Product extends Base {
 	 */
 	private function discountFinalPrice(): string {
 		return "(CASE WHEN `dc`.`type` = 'P' THEN (`p`.`price` - (`p`.`price` * (`dc`.`price` / 100))) WHEN `dc`.`type` = 'S' THEN (`p`.`price` - `dc`.`price`) ELSE `dc`.`price` END)";
-	}
-
-	/**
-	 * Kind of a product_discount row `dc`: "special" or "discount", the codes
-	 * translated by the category's value_kind_* keys.
-	 *
-	 * @return string SQL expression
-	 */
-	private function discountKind(): string {
-		return "IF(`dc`.`special` = '1', 'special', 'discount')";
 	}
 }
