@@ -222,6 +222,10 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 
 		$this->model_extension_gtr_guardian_guardian_result->createTables();
 
+		$this->load->model('extension/gtr_guardian/guardian/cleanup');
+
+		$this->model_extension_gtr_guardian_guardian_cleanup->createTables();
+
 		$this->load->model('setting/event');
 
 		/*
@@ -305,5 +309,9 @@ class GtrGuardian extends \Opencart\System\Engine\Model {
 		$this->load->model('extension/gtr_guardian/guardian/result');
 
 		$this->model_extension_gtr_guardian_guardian_result->dropTables();
+
+		$this->load->model('extension/gtr_guardian/guardian/cleanup');
+
+		$this->model_extension_gtr_guardian_guardian_cleanup->dropTables();
 	}
 }
