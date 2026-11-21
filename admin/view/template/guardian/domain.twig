@@ -18,4 +18,31 @@
     <div id="guardian-report">{{ report }}</div>
   </div>
 </div>
+<script type="text/javascript"><!--
+// Bound on the document and kept here, outside #guardian-report: that block is reloaded by AJAX and would lose its handlers.
+$(document).on('click', '[data-guardian-clean]', function (e) {
+    e.preventDefault();
+
+    var url = $(this).attr('data-guardian-clean');
+
+    $('#modal-guardian-clean').remove();
+
+    $.ajax({
+        url: url,
+        dataType: 'html',
+        success: function (html) {
+            $('body').append(html);
+
+            $('#modal-guardian-clean').modal('show');
+        }
+    });
+});
+
+// The stock ajax form reloads the report itself; this only closes the modal after a successful cleanup.
+$(document).on('ajaxComplete', function (e, xhr, settings) {
+    if (settings.url.indexOf('guardian/cleanup.execute') !== -1 && xhr.responseJSON && xhr.responseJSON.success) {
+        $('#modal-guardian-clean').modal('hide');
+    }
+});
+//--></script>
 {{ footer }}

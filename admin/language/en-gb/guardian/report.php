@@ -4,6 +4,7 @@ $_['text_success']           = 'Success: checks have been run!';
 $_['text_no_run']            = 'Checks have not been run yet.';
 $_['text_last_run']          = 'Last run:';
 $_['text_origin_manual']     = 'manual';
+$_['text_origin_cleanup']    = 'cleanup';
 $_['text_checks_total']      = 'Checks:';
 $_['text_findings']          = 'Findings (C / W / I):';
 $_['text_errors']            = 'Failed checks:';
@@ -30,6 +31,7 @@ $_['column_count']           = 'Count';
 $_['button_run']             = 'Run checks';
 $_['button_items']           = 'Show records (%d)';
 $_['button_edit']            = 'Edit';
+$_['button_clean']           = 'Clean up';
 
 // Error
 $_['error_permission']       = 'Warning: You do not have permission to run checks!';

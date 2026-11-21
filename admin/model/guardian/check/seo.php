@@ -29,8 +29,8 @@ class Seo extends Base {
 		'seo_duplicate_keyword'                   => ['severity' => CheckResult::SEVERITY_CRITICAL, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_empty_keyword'                       => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
 		'seo_invalid_keyword'                     => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_url'                          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id'],
-		'seo_orphan_store_language'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id'],
+		'seo_orphan_url'                          => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'seo_url_id', 'clean' => true],
+		'seo_orphan_store_language'               => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'seo_url_id', 'clean' => true],
 		'seo_missing_url'                         => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'product_id'],
 		'seo_urls_disabled'                       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
 		'seo_missing_url_category'                => ['severity' => CheckResult::SEVERITY_WARNING, 'source' => 'sql', 'edit' => 'category_id'],
@@ -107,27 +107,13 @@ class Seo extends Base {
 	 * SEO URLs, so these come from imports or direct SQL. The keyword stays
 	 * taken: the admin refuses it for another page of the store. A category
 	 * path points at its last id; `language` and `route` keys name no record.
+	 * The storefront opens no page for such an address (the record is not
+	 * found); the cleanup deletes the rows and so frees their keywords.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function seoOrphanUrl(): CheckResult {
-		// SEO URL key => [table, id column, record id taken from `su`.`value`]
-		$targets = [
-			'product_id'      => ['product', 'product_id', "`su`.`value`"],
-			'path'            => ['category', 'category_id', "SUBSTRING_INDEX(`su`.`value`, '_', -1)"],
-			'manufacturer_id' => ['manufacturer', 'manufacturer_id', "`su`.`value`"],
-			'information_id'  => ['information', 'information_id', "`su`.`value`"],
-			'article_id'      => ['article', 'article_id', "`su`.`value`"],
-			'topic_id'        => ['topic', 'topic_id', "`su`.`value`"]
-		];
-
-		$implode = [];
-
-		foreach ($targets as $key => [$table, $column, $id]) {
-			$implode[] = "(`su`.`key` = '" . $key . "' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $table . "` `t` WHERE `t`.`" . $column . "` = " . $id . "))";
-		}
-
-		return $this->collect('seo_orphan_url', $this->seoUrlSelect() . " WHERE " . implode(" OR ", $implode) . " ORDER BY `su`.`store_id`, `su`.`key`, `su`.`value`, `su`.`seo_url_id`");
+		return $this->collect('seo_orphan_url', $this->seoUrlSelect() . " WHERE " . $this->orphanUrlWhere() . " ORDER BY `su`.`store_id`, `su`.`key`, `su`.`value`, `su`.`seo_url_id`");
 	}
 
 	/**
@@ -612,6 +598,29 @@ class Seo extends Base {
 	}
 
 	/**
+	 * Cleanup of seo_orphan_url: deletes the SEO URLs of deleted records. Same
+	 * condition as the check. The storefront opens no page for these addresses
+	 * (the record is not found), and the delete frees their keywords.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function seoOrphanUrlCleanup(): array {
+		return [['alias' => 'su', 'from' => "`" . DB_PREFIX . "seo_url` `su`", 'where' => $this->orphanUrlWhere()]];
+	}
+
+	/**
+	 * Cleanup of seo_orphan_store_language: deletes the SEO URLs of a deleted
+	 * store. Rows of a deleted language are not cleaned: the storefront
+	 * resolves keywords without the language, so such a URL still opens its
+	 * page. The cleanup can therefore delete fewer rows than the check lists.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function seoOrphanStoreLanguageCleanup(): array {
+		return [['alias' => 'su', 'from' => "`" . DB_PREFIX . "seo_url` `su`", 'where' => "`su`.`store_id` != '0' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "store` `s` WHERE `s`.`store_id` = `su`.`store_id`)"]];
+	}
+
+	/**
 	 * SQL condition: an existing store (the default store has no row) with
 	 * SEO URLs on.
 	 *
@@ -673,5 +682,32 @@ class Seo extends Base {
 	 */
 	private function descriptionText(string $column): string {
 		return "TRIM(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(" . $column . ", '(?s)&lt;.*?&gt;', ' '), '&amp;(nbsp|#160);', ' '), '&amp;#?[[:alnum:]]+;|&(quot|lt|gt|amp|#039);', 'x'), '[[:space:]]+', ' '))";
+	}
+
+	/**
+	 * SQL condition: an SEO URL of a deleted product, category, manufacturer,
+	 * information page, article or topic, shared by the check and its cleanup
+	 * (seo_url table aliased `su`).
+	 *
+	 * @return string
+	 */
+	private function orphanUrlWhere(): string {
+		// SEO URL key => [table, id column, record id taken from `su`.`value`]
+		$targets = [
+			'product_id'      => ['product', 'product_id', "`su`.`value`"],
+			'path'            => ['category', 'category_id', "SUBSTRING_INDEX(`su`.`value`, '_', -1)"],
+			'manufacturer_id' => ['manufacturer', 'manufacturer_id', "`su`.`value`"],
+			'information_id'  => ['information', 'information_id', "`su`.`value`"],
+			'article_id'      => ['article', 'article_id', "`su`.`value`"],
+			'topic_id'        => ['topic', 'topic_id', "`su`.`value`"]
+		];
+
+		$implode = [];
+
+		foreach ($targets as $key => [$table, $column, $id]) {
+			$implode[] = "(`su`.`key` = '" . $key . "' AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $table . "` `t` WHERE `t`.`" . $column . "` = " . $id . "))";
+		}
+
+		return implode(" OR ", $implode);
 	}
 }

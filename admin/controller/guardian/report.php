@@ -107,6 +107,9 @@ class Report extends \Opencart\System\Engine\Controller {
 		// Technical failure detail (may quote SQL) is for Guardian admins only.
 		$show_message = $this->user->hasPermission('access', 'extension/gtr_guardian/other/gtr_guardian');
 
+		// The cleanup button needs both rights on the cleanup route.
+		$can_clean = $this->user->hasPermission('access', 'extension/gtr_guardian/guardian/cleanup') && $this->user->hasPermission('modify', 'extension/gtr_guardian/guardian/cleanup');
+
 		$data['categories'] = [];
 
 		foreach ($this->model_extension_gtr_guardian_guardian_runner->getCategoryModels($provider->categories()) as $category => $model) {
@@ -134,17 +137,18 @@ class Report extends \Opencart\System\Engine\Controller {
 				}
 
 				$checks[] = [
-					'code'     => $code,
-					'title'    => $this->language->get($category . '_check_' . $code . '_title'),
-					'desc'     => $this->language->get($category . '_check_' . $code . '_desc'),
-					'impact'   => $impact,
-					'hint'     => $this->language->get($category . '_check_' . $code . '_hint'),
-					'severity' => $meta['severity'],
-					'status'   => $result ? $result['status'] : 'pending',
-					'count'    => $result ? (int)$result['count'] : 0,
-					'columns'  => $items ? $this->getColumns($category, $code, array_keys($items[0]['cells'])) : [],
-					'items'    => $items,
-					'message'  => $message
+					'code'      => $code,
+					'title'     => $this->language->get($category . '_check_' . $code . '_title'),
+					'desc'      => $this->language->get($category . '_check_' . $code . '_desc'),
+					'impact'    => $impact,
+					'hint'      => $this->language->get($category . '_check_' . $code . '_hint'),
+					'severity'  => $meta['severity'],
+					'status'    => $result ? $result['status'] : 'pending',
+					'count'     => $result ? (int)$result['count'] : 0,
+					'columns'   => $items ? $this->getColumns($category, $code, array_keys($items[0]['cells'])) : [],
+					'items'     => $items,
+					'message'   => $message,
+					'clean_url' => $can_clean && $result && $result['status'] === CheckResult::STATUS_FOUND && $model->canClean($code) ? $this->url->link('extension/gtr_guardian/guardian/cleanup.confirm', 'user_token=' . $this->session->data['user_token'] . '&domain=' . $domain . '&category=' . $category . '&code=' . $code) : ''
 				];
 			}
 

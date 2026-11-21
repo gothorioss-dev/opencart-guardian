@@ -27,15 +27,18 @@ $_['text_retention_current_none'] = 'Currently: automatic clean-up is off — hi
 $_['text_history_total']          = 'Stored runs: %d';
 $_['text_clear_confirm']          = 'Delete the whole run history of every domain?';
 $_['text_clear_success']          = 'Success: run history has been cleared!';
-$_['text_permission_help']        = 'Which user groups may open (A — access) and act on (M — modify: run checks) each Guardian screen. A group with no access to a domain does not see it in the menu or on the dashboard.';
+$_['text_permission_help']        = 'Which user groups may open (A — access) and act on (M — modify: run checks) each Guardian screen. A group with no access to a domain does not see it in the menu or on the dashboard. In the Cleanup column both are needed to delete found leftover data.';
 $_['text_permission_admin']       = 'Groups allowed to modify these settings are not listed: they administer Guardian and cannot restrict themselves here. Their access is managed in System &gt; Users &gt; User Groups.';
 $_['text_access']                 = 'Access';
 $_['text_modify']                 = 'Modify';
+$_['text_cleanup']                = 'Cleanup';
+$_['text_no_cleanup']             = 'No cleanups yet.';
 
 // Tab
 $_['tab_general']                 = 'General';
 $_['tab_config']                  = 'Configuration';
 $_['tab_permission']              = 'Permissions';
+$_['tab_cleanup']                 = 'Cleanup log';
 
 // Entry
 $_['entry_status']                = 'Status';
@@ -52,6 +55,11 @@ $_['column_group']                = 'User group';
 $_['column_domain']               = 'Domain';
 $_['column_enabled']              = 'Enabled';
 $_['column_action']               = 'Action';
+$_['column_date']                 = 'Date';
+$_['column_user']                 = 'User';
+$_['column_check']                = 'Check';
+$_['column_expected']             = 'Expected';
+$_['column_deleted']              = 'Deleted';
 
 // Button
 $_['button_save']                 = 'Save';

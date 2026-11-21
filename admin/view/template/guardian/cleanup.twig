@@ -1,0 +1,33 @@
+<div id="modal-guardian-clean" class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-guardian-clean" action="{{ action }}" method="post" data-oc-toggle="ajax" data-oc-load="{{ reload_url }}" data-oc-target="#guardian-report">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa-solid fa-broom"></i> {{ heading }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {% if count %}
+            <p><strong>{{ text_count_line }}</strong></p>
+            <p class="text-danger">{{ text_warning }}</p>
+            <input type="hidden" name="domain" value="{{ domain }}"/>
+            <input type="hidden" name="category" value="{{ category }}"/>
+            <input type="hidden" name="code" value="{{ code }}"/>
+            <input type="hidden" name="expected" value="{{ count }}"/>
+            <div class="form-check">
+              <input type="checkbox" name="backup" value="1" id="input-backup" class="form-check-input"/>
+              <label for="input-backup" class="form-check-label">{{ entry_backup }}</label>
+              <div id="error-backup" class="invalid-feedback"></div>
+            </div>
+          {% else %}
+            <p>{{ text_none }}</p>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ button_cancel }}</button>
+          {% if count %}<button type="submit" class="btn btn-danger">{{ button_clean }}</button>{% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -11,6 +11,7 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Runner extends \Opencart\System\Engine\Model {
 	public const ORIGIN_MANUAL = 'manual';
+	public const ORIGIN_CLEANUP = 'cleanup';
 
 	/**
 	 * Run all checks of a domain.

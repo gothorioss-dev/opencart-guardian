@@ -12,11 +12,11 @@ use Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult;
  */
 class Garbage extends Base {
 	protected array $checks = [
-		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
-		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
+		'garbage_orphan_description'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
+		'garbage_description_bad_language' => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
+		'garbage_orphan_link'              => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
+		'garbage_link_deleted_target'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
+		'garbage_orphan_product_data'      => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'clean' => true],
 		'garbage_expired_coupon'           => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'coupon_id'],
 		'garbage_inactive_marketing'       => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql', 'edit' => 'marketing_id'],
 		'garbage_disabled_summary'         => ['severity' => CheckResult::SEVERITY_INFO, 'source' => 'sql'],
@@ -36,9 +36,12 @@ class Garbage extends Base {
 	 */
 	protected function garbageOrphanDescription(): CheckResult {
 		$parts = [];
+		$sources = $this->orphanDescriptionParts();
 
 		foreach ($this->descriptionTables() as $type => $name) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, COALESCE(MAX(IF(`d`.`language_id` = '" . (int)$this->config->get('config_language_id') . "', `d`.`" . $name . "`, NULL)), MIN(`d`.`" . $name . "`)) AS `name`, COUNT(*) AS `languages` FROM `" . DB_PREFIX . $type . "_description` `d` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) GROUP BY `d`.`" . $type . "_id`";
+			$part = $sources[$type];
+
+			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, COALESCE(MAX(IF(`d`.`language_id` = '" . (int)$this->config->get('config_language_id') . "', `d`.`" . $name . "`, NULL)), MIN(`d`.`" . $name . "`)) AS `name`, COUNT(*) AS `languages` FROM " . $part['from'] . " WHERE " . $part['where'] . " GROUP BY `d`.`" . $type . "_id`";
 		}
 
 		return $this->collect('garbage_orphan_description', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
@@ -60,9 +63,12 @@ class Garbage extends Base {
 	 */
 	protected function garbageDescriptionBadLanguage(): CheckResult {
 		$parts = [];
+		$sources = $this->badLanguageParts();
 
 		foreach ($this->descriptionTables() as $type => $name) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, `d`.`" . $name . "` AS `name`, `d`.`language_id` FROM `" . DB_PREFIX . $type . "_description` `d` WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "language` `l` WHERE `l`.`language_id` = `d`.`language_id`)";
+			$part = $sources[$type];
+
+			$parts[] = "SELECT '" . $type . "' AS `type`, `d`.`" . $type . "_id` AS `record_id`, `d`.`" . $name . "` AS `name`, `d`.`language_id` FROM " . $part['from'] . " WHERE " . $part['where'];
 		}
 
 		return $this->collect('garbage_description_bad_language', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `bad` ORDER BY `type`, `record_id`, `language_id`");
@@ -82,19 +88,16 @@ class Garbage extends Base {
 	 * storefront or in the admin reads them. Links of an existing owner to a
 	 * deleted target belong to garbage_link_deleted_target; children of guarded parents
 	 * (filters of a filter group, attributes of an attribute group, zones of a
-	 * country) are left out.
+	 * country) are left out. The cleanup deletes all of these except the
+	 * coupon history, which the core coupon report still reads.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function garbageOrphanLink(): CheckResult {
 		$parts = [];
 
-		foreach ($this->linkTables() as $table => $link) {
-			[$owner, $column] = $link;
-
-			$type = $link[2] ?? $table;
-
-			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $column . "` AS `record_id`, COUNT(*) AS `links` FROM `" . DB_PREFIX . $table . "` `t` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $column . "` = `t`.`" . $column . "`) GROUP BY `t`.`" . $column . "`";
+		foreach ($this->linkParts() as $part) {
+			$parts[] = "SELECT '" . $part['type'] . "' AS `type`, `t`.`" . $part['column'] . "` AS `record_id`, COUNT(*) AS `links` FROM " . $part['from'] . " WHERE " . $part['where'] . " GROUP BY `t`.`" . $part['column'] . "`";
 		}
 
 		return $this->collect('garbage_orphan_link', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
@@ -117,14 +120,17 @@ class Garbage extends Base {
 	 * catalog/model/catalog/product.php, used by the storefront coupon model,
 	 * does not look at the product). Links of a deleted owner belong to
 	 * garbage_orphan_link; layouts that were deleted are not checked here.
+	 * The cleanup deletes the store, product-category and filter links, but not
+	 * the coupon links nor a product link to a category a coupon still uses
+	 * (see garbageLinkDeletedTargetCleanup()).
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function garbageLinkDeletedTarget(): CheckResult {
 		$parts = [];
 
-		foreach ($this->targetLinks() as $type => [$owner, $owner_column, $target, $target_column]) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $owner_column . "` AS `record_id`, `t`.`" . $target_column . "` AS `target_id` FROM `" . DB_PREFIX . $type . "` `t` WHERE EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $owner_column . "` = `t`.`" . $owner_column . "`)" . ($target == 'store' ? " AND `t`.`store_id` != '0'" : "") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $target . "` `g` WHERE `g`.`" . $target_column . "` = `t`.`" . $target_column . "`)";
+		foreach ($this->targetParts() as $type => $part) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`" . $part['owner_column'] . "` AS `record_id`, `t`.`" . $part['target_column'] . "` AS `target_id` FROM " . $part['from'] . " WHERE " . $part['where'];
 		}
 
 		return $this->collect('garbage_link_deleted_target', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `dead` ORDER BY `type`, `record_id`, `target_id`");
@@ -143,14 +149,16 @@ class Garbage extends Base {
 	 * leftovers block that deletion.
 	 * Links of a deleted product to stores, categories, downloads and layouts
 	 * belong to garbage_orphan_link; descriptions to garbage_orphan_description.
+	 * The view statistics table exists only while the "Products Viewed" report
+	 * extension is installed, so it is checked only when present.
 	 *
 	 * @return \Opencart\System\Library\Extension\GtrGuardian\Guardian\CheckResult
 	 */
 	protected function garbageOrphanProductData(): CheckResult {
 		$parts = [];
 
-		foreach (['product_attribute', 'product_code', 'product_discount', 'product_filter', 'product_image', 'product_option', 'product_option_value', 'product_related', 'product_report', 'product_reward', 'product_subscription', 'product_viewed', 'review'] as $type) {
-			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`product_id` AS `record_id`, COUNT(*) AS `records` FROM `" . DB_PREFIX . $type . "` `t` WHERE NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`product_id` = `t`.`product_id`) GROUP BY `t`.`product_id`";
+		foreach ($this->orphanProductDataParts() as $type => $part) {
+			$parts[] = "SELECT '" . $type . "' AS `type`, `t`.`product_id` AS `record_id`, COUNT(*) AS `records` FROM " . $part['from'] . " WHERE " . $part['where'] . " GROUP BY `t`.`product_id`";
 		}
 
 		return $this->collect('garbage_orphan_product_data', "SELECT * FROM (" . implode(" UNION ALL ", $parts) . ") AS `orphan` ORDER BY `type`, `record_id`");
@@ -224,6 +232,116 @@ class Garbage extends Base {
 	 */
 	protected function garbageExpiredDiscount(): CheckResult {
 		return $this->collect('garbage_expired_discount', $this->productSelect($this->discountKind() . " AS `kind`, `dc`.`customer_group_id`, `dc`.`quantity`, `dc`.`type`, `dc`.`price` AS `value`, `dc`.`date_end`") . " INNER JOIN `" . DB_PREFIX . "product_discount` `dc` ON (`dc`.`product_id` = `p`.`product_id`) WHERE `dc`.`date_end` != '0000-00-00' AND `dc`.`date_end` <= CURDATE() AND NOT (`dc`.`date_start` != '0000-00-00' AND `dc`.`date_start` >= `dc`.`date_end`) ORDER BY `p`.`product_id`, `kind`, `dc`.`date_end`");
+	}
+
+	/**
+	 * Cleanup of garbage_orphan_description: deletes the description rows of
+	 * deleted records, all languages, in every `*_description` table. Same
+	 * FROM/WHERE as the check, so it deletes every description row behind the
+	 * records the check lists.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageOrphanDescriptionCleanup(): array {
+		$parts = [];
+
+		foreach ($this->orphanDescriptionParts() as $part) {
+			$parts[] = ['alias' => 'd', 'from' => $part['from'], 'where' => $part['where']];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Cleanup of garbage_description_bad_language: deletes the description
+	 * rows of a deleted language of an existing record. Same FROM/WHERE as the
+	 * check, so it deletes exactly the rows the check counts.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageDescriptionBadLanguageCleanup(): array {
+		$parts = [];
+
+		foreach ($this->badLanguageParts() as $part) {
+			$parts[] = ['alias' => 'd', 'from' => $part['from'], 'where' => $part['where']];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Cleanup of garbage_orphan_link: deletes the link rows of deleted owners.
+	 * Same FROM/WHERE as the check. The coupon history is reported but kept:
+	 * the core coupon report joins it with a LEFT JOIN and still lists the
+	 * orders. Deleting option_value or custom_field_value rows leaves their
+	 * descriptions behind; they show up in garbage_orphan_description on the
+	 * next run and are cleaned there.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageOrphanLinkCleanup(): array {
+		$parts = [];
+
+		foreach ($this->linkParts() as $table => $part) {
+			if ($table == 'coupon_history') {
+				continue;
+			}
+
+			$parts[] = ['alias' => 't', 'from' => $part['from'], 'where' => $part['where']];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Cleanup of garbage_link_deleted_target: deletes the links of an existing
+	 * owner to a deleted store, category or filter. Same FROM/WHERE as the
+	 * check, with two differences. The coupon links (coupon_category,
+	 * coupon_product) are never deleted: a coupon left without its
+	 * restrictions would apply to the whole cart. A product link to a deleted
+	 * category is skipped while a coupon still refers to that category: the
+	 * storefront's getTotalCategoriesByCategoryId does not look at the product,
+	 * so removing the link would change which carts the coupon applies to. So
+	 * the cleanup can delete fewer rows than the check lists.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageLinkDeletedTargetCleanup(): array {
+		$parts = [];
+
+		foreach ($this->targetParts() as $type => $part) {
+			if (in_array($type, ['coupon_product', 'coupon_category'])) {
+				continue;
+			}
+
+			$where = $part['where'];
+
+			if ($type == 'product_to_category') {
+				$where .= " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "coupon_category` `cc` WHERE `cc`.`category_id` = `t`.`category_id`)";
+			}
+
+			$parts[] = ['alias' => 't', 'from' => $part['from'], 'where' => $where];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Cleanup of garbage_orphan_product_data: deletes the rows of deleted
+	 * products in every listed table. Nothing shows this data; only the admin
+	 * attribute and option delete guards count it, so the cleanup also unblocks
+	 * those deletes. Same FROM/WHERE as the check.
+	 *
+	 * @return array<int, array{alias: string, from: string, where: string}>
+	 */
+	protected function garbageOrphanProductDataCleanup(): array {
+		$parts = [];
+
+		foreach ($this->orphanProductDataParts() as $part) {
+			$parts[] = ['alias' => 't', 'from' => $part['from'], 'where' => $part['where']];
+		}
+
+		return $parts;
 	}
 
 	/**
@@ -308,5 +426,114 @@ class Garbage extends Base {
 			'coupon_product'         => ['coupon', 'coupon_id', 'product', 'product_id'],
 			'product_filter'         => ['product', 'product_id', 'filter', 'filter_id']
 		];
+	}
+
+	/**
+	 * FROM and WHERE of the orphan descriptions of each type, shared by the
+	 * check and its cleanup (description table aliased `d`).
+	 *
+	 * @return array<string, array{from: string, where: string}> type => parts
+	 */
+	private function orphanDescriptionParts(): array {
+		$parts = [];
+
+		foreach (array_keys($this->descriptionTables()) as $type) {
+			$parts[$type] = [
+				'from'  => "`" . DB_PREFIX . $type . "_description` `d`",
+				'where' => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * FROM and WHERE of the descriptions in a deleted language of an existing
+	 * record, shared by the check and its cleanup (description table aliased `d`).
+	 *
+	 * @return array<string, array{from: string, where: string}> type => parts
+	 */
+	private function badLanguageParts(): array {
+		$parts = [];
+
+		foreach (array_keys($this->descriptionTables()) as $type) {
+			$parts[$type] = [
+				'from'  => "`" . DB_PREFIX . $type . "_description` `d`",
+				'where' => "EXISTS (SELECT 1 FROM `" . DB_PREFIX . $type . "` `p` WHERE `p`.`" . $type . "_id` = `d`.`" . $type . "_id`) AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "language` `l` WHERE `l`.`language_id` = `d`.`language_id`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Type, owner column, FROM and WHERE of the links of deleted owners, shared
+	 * by the check and its cleanup (link table aliased `t`).
+	 *
+	 * @return array<string, array{type: string, column: string, from: string, where: string}> link table => parts
+	 */
+	private function linkParts(): array {
+		$parts = [];
+
+		foreach ($this->linkTables() as $table => $link) {
+			[$owner, $column] = $link;
+
+			$parts[$table] = [
+				'type'   => $link[2] ?? $table,
+				'column' => $column,
+				'from'   => "`" . DB_PREFIX . $table . "` `t`",
+				'where'  => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $column . "` = `t`.`" . $column . "`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * Owner and target columns, FROM and WHERE of the links to a deleted
+	 * target, shared by the check and its cleanup (link table aliased `t`).
+	 *
+	 * @return array<string, array{owner_column: string, target_column: string, from: string, where: string}> link table => parts
+	 */
+	private function targetParts(): array {
+		$parts = [];
+
+		foreach ($this->targetLinks() as $type => [$owner, $owner_column, $target, $target_column]) {
+			$parts[$type] = [
+				'owner_column'  => $owner_column,
+				'target_column' => $target_column,
+				'from'          => "`" . DB_PREFIX . $type . "` `t`",
+				'where'         => "EXISTS (SELECT 1 FROM `" . DB_PREFIX . $owner . "` `o` WHERE `o`.`" . $owner_column . "` = `t`.`" . $owner_column . "`)" . ($target == 'store' ? " AND `t`.`store_id` != '0'" : "") . " AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . $target . "` `g` WHERE `g`.`" . $target_column . "` = `t`.`" . $target_column . "`)"
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * FROM and WHERE of the data of deleted products of each table (aliased
+	 * `t`). product_viewed belongs to the "Products Viewed" report extension
+	 * and is left out when its table does not exist.
+	 *
+	 * @return array<string, array{from: string, where: string}> table => parts
+	 */
+	private function orphanProductDataParts(): array {
+		$tables = ['product_attribute', 'product_code', 'product_discount', 'product_filter', 'product_image', 'product_option', 'product_option_value', 'product_related', 'product_report', 'product_reward', 'product_subscription', 'product_viewed', 'review'];
+
+		// "_" is a LIKE wildcard; escape it after the string escaping so the backslash survives.
+		if (!$this->db->query("SHOW TABLES LIKE '" . str_replace('_', '\\_', $this->db->escape(DB_PREFIX . "product_viewed")) . "'")->num_rows) {
+			$tables = array_diff($tables, ['product_viewed']);
+		}
+
+		$parts = [];
+
+		foreach ($tables as $type) {
+			$parts[$type] = [
+				'from'  => "`" . DB_PREFIX . $type . "` `t`",
+				'where' => "NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "product` `p` WHERE `p`.`product_id` = `t`.`product_id`)"
+			];
+		}
+
+		return $parts;
 	}
 }

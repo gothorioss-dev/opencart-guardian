@@ -74,12 +74,14 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 			];
 		}
 
-		// Matrix columns: the dashboard plus the domains listed above.
+		// Matrix columns: the dashboard, the domains listed above and the cleanup route.
 		$data['permission_routes'] = [['code' => 'dashboard', 'name' => $this->language->get('text_dashboard')]];
 
 		foreach ($data['domains'] as $domain) {
 			$data['permission_routes'][] = ['code' => $domain['code'], 'name' => $domain['name']];
 		}
+
+		$data['permission_routes'][] = ['code' => 'cleanup', 'name' => $this->language->get('text_cleanup')];
 
 		$routes = $this->model_extension_gtr_guardian_other_gtr_guardian->getPermissionRoutes();
 
@@ -101,6 +103,38 @@ class GtrGuardian extends \Opencart\System\Engine\Controller {
 				'user_group_id' => (int)$group['user_group_id'],
 				'name'          => $group['name'],
 				'cells'         => $cells
+			];
+		}
+
+		// Cleanup journal: the newest entries, read-only.
+		$this->load->model('extension/gtr_guardian/guardian/cleanup');
+
+		$domain_names = array_column($data['domains'], 'name', 'code');
+
+		$loaded = [];
+
+		$data['cleanups'] = [];
+
+		foreach ($this->model_extension_gtr_guardian_guardian_cleanup->getCleanups(0, 20) as $cleanup) {
+			$category = $cleanup['category'];
+
+			if (!isset($loaded[$category])) {
+				$this->load->language('extension/gtr_guardian/guardian/check/' . $category, $category);
+
+				$loaded[$category] = true;
+			}
+
+			// A missing key comes back as the key itself; show the plain code then.
+			$title_key = $category . '_check_' . $cleanup['code'] . '_title';
+			$title = $this->language->get($title_key);
+
+			$data['cleanups'][] = [
+				'date_added' => date($this->language->get('datetime_format'), strtotime($cleanup['date_added'])),
+				'username'   => $cleanup['username'] ?? '—',
+				'domain'     => $domain_names[$cleanup['domain']] ?? $cleanup['domain'],
+				'check'      => $title === $title_key ? $cleanup['code'] : $title,
+				'expected'   => (int)$cleanup['expected'],
+				'deleted'    => (int)$cleanup['deleted']
 			];
 		}
 
